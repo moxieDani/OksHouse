@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ok's House - 별장 예약시스템</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 50px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            transform: translateY(0);
+            animation: slideUp 0.6s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #7f8c8d;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+            font-weight: 400;
+            opacity: 0.8;
+        }
+        
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .menu-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px 25px;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            text-decoration: none;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .menu-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .menu-btn:hover::before {
+            left: 100%;
+        }
+        
+        .menu-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
+        }
+        
+        .menu-btn.modify {
+            background: linear-gradient(45deg, #e67e22, #d35400);
+            box-shadow: 0 4px 15px rgba(230, 126, 34, 0.3);
+        }
+        
+        .menu-btn.modify:hover {
+            box-shadow: 0 8px 25px rgba(230, 126, 34, 0.4);
+        }
+        
+        .menu-btn.inquiry {
+            background: linear-gradient(45deg, #27ae60, #219a52);
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+        
+        .menu-btn.inquiry:hover {
+            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.4);
+        }
+        
+        .menu-btn .emoji {
+            font-size: 1.3em;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+        
+        .menu-btn .text {
+            flex: 1;
+            text-align: left;
+        }
+        
+        .menu-btn .arrow {
+            font-size: 1.2em;
+            transition: transform 0.3s ease;
+        }
+        
+        .menu-btn:hover .arrow {
+            transform: translateX(5px);
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .menu-btn {
+                font-size: 16px;
+                padding: 18px 20px;
+            }
+        }
+        
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            color: #7f8c8d;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏡 Ok's House</h1>
+        <h2>프리미엄 별장 예약시스템</h2>
+        
+        <div class="menu">
+            <a href="reservation.html" class="menu-btn">
+                <span class="emoji">▶️</span>
+                <span class="text">새로운 예약</span>
+                <span class="arrow">→</span>
+            </a>
+            <a href="modify.html" class="menu-btn modify">
+                <span class="emoji">🛠</span>
+                <span class="text">예약 수정</span>
+                <span class="arrow">→</span>
+            </a>
+            <a href="inquiry.html" class="menu-btn inquiry">
+                <span class="emoji">🔍</span>
+                <span class="text">예약 조회/삭제</span>
+                <span class="arrow">→</span>
+            </a>
+        </div>
+        
+        <div class="footer">
+            편안하고 특별한 휴식을 위한 최고의 선택
+        </div>
+    </div>
+</body>
+</html>
