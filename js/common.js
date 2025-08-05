@@ -391,14 +391,39 @@ class ReservationManager {
 
     static highlightDateOnCalendar(date) {
         const dateString = date.getDate().toString();
+        const targetMonth = date.getMonth();
+        const targetYear = date.getFullYear();
         const calendarDays = document.querySelectorAll('.calendar-day');
         
         calendarDays.forEach(day => {
             if (day.textContent === dateString && !day.classList.contains('other-month')) {
-                // Check if it's the correct month/year
-                const dayElement = day;
-                if (dayElement && !dayElement.classList.contains('disabled')) {
-                    dayElement.classList.add('reservation-highlight');
+                // Get the calendar's current displayed month/year
+                const calendar = document.querySelector('.calendar');
+                if (calendar) {
+                    const monthDisplay = calendar.querySelector('[id*="month-"]');
+                    if (monthDisplay) {
+                        const displayText = monthDisplay.textContent;
+                        const currentYear = parseInt(displayText.match(/(\d{4})년/)?.[1]);
+                        const currentMonth = displayText.includes('1월') ? 0 :
+                                          displayText.includes('2월') ? 1 :
+                                          displayText.includes('3월') ? 2 :
+                                          displayText.includes('4월') ? 3 :
+                                          displayText.includes('5월') ? 4 :
+                                          displayText.includes('6월') ? 5 :
+                                          displayText.includes('7월') ? 6 :
+                                          displayText.includes('8월') ? 7 :
+                                          displayText.includes('9월') ? 8 :
+                                          displayText.includes('10월') ? 9 :
+                                          displayText.includes('11월') ? 10 :
+                                          displayText.includes('12월') ? 11 : -1;
+                        
+                        // Only highlight if the date matches the currently displayed month/year
+                        if (currentYear === targetYear && currentMonth === targetMonth) {
+                            if (!day.classList.contains('disabled')) {
+                                day.classList.add('reservation-highlight');
+                            }
+                        }
+                    }
                 }
             }
         });

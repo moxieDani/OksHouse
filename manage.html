@@ -145,6 +145,27 @@
             color: #d35400;
             font-weight: 600;
         }
+        /* Hide today highlight in manage page */
+        .calendar-day.today {
+            background: transparent !important;
+            color: inherit !important;
+            font-weight: normal !important;
+        }
+        /* Make calendar read-only in step 2 */
+        #step2 .calendar-day {
+            cursor: default !important;
+            pointer-events: none !important;
+        }
+        #step2 .calendar-day:hover {
+            background: transparent !important;
+            color: inherit !important;
+        }
+        /* Ensure no interaction styling in read-only mode */
+        #step2 .calendar-day.selected:hover,
+        #step2 .calendar-day.in-range:hover {
+            background: inherit !important;
+            color: inherit !important;
+        }
     </style>
 </head>
 <body>
@@ -296,14 +317,15 @@
             // Initialize components
             stepNavigator = new StepNavigator(3);
             
-            // Initialize main calendar
+            // Initialize main calendar (read-only for viewing reservations only)
             calendar = new OksCalendar({
                 containerId: 'calendar-container',
                 primaryColor: '#e67e22',
                 rangeBgColor: '#fdeaa7',
                 rangeTextColor: '#d35400',
-                onDateSelect: handleCalendarDateSelect,
-                onMonthChange: handleMonthChange
+                onDateSelect: null, // Disable date selection
+                onMonthChange: handleMonthChange,
+                readOnly: true // Make calendar read-only - no date selection allowed
             });
         });
 
@@ -355,15 +377,26 @@
                 } else if (current === 2) {
                     selectedReservation = null;
                     document.getElementById('reservations-list').innerHTML = '';
+                    // Clear calendar highlights when going back from step 2
+                    clearCalendarHighlights();
                 }
             });
         }
 
         function findUserReservations(name, phone, password) {
             // 실제로는 서버 API를 호출하여 사용자 예약을 조회
-            return mockReservations.filter(res => 
+            const allUserReservations = mockReservations.filter(res => 
                 res.name === name && res.phone === phone
             );
+            
+            // 완료된 예약과 이용 중인 예약은 제외하고 예약 확정 상태만 표시
+            return allUserReservations.filter(reservation => {
+                const status = ReservationManager.getReservationStatus(
+                    reservation.startDate, 
+                    reservation.duration
+                );
+                return status === 'upcoming';
+            });
         }
 
         function loadUserReservations() {
@@ -373,7 +406,8 @@
             
             const userReservations = findUserReservations(name, phone, password);
             displayReservations(userReservations);
-            highlightReservationsOnCalendar(userReservations);
+            // Remove automatic highlighting - let calendar stay clean initially
+            // highlightReservationsOnCalendar(userReservations);
         }
 
         function displayReservations(reservations) {
@@ -382,7 +416,10 @@
             if (reservations.length === 0) {
                 listContainer.innerHTML = `
                     <div class="no-reservations">
-                        <p>예약 내역이 없습니다.</p>
+                        <p>변경 가능한 예약이 없습니다.</p>
+                        <p style="font-size: 14px; color: #95a5a6; margin-top: 10px;">
+                            완료된 예약과 이용 중인 예약은 표시되지 않습니다.
+                        </p>
                     </div>
                 `;
                 return;
@@ -395,7 +432,17 @@
 
         function highlightReservationsOnCalendar(reservations) {
             setTimeout(() => {
-                ReservationManager.highlightReservationDates(calendar, reservations);
+                // 기존 하이라이트 제거
+                clearCalendarHighlights();
+                
+                // 모든 예약을 연한 색으로 표시 (선택되지 않은 상태)
+                reservations.forEach(reservation => {
+                    for (let i = 0; i < reservation.duration; i++) {
+                        const date = new Date(reservation.startDate);
+                        date.setDate(reservation.startDate.getDate() + i);
+                        highlightOtherReservationDate(date);
+                    }
+                });
             }, 100);
         }
 
@@ -410,19 +457,29 @@
             
             selectedReservation = mockReservations.find(res => res.id === reservationId);
             
-            // 달력을 선택된 예약의 시작날짜 달로 이동
+            // 달력을 선택된 예약의 시작날짜 달로 이동하고 예약 기간 표시
             if (selectedReservation && calendar) {
+                // 기존 스타일 제거
+                clearCalendarHighlights();
+                
+                // 먼저 달력을 해당 월로 이동
                 calendar.navigateToDate(selectedReservation.startDate);
                 
-                // 잠시 후 예약 하이라이트 다시 적용
+                // 달력의 duration을 설정하고 선택된 예약을 표시
+                calendar.setDuration(selectedReservation.duration);
+                
+                // 선택된 예약을 달력에 표시
                 setTimeout(() => {
+                    calendar.selectDate(selectedReservation.startDate);
+                    
+                    // 다른 예약들도 하이라이트 (선택된 예약과 구분하기 위해)
                     const name = document.getElementById('auth-name').value;
                     const phone = document.getElementById('auth-phone').value;
                     if (name && phone) {
                         const userReservations = findUserReservations(name, phone, '');
-                        ReservationManager.highlightReservationDates(calendar, userReservations);
+                        highlightOtherReservations(userReservations, selectedReservation.id);
                     }
-                }, 150);
+                }, 200);
             }
             
             // 다음 버튼 활성화
@@ -430,6 +487,53 @@
             nextBtn.disabled = false;
             nextBtn.style.opacity = '1';
             nextBtn.style.cursor = 'pointer';
+        }
+
+        function highlightOtherReservations(reservations, selectedId) {
+            // 선택된 예약이 아닌 다른 예약들을 다른 스타일로 표시
+            const otherReservations = reservations.filter(res => res.id !== selectedId);
+            
+            otherReservations.forEach(reservation => {
+                for (let i = 0; i < reservation.duration; i++) {
+                    const date = new Date(reservation.startDate);
+                    date.setDate(reservation.startDate.getDate() + i);
+                    highlightOtherReservationDate(date);
+                }
+            });
+        }
+
+        function highlightOtherReservationDate(date) {
+            // 현재 달력에 표시된 월/년과 날짜의 월/년이 일치하는지 확인
+            const currentCalendarMonth = calendar.getCurrentMonth();
+            
+            if (date.getMonth() === currentCalendarMonth.month && 
+                date.getFullYear() === currentCalendarMonth.year) {
+                
+                const dateString = date.getDate().toString();
+                const calendarDays = document.querySelectorAll('.calendar-day');
+                
+                calendarDays.forEach(day => {
+                    if (day.textContent === dateString && 
+                        !day.classList.contains('other-month') && 
+                        !day.classList.contains('selected') && 
+                        !day.classList.contains('in-range')) {
+                        // 다른 예약은 더 연한 오렌지색으로 표시
+                        day.style.backgroundColor = '#fef3e2';
+                        day.style.border = '1px solid #f39c12';
+                        day.style.color = '#d35400';
+                    }
+                });
+            }
+        }
+
+        function clearCalendarHighlights() {
+            // 모든 달력 하이라이트 제거
+            document.querySelectorAll('.calendar-day').forEach(day => {
+                day.classList.remove('reservation-highlight');
+                day.style.backgroundColor = '';
+                day.style.border = '';
+                day.style.color = '';
+            });
         }
 
         function showSelectedReservation() {
@@ -540,12 +644,20 @@
             // Month change handler
             console.log('Month changed to:', year, month + 1);
             
-            // Re-highlight reservations when month changes
-            const name = document.getElementById('auth-name').value;
-            const phone = document.getElementById('auth-phone').value;
-            if (name && phone) {
-                const userReservations = findUserReservations(name, phone, '');
-                setTimeout(() => highlightReservationsOnCalendar(userReservations), 100);
+            // Only re-highlight if a reservation is currently selected
+            if (selectedReservation) {
+                // Re-highlight the selected reservation and other reservations
+                const name = document.getElementById('auth-name').value;
+                const phone = document.getElementById('auth-phone').value;
+                if (name && phone) {
+                    const userReservations = findUserReservations(name, phone, '');
+                    setTimeout(() => {
+                        // Clear and re-apply highlights for selected reservation
+                        clearCalendarHighlights();
+                        calendar.selectDate(selectedReservation.startDate);
+                        highlightOtherReservations(userReservations, selectedReservation.id);
+                    }, 100);
+                }
             }
         }
 

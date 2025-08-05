@@ -200,9 +200,6 @@ class PrivacyConsent {
         
         if (this.options.onDecline) {
             this.options.onDecline();
-        } else {
-            // Default behavior: show message and stay on index
-            alert('개인정보 수집·이용에 동의하지 않으시면 예약 서비스를 이용할 수 없습니다.');
         }
     }
 

@@ -15,6 +15,7 @@ class OksCalendar {
             weekdays: options.weekdays || ['일', '월', '화', '수', '목', '금', '토'],
             onDateSelect: options.onDateSelect || null,
             onMonthChange: options.onMonthChange || null,
+            readOnly: options.readOnly || false,
             ...options
         };
         
@@ -249,8 +250,10 @@ class OksCalendar {
             if (dayOfWeek === 0) dayElement.classList.add('sunday');
             if (dayOfWeek === 6) dayElement.classList.add('saturday');
             
-            // Add click handler
-            dayElement.onclick = () => this.handleDateClick(date, dayElement);
+            // Add click handler only if not in read-only mode
+            if (!this.options.readOnly) {
+                dayElement.onclick = () => this.handleDateClick(date, dayElement);
+            }
         }
     }
 

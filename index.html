@@ -195,12 +195,7 @@
                 e.preventDefault();
                 
                 // Use PrivacyConsent static method for easy integration
-                PrivacyConsent.requireConsent('reservation.html', {
-                    onDecline: function() {
-                        // Custom behavior when user declines
-                        alert('개인정보 수집·이용에 동의하지 않으시면 예약 서비스를 이용할 수 없습니다.\n\n동의하신 후 예약을 진행해 주세요.');
-                    }
-                });
+                PrivacyConsent.requireConsent('reservation.html');
             });
         });
     </script>
