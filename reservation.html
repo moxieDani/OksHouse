@@ -24,7 +24,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>▶️ 예약</h1>
+        <h1 id="page-title">▶️ 예약</h1>
         
         <!-- Step Indicator -->
         <div class="step-indicator">
@@ -77,28 +77,37 @@
 
         <!-- Step 3: 예약자 정보 입력 -->
         <div class="step hidden" id="step3">
-            <h3>3단계: 예약자 정보</h3>
+            <h3 id="step3-title">3단계: 예약자 정보</h3>
             
             <!-- 선택된 예약 정보 표시 -->
             <div class="date-range-display selected" id="selectedReservationInfo">
                 선택된 예약 정보가 여기에 표시됩니다
             </div>
+
+            <!-- 기존 예약 정보 (수정 모드일 때만 표시) -->
+            <div id="original-reservation-info" style="display: none; background: #f0f8ff; padding: 15px; border-left: 4px solid #3498db; margin: 15px 0;">
+                <h4>기존 예약 정보</h4>
+                <div id="original-reservation-details"></div>
+            </div>
             
-            <div class="form-group">
-                <label for="name">이름:</label>
-                <input type="text" id="name" placeholder="이름을 입력하세요">
+            <div id="personal-info-form">
+                <div class="form-group">
+                    <label for="name">이름:</label>
+                    <input type="text" id="name" placeholder="이름을 입력하세요">
+                </div>
+                <div class="form-group">
+                    <label for="phone">전화번호:</label>
+                    <input type="tel" id="phone" placeholder="010-1234-5678">
+                </div>
+                <div class="form-group">
+                    <label for="password">비밀번호:</label>
+                    <input type="password" id="password" placeholder="4자리 숫자 비밀번호">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="phone">전화번호:</label>
-                <input type="tel" id="phone" placeholder="010-1234-5678">
-            </div>
-            <div class="form-group">
-                <label for="password">비밀번호:</label>
-                <input type="password" id="password" placeholder="예약 조회/수정용 비밀번호">
-            </div>
+            
             <div style="text-align: center; margin-top: 30px;">
                 <button class="btn btn-back" onclick="prevStep(3)">이전</button>
-                <button class="btn" onclick="completeReservation()">예약 완료</button>
+                <button class="btn" id="complete-btn" onclick="completeReservation()">예약 완료</button>
             </div>
         </div>
     </div>
@@ -110,16 +119,31 @@
         // Initialize components
         let stepNavigator, durationSelector, calendar;
 
+        let isModificationMode = false;
+        let modificationData = null;
+
         document.addEventListener('DOMContentLoaded', function() {
-            // Check privacy consent first
-            if (!CompletionHandler.validatePrivacyConsent()) {
-                alert('개인정보 수집·이용 동의가 필요합니다. 메인 페이지에서 동의 후 진행해 주세요.');
-                location.href = 'index.html';
-                return;
+            // Check if this is a modification from manage page
+            const storedModificationData = sessionStorage.getItem('modificationData');
+            if (storedModificationData) {
+                modificationData = JSON.parse(storedModificationData);
+                isModificationMode = true;
+                // Clear the stored data
+                sessionStorage.removeItem('modificationData');
+            } else {
+                // Check privacy consent for new reservations only
+                if (!CompletionHandler.validatePrivacyConsent()) {
+                    alert('개인정보 수집·이용 동의가 필요합니다. 메인 페이지에서 동의 후 진행해 주세요.');
+                    location.href = 'index.html';
+                    return;
+                }
             }
             
             // Set theme
             ThemeManager.setReservationTheme();
+            
+            // Initialize input formatters
+            InputFormatter.initializeAllFormatters();
             
             // Initialize components
             stepNavigator = new StepNavigator(3);
@@ -130,6 +154,11 @@
                 onDateSelect: handleDateSelection,
                 onMonthChange: handleMonthChange
             });
+
+            // If modification mode, pre-fill and setup the form
+            if (isModificationMode) {
+                setupModificationMode();
+            }
         });
 
         // Event handlers
@@ -187,7 +216,121 @@
         function updateStep3ReservationInfo() {
             const infoElement = document.getElementById('selectedReservationInfo');
             if (infoElement) {
-                infoElement.innerHTML = calendar.formatReservationInfo('선택된 예약 정보', '#3498db');
+                const title = isModificationMode ? '새로운 예약 정보' : '선택된 예약 정보';
+                const color = isModificationMode ? '#e67e22' : '#3498db';
+                infoElement.innerHTML = calendar.formatReservationInfo(title, color);
+            }
+        }
+
+        function applyModificationTheme() {
+            // Inject orange theme styles for modification mode
+            const style = document.createElement('style');
+            style.innerHTML = `
+                /* Override blue theme with orange for modification */
+                h1 {
+                    color: #e67e22 !important;
+                }
+                .step h3 {
+                    color: #e67e22 !important;
+                }
+                .btn {
+                    background: #e67e22 !important;
+                }
+                .btn:hover {
+                    background: #d35400 !important;
+                }
+                .step-dot.active {
+                    background: #e67e22 !important;
+                }
+                .step-dot.completed {
+                    background: #d35400 !important;
+                }
+                .date-range-display.selected {
+                    background: #fdeaa7 !important;
+                    color: #d35400 !important;
+                    border-color: #e67e22 !important;
+                }
+                .duration-btn.selected {
+                    background: #e67e22 !important;
+                    color: white !important;
+                    border-color: #d35400 !important;
+                }
+                .duration-btn:hover {
+                    border-color: #e67e22 !important;
+                    color: #e67e22 !important;
+                }
+                #original-reservation-info {
+                    background: #fdf6f0 !important;
+                    border-left-color: #e67e22 !important;
+                }
+                #original-reservation-info h4 {
+                    color: #e67e22 !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        function setupModificationMode() {
+            // Update page title and step titles
+            document.getElementById('page-title').textContent = '📋 예약 변경';
+            document.getElementById('step3-title').textContent = '3단계: 예약 변경 확인';
+            document.getElementById('complete-btn').textContent = '예약 변경 완료';
+
+            // Apply orange theme for modification mode
+            applyModificationTheme();
+
+            // Hide personal info form since we already have the info
+            document.getElementById('personal-info-form').style.display = 'none';
+
+            // Show and populate original reservation info
+            const originalInfo = document.getElementById('original-reservation-info');
+            const originalDetails = document.getElementById('original-reservation-details');
+            
+            const original = modificationData.originalReservation;
+            const endDate = new Date(original.startDate);
+            endDate.setDate(original.startDate.getDate() + original.duration);
+
+            originalDetails.innerHTML = `
+                <p><strong>기존 날짜:</strong> ${ReservationManager.formatKoreanDate(original.startDate)} ~ ${ReservationManager.formatKoreanDate(endDate)}</p>
+                <p><strong>기존 기간:</strong> ${original.duration}박 ${original.duration + 1}일</p>
+                <p><strong>예약자:</strong> ${modificationData.userInfo.name}</p>
+                <p><strong>전화번호:</strong> ${modificationData.userInfo.phone}</p>
+            `;
+            originalInfo.style.display = 'block';
+
+            // Pre-select the duration from original reservation
+            durationSelector.setDuration(original.duration);
+            calendar.setDuration(original.duration);
+
+            // Update duration buttons to show current selection
+            const durationButtons = document.querySelectorAll('.duration-btn');
+            durationButtons.forEach(btn => {
+                if (btn.textContent.includes(`${original.duration}박`)) {
+                    btn.classList.add('selected');
+                }
+            });
+        }
+
+        function completeReservation() {
+            if (isModificationMode) {
+                // For modifications, we don't need to validate personal info again
+                if (!calendar.getSelectedDate()) {
+                    alert('새로운 예약 날짜를 선택해주세요.');
+                    return false;
+                }
+
+                if (!durationSelector.getDuration()) {
+                    alert('숙박 기간을 선택해주세요.');
+                    return false;
+                }
+
+                // Show success message for modification
+                alert('예약 변경이 완료되었습니다!');
+                location.href = 'index.html';
+                return true;
+            } else {
+                // Original reservation completion logic
+                return CompletionHandler.completeReservation();
             }
         }
     </script>

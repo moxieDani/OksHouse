@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>예약 확인/변경 - Ok's House</title>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/calendar.css">
+    <link rel="stylesheet" href="css/privacy.css">
+    <style>
+        h1 {
+            color: #e67e22;
+        }
+        .step h3 {
+            color: #e67e22;
+        }
+        .btn {
+            background: #e67e22;
+        }
+        .btn:hover {
+            background: #d35400;
+        }
+        .current-reservation {
+            background: #fdf6f0;
+            padding: 15px;
+            border-left: 4px solid #e67e22;
+            margin: 15px 0;
+        }
+        /* Override calendar colors for manage page */
+        .step-dot.active {
+            background: #e67e22 !important;
+        }
+        .step-dot.completed {
+            background: #d35400 !important;
+        }
+        .date-range-display.selected {
+            background: #fdeaa7 !important;
+            color: #d35400 !important;
+            border-color: #e67e22 !important;
+        }
+        .reservation-card {
+            background: #fefefe;
+            border: 2px solid #f4f4f4;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .reservation-card:hover {
+            border-color: #e67e22;
+            box-shadow: 0 4px 12px rgba(230, 126, 34, 0.15);
+            background: #fdf9f5;
+        }
+        .reservation-card.selected {
+            border-color: #e67e22;
+            background: #fdf6f0;
+            box-shadow: 0 4px 12px rgba(230, 126, 34, 0.25);
+        }
+        .reservation-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .reservation-details {
+            flex: 1;
+        }
+        .reservation-status {
+            background: #f39c12;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .reservation-status.past {
+            background: #bdc3c7;
+        }
+        .reservation-status.current {
+            background: #e67e22;
+        }
+        .reservation-status.upcoming {
+            background: #f39c12;
+        }
+        .reservation-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        #delete-btn:hover {
+            background: #c0392b !important;
+        }
+        .no-reservations {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        .calendar-view {
+            margin-top: 20px;
+        }
+        .reservation-highlight {
+            background: #e67e22 !important;
+            color: white !important;
+            font-weight: bold;
+        }
+        .modify-form {
+            background: #fdf6f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 2px solid #e67e22;
+        }
+        .modify-form h4 {
+            color: #e67e22;
+            margin-top: 0;
+        }
+        /* Duration buttons orange theme */
+        .duration-btn.selected {
+            background: #e67e22 !important;
+            color: white !important;
+            border-color: #d35400 !important;
+        }
+        .duration-btn:hover {
+            border-color: #e67e22 !important;
+            color: #e67e22 !important;
+        }
+        /* Calendar section styling */
+        .calendar-view h4 {
+            color: #e67e22;
+            border-bottom: 2px solid #e67e22;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+        #reservations-list h4 {
+            color: #e67e22;
+            border-bottom: 2px solid #e67e22;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+        /* Form labels */
+        .form-group label {
+            color: #d35400;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 예약 확인/변경</h1>
+        
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <span class="step-dot active" id="dot1">1</span>
+            <span class="step-dot" id="dot2">2</span>
+            <span class="step-dot" id="dot3">3</span>
+        </div>
+        
+        <!-- Step 1: 예약자 정보 입력 -->
+        <div class="step" id="step1">
+            <h3>1단계: 예약자 정보 입력</h3>
+            <div class="form-group">
+                <label for="auth-name">이름:</label>
+                <input type="text" id="auth-name" placeholder="예약자 이름을 입력하세요">
+            </div>
+            <div class="form-group">
+                <label for="auth-phone">전화번호:</label>
+                <input type="tel" id="auth-phone" placeholder="010-1234-5678">
+            </div>
+            <div class="form-group">
+                <label for="password">비밀번호:</label>
+                <input type="password" id="password" placeholder="4자리 숫자 비밀번호">
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-back" onclick="location.href='index.html'">이전</button>
+                <button class="btn" onclick="nextStep(1)">확인</button>
+            </div>
+        </div>
+
+        <!-- Step 2: 예약 목록 확인 -->
+        <div class="step hidden" id="step2">
+            <h3>2단계: 예약 현황 확인</h3>
+            
+            <!-- 달력 보기 -->
+            <div class="calendar-view">
+                <div id="calendar-container"></div>
+            </div>
+            
+            <!-- 예약 목록 -->
+            <div style="margin-top: 30px;">
+                <h4>📋 예약 목록</h4>
+                <div id="reservations-list">
+                    <!-- 예약 목록이 여기에 동적으로 추가됩니다 -->
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn btn-back" onclick="prevStep(2)">이전</button>
+                <button class="btn" id="nextBtn2" onclick="startReservationModification()" disabled style="opacity: 0.5; cursor: not-allowed;">선택한 예약 변경</button>
+            </div>
+        </div>
+
+        <!-- Step 3: 예약 변경/삭제 -->
+        <div class="step hidden" id="step3">
+            <h3>3단계: 예약 변경</h3>
+            
+            <!-- 현재 선택된 예약 정보 -->
+            <div class="current-reservation" id="selected-reservation-info">
+                선택된 예약 정보가 여기에 표시됩니다
+            </div>
+            
+            <!-- 변경 옵션 -->
+            <div class="modify-form" id="modify-form" style="display: none;">
+                <h4>새로운 예약 정보</h4>
+                
+                <!-- 새로운 숙박 기간 선택 -->
+                <div class="form-group">
+                    <label>새로운 숙박 기간:</label>
+                    <div class="duration-buttons">
+                        <button class="duration-btn" onclick="selectDuration(1, this)">1박 2일</button>
+                        <button class="duration-btn" onclick="selectDuration(2, this)">2박 3일</button>
+                        <button class="duration-btn" onclick="selectDuration(3, this)">3박 4일</button>
+                        <button class="duration-btn" onclick="selectDuration(4, this)">4박 5일</button>
+                        <button class="duration-btn" onclick="selectDuration(5, this)">5박 6일</button>
+                        <button class="duration-btn" onclick="selectDuration(6, this)">6박 7일</button>
+                        <button class="duration-btn" onclick="selectDuration(7, this)">7박 8일</button>
+                        <button class="duration-btn" onclick="selectDuration(8, this)">8박 9일</button>
+                        <button class="duration-btn" onclick="selectDuration(9, this)">9박 10일</button>
+                        <button class="duration-btn" onclick="selectDuration(10, this)">10박 11일</button>
+                    </div>
+                </div>
+                
+                <!-- 새로운 날짜 선택 -->
+                <div class="form-group" style="margin-top: 20px;">
+                    <label>새로운 예약 날짜:</label>
+                    <div class="date-range-display" id="dateRangeDisplay">
+                        날짜를 선택해주세요
+                    </div>
+                    <div id="modify-calendar-container"></div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn btn-back" onclick="prevStep(3)">이전</button>
+                <button class="btn" onclick="showModifyForm()" id="modify-btn">예약 변경</button>
+                <button class="btn" onclick="deleteReservation()" id="delete-btn" style="background: #e74c3c;">예약 삭제</button>
+                <button class="btn" onclick="completeModification()" id="save-btn" style="display: none;">변경 저장</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script src="js/calendar.js"></script>
+    <script src="js/privacy.js"></script>
+    <script>
+        // Initialize components
+        let stepNavigator, calendar, modifyCalendar, selectedReservation = null;
+        
+        // Mock reservation data - 실제로는 서버에서 가져올 데이터
+        const mockReservations = [
+            {
+                id: 1,
+                name: '홍길동',
+                phone: '010-1234-5678',
+                startDate: new Date(2025, 7, 10), // 8월 10일
+                duration: 2,
+                status: 'confirmed'
+            },
+            {
+                id: 2,
+                name: '홍길동',
+                phone: '010-1234-5678',
+                startDate: new Date(2025, 8, 15), // 9월 15일
+                duration: 3,
+                status: 'confirmed'
+            },
+            {
+                id: 3,
+                name: '홍길동',
+                phone: '010-1234-5678',
+                startDate: new Date(2025, 6, 5), // 7월 5일 (과거)
+                duration: 1,
+                status: 'completed'
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set theme
+            ThemeManager.setModifyTheme();
+            
+            // Initialize input formatters
+            InputFormatter.initializeAllFormatters();
+            
+            // Initialize components
+            stepNavigator = new StepNavigator(3);
+            
+            // Initialize main calendar
+            calendar = new OksCalendar({
+                containerId: 'calendar-container',
+                primaryColor: '#e67e22',
+                rangeBgColor: '#fdeaa7',
+                rangeTextColor: '#d35400',
+                onDateSelect: handleCalendarDateSelect,
+                onMonthChange: handleMonthChange
+            });
+        });
+
+        // Event handlers
+        function nextStep(currentStep) {
+            const validationFunctions = {
+                1: () => {
+                    const name = document.getElementById('auth-name').value;
+                    const phone = document.getElementById('auth-phone').value;
+                    const password = document.getElementById('password').value;
+                    
+                    if (!FormValidator.validateAuthInfo(name, phone, password)) {
+                        return false;
+                    }
+                    
+                    // 입력된 정보로 예약 검색 (실제로는 서버 API 호출)
+                    const userReservations = findUserReservations(name, phone, password);
+                    if (userReservations.length === 0) {
+                        alert('일치하는 예약 정보를 찾을 수 없습니다.');
+                        return false;
+                    }
+                    
+                    return true;
+                },
+                2: () => {
+                    if (!selectedReservation) {
+                        alert('변경할 예약을 선택해주세요.');
+                        return false;
+                    }
+                    return true;
+                }
+            };
+
+            const nextStepNum = stepNavigator.nextStep(currentStep, validationFunctions[currentStep]);
+            
+            if (nextStepNum === 2) {
+                loadUserReservations();
+            } else if (nextStepNum === 3) {
+                showSelectedReservation();
+            }
+            
+            return nextStepNum;
+        }
+
+        function prevStep(currentStep) {
+            const prevStepNum = stepNavigator.prevStep(currentStep, (current, prev) => {
+                if (current === 3) {
+                    hideModifyForm();
+                } else if (current === 2) {
+                    selectedReservation = null;
+                    document.getElementById('reservations-list').innerHTML = '';
+                }
+            });
+        }
+
+        function findUserReservations(name, phone, password) {
+            // 실제로는 서버 API를 호출하여 사용자 예약을 조회
+            return mockReservations.filter(res => 
+                res.name === name && res.phone === phone
+            );
+        }
+
+        function loadUserReservations() {
+            const name = document.getElementById('auth-name').value;
+            const phone = document.getElementById('auth-phone').value;
+            const password = document.getElementById('password').value;
+            
+            const userReservations = findUserReservations(name, phone, password);
+            displayReservations(userReservations);
+            highlightReservationsOnCalendar(userReservations);
+        }
+
+        function displayReservations(reservations) {
+            const listContainer = document.getElementById('reservations-list');
+            
+            if (reservations.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="no-reservations">
+                        <p>예약 내역이 없습니다.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            listContainer.innerHTML = reservations.map(reservation => 
+                ReservationManager.createReservationCard(reservation)
+            ).join('');
+        }
+
+        function highlightReservationsOnCalendar(reservations) {
+            setTimeout(() => {
+                ReservationManager.highlightReservationDates(calendar, reservations);
+            }, 100);
+        }
+
+        function selectReservation(reservationId) {
+            // 기존 선택 해제
+            document.querySelectorAll('.reservation-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // 새로운 선택
+            event.target.closest('.reservation-card').classList.add('selected');
+            
+            selectedReservation = mockReservations.find(res => res.id === reservationId);
+            
+            // 달력을 선택된 예약의 시작날짜 달로 이동
+            if (selectedReservation && calendar) {
+                calendar.navigateToDate(selectedReservation.startDate);
+                
+                // 잠시 후 예약 하이라이트 다시 적용
+                setTimeout(() => {
+                    const name = document.getElementById('auth-name').value;
+                    const phone = document.getElementById('auth-phone').value;
+                    if (name && phone) {
+                        const userReservations = findUserReservations(name, phone, '');
+                        ReservationManager.highlightReservationDates(calendar, userReservations);
+                    }
+                }, 150);
+            }
+            
+            // 다음 버튼 활성화
+            const nextBtn = document.getElementById('nextBtn2');
+            nextBtn.disabled = false;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+        }
+
+        function showSelectedReservation() {
+            if (!selectedReservation) return;
+            
+            const endDate = new Date(selectedReservation.startDate);
+            endDate.setDate(selectedReservation.startDate.getDate() + selectedReservation.duration);
+            
+            const infoElement = document.getElementById('selected-reservation-info');
+            infoElement.innerHTML = `
+                <h4>현재 예약 정보</h4>
+                <p><strong>예약자:</strong> ${selectedReservation.name}</p>
+                <p><strong>예약 날짜:</strong> ${ReservationManager.formatKoreanDate(selectedReservation.startDate)} ~ ${ReservationManager.formatKoreanDate(endDate)}</p>
+                <p><strong>숙박 기간:</strong> ${selectedReservation.duration}박 ${selectedReservation.duration + 1}일</p>
+                <p><strong>전화번호:</strong> ${selectedReservation.phone}</p>
+            `;
+            
+            // 폼에 기본값 설정
+            document.getElementById('new-name').value = selectedReservation.name;
+            document.getElementById('new-phone').value = selectedReservation.phone;
+        }
+
+        function showModifyForm() {
+            const modifyForm = document.getElementById('modify-form');
+            const modifyBtn = document.getElementById('modify-btn');
+            const deleteBtn = document.getElementById('delete-btn');
+            const saveBtn = document.getElementById('save-btn');
+            
+            modifyForm.style.display = 'block';
+            modifyBtn.style.display = 'none';
+            deleteBtn.style.display = 'none';
+            saveBtn.style.display = 'inline-block';
+            
+            // Initialize modify calendar
+            if (!modifyCalendar) {
+                modifyCalendar = new OksCalendar({
+                    containerId: 'modify-calendar-container',
+                    dateRangeDisplayId: 'dateRangeDisplay',
+                    nextButtonId: 'save-btn',
+                    primaryColor: '#e67e22',
+                    rangeBgColor: '#fdeaa7',
+                    rangeTextColor: '#d35400'
+                });
+            }
+        }
+
+        function hideModifyForm() {
+            const modifyForm = document.getElementById('modify-form');
+            const modifyBtn = document.getElementById('modify-btn');
+            const deleteBtn = document.getElementById('delete-btn');
+            const saveBtn = document.getElementById('save-btn');
+            
+            modifyForm.style.display = 'none';
+            modifyBtn.style.display = 'inline-block';
+            deleteBtn.style.display = 'inline-block';
+            saveBtn.style.display = 'none';
+        }
+
+        function selectDuration(days, button) {
+            // Duration button selection logic
+            document.querySelectorAll('.duration-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            button.classList.add('selected');
+            
+            if (modifyCalendar) {
+                modifyCalendar.setDuration(days);
+            }
+        }
+
+        function deleteReservation() {
+            if (!selectedReservation) return;
+            
+            const confirmDelete = confirm(`정말로 이 예약을 삭제하시겠습니까?\n\n예약 날짜: ${ReservationManager.formatKoreanDate(selectedReservation.startDate)}\n예약자: ${selectedReservation.name}`);
+            
+            if (confirmDelete) {
+                // 실제로는 서버 API 호출
+                alert('예약이 삭제되었습니다.');
+                location.href = 'index.html';
+            }
+        }
+
+        function completeModification() {
+            if (!modifyCalendar || !modifyCalendar.getSelectedDate()) {
+                alert('새로운 예약 날짜를 선택해주세요.');
+                return false;
+            }
+            
+            const newName = document.getElementById('new-name').value;
+            const newPhone = document.getElementById('new-phone').value;
+            
+            if (!newName || !newPhone) {
+                alert('예약자 정보를 입력해주세요.');
+                return false;
+            }
+            
+            // 실제로는 서버 API 호출하여 예약 정보 업데이트
+            alert('예약이 성공적으로 변경되었습니다!');
+            location.href = 'index.html';
+        }
+
+        function handleCalendarDateSelect(date, duration) {
+            // Calendar date selection handler
+            console.log('Calendar date selected:', date, duration);
+        }
+
+        function handleMonthChange(month, year) {
+            // Month change handler
+            console.log('Month changed to:', year, month + 1);
+            
+            // Re-highlight reservations when month changes
+            const name = document.getElementById('auth-name').value;
+            const phone = document.getElementById('auth-phone').value;
+            if (name && phone) {
+                const userReservations = findUserReservations(name, phone, '');
+                setTimeout(() => highlightReservationsOnCalendar(userReservations), 100);
+            }
+        }
+
+        function startReservationModification() {
+            if (!selectedReservation) {
+                alert('변경할 예약을 선택해주세요.');
+                return;
+            }
+
+            // Store reservation data and user info for the reservation page
+            const modificationData = {
+                isModification: true,
+                originalReservation: selectedReservation,
+                userInfo: {
+                    name: document.getElementById('auth-name').value,
+                    phone: document.getElementById('auth-phone').value,
+                    password: document.getElementById('password').value
+                }
+            };
+
+            // Store in sessionStorage for the reservation page to use
+            sessionStorage.setItem('modificationData', JSON.stringify(modificationData));
+
+            // Redirect to reservation page
+            window.location.href = 'reservation.html';
+        }
+    </script>
+</body>
+</html>
