@@ -179,19 +179,10 @@ class PrivacyConsent {
     }
 
     handleConsent() {
-        // Store consent with timestamp
-        const consentData = {
-            consented: true,
-            timestamp: new Date().toISOString(),
-            version: '1.0'
-        };
-        
-        localStorage.setItem(this.options.storageKey, JSON.stringify(consentData));
-        
         this.hideModal();
         
         if (this.options.onConsent) {
-            this.options.onConsent(consentData);
+            this.options.onConsent();
         }
     }
 

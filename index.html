@@ -194,8 +194,19 @@
             reservationBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 
-                // Use PrivacyConsent static method for easy integration
-                PrivacyConsent.requireConsent('reservation.html');
+                // Always show privacy consent modal (don't check existing consent)
+                const privacy = new PrivacyConsent({
+                    onConsent: () => {
+                        window.location.href = 'reservation.html';
+                    },
+                    onDecline: () => {
+                        // Stay on current page
+                        console.log('Privacy consent declined');
+                    }
+                });
+                
+                // Always show modal regardless of previous consent
+                privacy.showModal();
             });
         });
     </script>

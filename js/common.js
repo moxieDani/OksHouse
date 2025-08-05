@@ -253,13 +253,6 @@ class ThemeManager {
 // Page completion utilities
 class CompletionHandler {
     static completeReservation() {
-        // Validate privacy consent first
-        if (!CompletionHandler.validatePrivacyConsent()) {
-            alert('개인정보 수집·이용 동의가 필요합니다. 메인 페이지에서 다시 시작해 주세요.');
-            location.href = 'index.html';
-            return false;
-        }
-        
         // Get form values
         const name = document.getElementById('name')?.value;
         const phone = document.getElementById('phone')?.value;
@@ -295,26 +288,6 @@ class CompletionHandler {
         return true;
     }
 
-    static validatePrivacyConsent() {
-        try {
-            const storageKey = 'okshouse_privacy_consent';
-            const stored = localStorage.getItem(storageKey);
-            
-            if (!stored) return false;
-            
-            const consentData = JSON.parse(stored);
-            if (!consentData.consented) return false;
-            
-            // Check expiration (365 days default)
-            const consentDate = new Date(consentData.timestamp);
-            const expirationDate = new Date(consentDate.getTime() + (365 * 24 * 60 * 60 * 1000));
-            
-            return new Date() < expirationDate;
-        } catch (error) {
-            console.error('Error validating privacy consent:', error);
-            return false;
-        }
-    }
 }
 
 // Reservation management utilities
