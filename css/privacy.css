@@ -257,24 +257,7 @@
     box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
 }
 
-/* Scrollbar Styling */
-.privacy-body::-webkit-scrollbar {
-    width: 8px;
-}
-
-.privacy-body::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-}
-
-.privacy-body::-webkit-scrollbar-thumb {
-    background: #bdc3c7;
-    border-radius: 4px;
-}
-
-.privacy-body::-webkit-scrollbar-thumb:hover {
-    background: #95a5a6;
-}
+/* Modern browsers will use their default scrollbar styling */
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {

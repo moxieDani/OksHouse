@@ -102,8 +102,8 @@ class PrivacyConsent {
                         </label>
                     </div>
                     <div class="privacy-buttons">
-                        <button class="btn-decline" id="privacy-decline">동의하지 않음</button>
                         <button class="btn-consent" id="privacy-consent" disabled>동의하고 예약 진행</button>
+                        <button class="btn-decline" id="privacy-decline">동의하지 않음</button>
                     </div>
                     </div>
                 </div>

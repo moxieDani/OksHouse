@@ -1,0 +1,587 @@
+/* Manage Page Specific Styles - OksHouse Reservation System */
+
+/* CSS variables are defined in common.css */
+h1 {
+    background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif;
+}
+
+.emoji-normal {
+    background: none !important;
+    background-clip: initial !important;
+    -webkit-background-clip: initial !important;
+    color: inherit !important;
+    -webkit-text-fill-color: initial !important;
+    display: inline-block;
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", sans-serif !important;
+}
+
+.compact-btn {
+    font-size: 14px !important;
+    padding: 10px 12px !important;
+    min-width: 80px !important;
+    white-space: nowrap !important;
+}
+.step h3 {
+    background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+}
+.btn {
+    background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+}
+.btn:hover {
+    background: linear-gradient(135deg, #d97706 0%, var(--warning) 100%);
+}
+.current-reservation {
+    background: rgba(245, 158, 11, 0.05);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    border-left: 4px solid var(--warning);
+    border-radius: 16px;
+    margin: 20px 0;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.1);
+}
+/* Override calendar colors for manage page */
+.calendar-day.selected {
+    background: var(--warning) !important;
+    color: white !important;
+    border-color: var(--warning) !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4) !important;
+}
+
+.calendar-day.in-range {
+    background: rgba(245, 158, 11, 0.15) !important;
+    color: var(--warning) !important;
+    border-color: rgba(245, 158, 11, 0.4) !important;
+}
+
+.calendar-day:hover {
+    background: rgba(245, 158, 11, 0.1) !important;
+    color: var(--warning) !important;
+    border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+.step-dot {
+    background: var(--neutral-300);
+    color: var(--neutral-600);
+    border: 2px solid var(--neutral-300);
+}
+
+.step-dot.active {
+    background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%) !important;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4) !important;
+    color: white !important;
+    border: 2px solid var(--warning) !important;
+    transform: scale(1.1) !important;
+}
+
+.step-dot.completed {
+    background: var(--success) !important;
+    color: white !important;
+    border: 2px solid var(--success) !important;
+    box-shadow: 0 2px 8px rgba(4, 120, 87, 0.3) !important;
+}
+
+.step-dot:hover:not(.active):not(.completed) {
+    background: var(--neutral-400) !important;
+    border-color: var(--neutral-400) !important;
+    transform: scale(1.05) !important;
+}
+
+/* PC 웹브라우저용 텍스트 입력창 스타일 */
+input[type="text"], input[type="tel"], input[type="password"] {
+    width: 100%;
+    padding: 16px 20px;
+    margin: 8px 0;
+    border: 2px solid var(--neutral-300);
+    border-radius: 12px;
+    font-size: 16px;
+    font-family: inherit;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--neutral-800);
+    min-height: 52px;
+    box-sizing: border-box;
+}
+
+input[type="text"]:focus, input[type="tel"]:focus, input[type="password"]:focus {
+    outline: 3px solid var(--warning);
+    outline-offset: 2px;
+    border-color: var(--warning);
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+    background: rgba(255, 255, 255, 1);
+}
+
+/* 버튼 컨테이너 스타일 */
+.button-container {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 12px !important;
+    margin-top: 30px !important;
+}
+
+.button-container .btn {
+    min-width: 100px !important;
+    padding: 14px 24px !important;
+    font-size: 16px !important;
+}
+.date-range-display.selected {
+    background: rgba(245, 158, 11, 0.1) !important;
+    color: var(--warning) !important;
+    border-color: var(--warning) !important;
+    backdrop-filter: blur(10px) !important;
+}
+.reservation-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--neutral-200);
+    border-radius: 20px;
+    padding: 16px;
+    margin: 12px 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+.reservation-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+}
+.reservation-card:hover {
+    border-color: var(--warning);
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.15);
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+}
+.reservation-card.selected {
+    border-color: var(--warning);
+    background: rgba(245, 158, 11, 0.05);
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2), 0 0 0 1px var(--warning);
+    transform: translateY(-2px);
+}
+.reservation-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.reservation-details {
+    flex: 1;
+    margin-top: -20px;
+}
+.reservation-status {
+    background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    letter-spacing: -0.025em;
+}
+.reservation-status.past {
+    background: linear-gradient(135deg, var(--neutral-400) 0%, var(--neutral-500) 100%);
+    box-shadow: 0 2px 8px rgba(148, 163, 184, 0.3);
+}
+.reservation-status.current {
+    background: linear-gradient(135deg, var(--error) 0%, #dc2626 100%);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+.reservation-status.upcoming {
+    background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+.reservation-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+#delete-btn:hover {
+    background: #c0392b !important;
+}
+.no-reservations {
+    text-align: center;
+    padding: 40px 20px;
+    color: #7f8c8d;
+    font-size: 16px;
+}
+.calendar-view {
+    margin-top: 20px;
+}
+.reservation-highlight {
+    background: #e67e22 !important;
+    color: white !important;
+    font-weight: bold;
+}
+.modify-form {
+    background: rgba(245, 158, 11, 0.05);
+    backdrop-filter: blur(10px);
+    padding: 28px;
+    border-radius: 20px;
+    margin-top: 24px;
+    border: 1px solid var(--warning);
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+.modify-form::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+}
+.modify-form h4 {
+    background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    margin-top: 0;
+}
+/* Duration buttons warning theme */
+.duration-btn.selected {
+    background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%) !important;
+    color: white !important;
+    border-color: var(--warning) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+}
+.duration-btn:hover {
+    border-color: var(--warning) !important;
+    color: var(--warning) !important;
+}
+
+/* 모바일에서 선택된 duration 버튼 텍스트 가시성 보장 */
+@media (max-width: 480px) {
+    .duration-btn.selected {
+        background: #e67e22 !important;
+        color: #ffffff !important;
+        border-color: #d35400 !important;
+        font-weight: bold !important;
+    }
+}
+@media (max-width: 400px) {
+    .duration-btn.selected {
+        background: #e67e22 !important;
+        color: #ffffff !important;
+        border-color: #d35400 !important;
+        font-weight: bold !important;
+        border: 2px solid #d35400 !important;
+    }
+}
+/* Calendar section styling */
+.calendar-view h4 {
+    color: #e67e22;
+    border-bottom: 2px solid #e67e22;
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+}
+#reservations-list h4 {
+    color: #e67e22;
+    border-bottom: 2px solid #e67e22;
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+}
+/* Form labels */
+.form-group label {
+    color: #d35400;
+    font-weight: 600;
+}
+/* Hide today highlight in manage page */
+.calendar-day.today {
+    background: transparent !important;
+    color: inherit !important;
+    font-weight: normal !important;
+}
+/* Make calendar read-only in step 2 */
+#step2 .calendar-day {
+    cursor: default !important;
+    pointer-events: none !important;
+}
+#step2 .calendar-day:hover {
+    background: transparent !important;
+    color: inherit !important;
+}
+/* Ensure no interaction styling in read-only mode */
+#step2 .calendar-day.selected:hover,
+#step2 .calendar-day.in-range:hover {
+    background: inherit !important;
+    color: inherit !important;
+}
+/* Cancel button styling */
+#cancelBtn2 {
+    background: #e74c3c !important;
+}
+#cancelBtn2:hover {
+    background: #c0392b !important;
+}
+#cancelBtn2:disabled {
+    background: #bdc3c7 !important;
+}
+
+/* 모바일 화면 최적화 - 다양한 화면 크기 대응 */
+@media (max-width: 480px) {
+    .reservation-info {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+    
+    .reservation-details {
+        width: 100%;
+    }
+    
+    .reservation-details p {
+        font-size: 13px;
+        line-height: 1.4;
+        margin-bottom: 4px;
+        word-wrap: break-word;
+    }
+    
+    .reservation-status {
+        align-self: flex-start;
+        margin-top: 4px;
+    }
+}
+
+/* Galaxy Z Fold 5 및 초소형 화면 최적화 (344px-400px) */
+@media (max-width: 400px) {
+    .container {
+        padding: 15px 8px;
+        margin: 0;
+    }
+    
+    h1 {
+        font-size: 1.3em;
+        margin-bottom: 15px;
+    }
+    
+    .step h3 {
+        font-size: 1em;
+        margin-bottom: 12px;
+    }
+    
+    .form-group {
+        margin-bottom: 12px;
+    }
+    
+    .form-group label {
+        font-size: 13px;
+        margin-bottom: 4px;
+    }
+    
+    input[type="text"], input[type="tel"], input[type="password"] {
+        font-size: 14px;
+        padding: 10px 8px;
+        border-radius: 6px;
+    }
+    
+    .btn {
+        font-size: 13px;
+        padding: 10px 12px;
+        border-radius: 6px;
+        margin: 0 3px;
+    }
+    
+    /* 버튼 컨테이너를 플렉스로 만들어 줄넘김 방지 */
+    .step > div:last-child {
+        display: flex;
+        gap: 4px;
+        flex-wrap: nowrap;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    /* 2단계 버튼들 특별 처리 - 가로폭 최대 활용 */
+    .step2-buttons {
+        display: flex !important;
+        gap: 4px !important;
+        flex-wrap: nowrap !important;
+        justify-content: stretch !important;
+        align-items: center !important;
+        width: 100% !important;
+        padding: 0 !important;
+    }
+    
+    #nextBtn2, #cancelBtn2 {
+        font-size: 12px;
+        padding: 10px 8px;
+        margin: 0;
+        flex: 1.2;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        box-sizing: border-box;
+        border-radius: 6px;
+        min-height: 42px;
+    }
+    
+    .step2-buttons .btn-back {
+        font-size: 12px;
+        padding: 10px 8px;
+        margin: 0;
+        flex: 0.8;
+        min-width: 0;
+        border-radius: 6px;
+        min-height: 42px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    
+    .calendar-view h4, #reservations-list h4 {
+        font-size: 0.9em;
+        margin-bottom: 10px;
+        padding-bottom: 3px;
+    }
+    
+    .reservation-card {
+        padding: 12px;
+        margin: 8px 0;
+        border-radius: 8px;
+    }
+    
+    .reservation-card h4 {
+        font-size: 14px;
+        margin-bottom: 6px;
+    }
+    
+    .reservation-card p {
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
+    
+    .reservation-status {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+    
+    /* 2단계 버튼 최적화 - 가로폭 최대 활용 */
+    .step2-buttons {
+        gap: 3px !important;
+        display: flex !important;
+        justify-content: stretch !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+    
+    .compact-btn {
+        font-size: 13px !important;
+        padding: 12px 6px !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+        margin: 0 !important;
+        border-radius: 6px !important;
+        text-overflow: ellipsis !important;
+        overflow: hidden !important;
+        white-space: nowrap !important;
+        min-height: 44px !important;
+    }
+    
+    .step2-buttons .btn-back {
+        flex: 0.7 !important;
+    }
+    
+    .current-reservation {
+        padding: 12px;
+        margin: 12px 0;
+        border-radius: 8px;
+    }
+    
+    .current-reservation h4 {
+        font-size: 1em;
+        margin-bottom: 8px;
+    }
+    
+    .current-reservation p {
+        font-size: 13px;
+        margin-bottom: 5px;
+    }
+    
+    .modify-form {
+        padding: 15px;
+        margin-top: 15px;
+        border-radius: 8px;
+    }
+    
+    .modify-form h4 {
+        font-size: 1em;
+        margin-bottom: 10px;
+    }
+    
+    .duration-buttons {
+        gap: 6px;
+    }
+    
+    .duration-btn {
+        font-size: 11px;
+        padding: 6px 4px;
+        border-radius: 5px;
+        min-width: 45px;
+        flex: 1;
+    }
+    
+    /* 초소형 화면에서도 버튼 컨테이너 가로폭 최대 활용 */
+    .step2-buttons {
+        gap: 2px !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+    
+    .step2-buttons .compact-btn {
+        font-size: 11px !important;
+        padding: 10px 4px !important;
+        flex: 1.2 !important;
+        min-width: 0 !important;
+        line-height: 1.3 !important;
+        min-height: 40px !important;
+    }
+    
+    .step2-buttons .btn-back {
+        flex: 0.6 !important;
+        min-width: 0 !important;
+        font-size: 11px !important;
+        padding: 10px 4px !important;
+        min-height: 40px !important;
+    }
+    
+    .date-range-display {
+        font-size: 13px;
+        padding: 10px;
+        margin: 12px 0;
+        border-radius: 6px;
+    }
+    
+    .no-reservations {
+        padding: 30px 15px;
+        font-size: 14px;
+    }
+    
+    .no-reservations p {
+        font-size: 12px;
+        margin-top: 8px;
+    }
+}

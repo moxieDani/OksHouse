@@ -7,185 +7,22 @@
     <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/calendar.css">
     <link rel="stylesheet" href="css/privacy.css">
-    <style>
-        h1 {
-            color: #e67e22;
-        }
-        .step h3 {
-            color: #e67e22;
-        }
-        .btn {
-            background: #e67e22;
-        }
-        .btn:hover {
-            background: #d35400;
-        }
-        .current-reservation {
-            background: #fdf6f0;
-            padding: 15px;
-            border-left: 4px solid #e67e22;
-            margin: 15px 0;
-        }
-        /* Override calendar colors for manage page */
-        .step-dot.active {
-            background: #e67e22 !important;
-        }
-        .step-dot.completed {
-            background: #d35400 !important;
-        }
-        .date-range-display.selected {
-            background: #fdeaa7 !important;
-            color: #d35400 !important;
-            border-color: #e67e22 !important;
-        }
-        .reservation-card {
-            background: #fefefe;
-            border: 2px solid #f4f4f4;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 15px 0;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        .reservation-card:hover {
-            border-color: #e67e22;
-            box-shadow: 0 4px 12px rgba(230, 126, 34, 0.15);
-            background: #fdf9f5;
-        }
-        .reservation-card.selected {
-            border-color: #e67e22;
-            background: #fdf6f0;
-            box-shadow: 0 4px 12px rgba(230, 126, 34, 0.25);
-        }
-        .reservation-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .reservation-details {
-            flex: 1;
-        }
-        .reservation-status {
-            background: #f39c12;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .reservation-status.past {
-            background: #bdc3c7;
-        }
-        .reservation-status.current {
-            background: #e67e22;
-        }
-        .reservation-status.upcoming {
-            background: #f39c12;
-        }
-        .reservation-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        #delete-btn:hover {
-            background: #c0392b !important;
-        }
-        .no-reservations {
-            text-align: center;
-            padding: 40px 20px;
-            color: #7f8c8d;
-            font-size: 16px;
-        }
-        .calendar-view {
-            margin-top: 20px;
-        }
-        .reservation-highlight {
-            background: #e67e22 !important;
-            color: white !important;
-            font-weight: bold;
-        }
-        .modify-form {
-            background: #fdf6f0;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-            border: 2px solid #e67e22;
-        }
-        .modify-form h4 {
-            color: #e67e22;
-            margin-top: 0;
-        }
-        /* Duration buttons orange theme */
-        .duration-btn.selected {
-            background: #e67e22 !important;
-            color: white !important;
-            border-color: #d35400 !important;
-        }
-        .duration-btn:hover {
-            border-color: #e67e22 !important;
-            color: #e67e22 !important;
-        }
-        /* Calendar section styling */
-        .calendar-view h4 {
-            color: #e67e22;
-            border-bottom: 2px solid #e67e22;
-            padding-bottom: 5px;
-            margin-bottom: 15px;
-        }
-        #reservations-list h4 {
-            color: #e67e22;
-            border-bottom: 2px solid #e67e22;
-            padding-bottom: 5px;
-            margin-bottom: 15px;
-        }
-        /* Form labels */
-        .form-group label {
-            color: #d35400;
-            font-weight: 600;
-        }
-        /* Hide today highlight in manage page */
-        .calendar-day.today {
-            background: transparent !important;
-            color: inherit !important;
-            font-weight: normal !important;
-        }
-        /* Make calendar read-only in step 2 */
-        #step2 .calendar-day {
-            cursor: default !important;
-            pointer-events: none !important;
-        }
-        #step2 .calendar-day:hover {
-            background: transparent !important;
-            color: inherit !important;
-        }
-        /* Ensure no interaction styling in read-only mode */
-        #step2 .calendar-day.selected:hover,
-        #step2 .calendar-day.in-range:hover {
-            background: inherit !important;
-            color: inherit !important;
-        }
-        /* Cancel button styling */
-        #cancelBtn2 {
-            background: #e74c3c !important;
-        }
-        #cancelBtn2:hover {
-            background: #c0392b !important;
-        }
-        #cancelBtn2:disabled {
-            background: #bdc3c7 !important;
-        }
-    </style>
+    <link rel="stylesheet" href="css/manage.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <h1>📋 예약 확인</h1>
+        <h1><span class="emoji-normal">⚙️</span> Ok's 러브하우스 예약 확인</h1>
         
         
         <!-- Step 1: 예약자 정보 입력 -->
         <div class="step" id="step1">
-            <h3>예약자 정보 입력</h3>
+            <h3><span class="emoji-normal">🔑</span> 1단계: 예약자 인증</h3>
+            <p class="step-description">
+                예약 시 입력하신 정보를 동일하게 입력해주세요. 비밀번호는 예약 시 설정하신 4자리 숫자입니다.
+            </p>
             <div class="form-group">
                 <label for="auth-name">이름:</label>
                 <input type="text" id="auth-name" placeholder="예약자 이름을 입력하세요">
@@ -198,7 +35,7 @@
                 <label for="password">비밀번호:</label>
                 <input type="password" id="password" placeholder="4자리 숫자 비밀번호">
             </div>
-            <div style="text-align: center; margin-top: 20px;">
+            <div class="button-container">
                 <button class="btn btn-back" onclick="location.href='index.html'">이전</button>
                 <button class="btn" onclick="nextStep(1)">확인</button>
             </div>
@@ -206,7 +43,10 @@
 
         <!-- Step 2: 예약 목록 확인 -->
         <div class="step hidden" id="step2">
-            <h3>예약 현황 확인</h3>
+            <h3><span class="emoji-normal">📊</span> 2단계: 예약 현황 확인</h3>
+            <p class="step-description">
+                아래 달력과 예약 목록에서 변경하거나 취소할 예약을 선택해주세요.
+            </p>
             
             <!-- 달력 보기 -->
             <div class="calendar-view">
@@ -214,23 +54,26 @@
             </div>
             
             <!-- 예약 목록 -->
-            <div style="margin-top: 30px;">
-                <h4>📋 예약 목록</h4>
+            <div style="margin-top: 20px;">
+                <h4><span class="emoji-normal">📈</span> 내 예약 목록</h4>
                 <div id="reservations-list">
                     <!-- 예약 목록이 여기에 동적으로 추가됩니다 -->
                 </div>
             </div>
             
-            <div style="text-align: center; margin-top: 30px;">
-                <button class="btn btn-back" onclick="prevStep(2)">이전</button>
-                <button class="btn" id="nextBtn2" onclick="startReservationModification()" disabled style="opacity: 0.5; cursor: not-allowed;">선택한 예약 변경</button>
-                <button class="btn" id="cancelBtn2" onclick="cancelSelectedReservation()" disabled style="opacity: 0.5; cursor: not-allowed; background: #e74c3c;">선택한 예약 취소</button>
+            <div class="button-container step2-buttons" style="text-align: center; margin-top: 20px; display: flex; gap: 6px; justify-content: center; flex-wrap: nowrap;">
+                <button class="btn btn-back compact-btn" onclick="prevStep(2)">이전</button>
+                <button class="btn compact-btn" id="nextBtn2" onclick="startReservationModification()" disabled style="opacity: 0.5; cursor: not-allowed;">예약 변경</button>
+                <button class="btn compact-btn" id="cancelBtn2" onclick="cancelSelectedReservation()" disabled style="opacity: 0.5; cursor: not-allowed; background: #e74c3c;">예약 취소</button>
             </div>
         </div>
 
         <!-- Step 3: 예약 변경/삭제 -->
         <div class="step hidden" id="step3">
-            <h3>예약 변경</h3>
+            <h3><span class="emoji-normal">⚙️</span> 3단계: 예약 변경 및 취소</h3>
+            <p class="step-description">
+                선택하신 예약의 날짜를 변경하거나 예약을 완전히 취소할 수 있습니다.
+            </p>
             
             <!-- 현재 선택된 예약 정보 -->
             <div class="current-reservation" id="selected-reservation-info">
@@ -268,10 +111,10 @@
                 </div>
             </div>
             
-            <div style="text-align: center; margin-top: 30px;">
+            <div class="button-container">
                 <button class="btn btn-back" onclick="prevStep(3)">이전</button>
                 <button class="btn" onclick="showModifyForm()" id="modify-btn">예약 변경</button>
-                <button class="btn" onclick="deleteReservation()" id="delete-btn" style="background: #e74c3c;">예약 삭제</button>
+                <button class="btn btn-delete" onclick="deleteReservation()" id="delete-btn">예약 삭제</button>
                 <button class="btn" onclick="completeModification()" id="save-btn" style="display: none;">변경 저장</button>
             </div>
         </div>
@@ -462,10 +305,14 @@
             if (reservations.length === 0) {
                 listContainer.innerHTML = `
                     <div class="no-reservations">
-                        <p>변경 가능한 예약이 없습니다.</p>
-                        <p style="font-size: 14px; color: #95a5a6; margin-top: 10px;">
-                            완료된 예약과 이용 중인 예약은 표시되지 않습니다.
+                        <p style="font-size: var(--text-lg); color: var(--neutral-600); text-align: center; padding: var(--space-8);">
+                            현재 변경 가능한 예약이 없습니다.
                         </p>
+                        <div style="background: rgba(245, 158, 11, 0.1); padding: var(--space-4); border-radius: var(--radius-lg); margin-top: var(--space-4);">
+                            <p style="font-size: var(--text-base); color: var(--neutral-600); margin: 0; line-height: 1.6;">
+                                ℹ️ <strong>안내:</strong> 이미 종료된 예약이나 현재 이용 중인 예약은 변경할 수 없어 목록에 표시되지 않습니다.
+                            </p>
+                        </div>
                     </div>
                 `;
                 return;
@@ -680,21 +527,79 @@
 
         function completeModification() {
             if (!modifyCalendar || !modifyCalendar.getSelectedDate()) {
-                alert('새로운 예약 날짜를 선택해주세요.');
+                FeedbackManager.showAlert('새로운 예약 날짜를 선택해주세요.', 'warning');
                 return false;
             }
+            
+            const selectedDurationButton = document.querySelector('.duration-btn.selected');
+            if (!selectedDurationButton) {
+                FeedbackManager.showAlert('새로운 숙박 기간을 선택해주세요.', 'warning');
+                return false;
+            }
+            
+            // 이미 인증된 사용자 정보 사용
+            const userName = document.getElementById('auth-name').value;
+            const userPhone = document.getElementById('auth-phone').value;
+            
+            // 변경된 예약 정보로 성공 메시지 표시
+            const selectedDate = modifyCalendar.getSelectedDate();
+            const duration = modifyCalendar.getDuration();
+            const endDate = new Date(selectedDate);
+            endDate.setDate(selectedDate.getDate() + duration);
+            
+            FeedbackManager.showSuccess(
+                '🎉 예약 변경이 완료되었습니다!',
+                `${userName}님의 예약이 성공적으로 변경되었습니다. 새로운 예약 날짜: ${ReservationManager.formatKoreanDate(selectedDate)} ~ ${ReservationManager.formatKoreanDate(endDate)}<br>(${duration}박 ${duration + 1}일)`,
+                () => {
+                    window.location.href = 'index.html';
+                }
+            );
+        }
+        
+        function showModificationCompletionScreen() {
+            const selectedDate = modifyCalendar.getSelectedDate();
+            const duration = modifyCalendar.getDuration();
+            const endDate = new Date(selectedDate);
+            endDate.setDate(selectedDate.getDate() + duration);
             
             const newName = document.getElementById('new-name').value;
             const newPhone = document.getElementById('new-phone').value;
             
-            if (!newName || !newPhone) {
-                alert('예약자 정보를 입력해주세요.');
-                return false;
-            }
-            
-            // 실제로는 서버 API 호출하여 예약 정보 업데이트
-            alert('예약이 성공적으로 변경되었습니다!');
-            location.href = 'index.html';
+            // 컨테이너 내용을 완료 화면으로 교체
+            document.querySelector('.container').innerHTML = `
+                <div style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">🎉</div>
+                    <h1 style="color: var(--success); font-size: 2.5rem; margin-bottom: 20px; font-weight: 700;">
+                        예약 변경 완료!
+                    </h1>
+                    <div style="background: rgba(4, 120, 87, 0.1); border: 2px solid var(--success); border-radius: 20px; padding: 30px; margin: 30px 0; text-align: left;">
+                        <h3 style="color: var(--success); margin-top: 0; margin-bottom: 20px; text-align: center;">
+                            📅 변경된 예약 정보
+                        </h3>
+                        <div style="font-size: 1.1rem; line-height: 1.8; color: var(--neutral-800);">
+                            <p><strong>📍 예약자:</strong> ${newName}</p>
+                            <p><strong>📞 전화번호:</strong> ${newPhone}</p>
+                            <p><strong>🗓️ 예약 날짜:</strong> ${ReservationManager.formatKoreanDate(selectedDate)} ~ ${ReservationManager.formatKoreanDate(endDate)}</p>
+                            <p><strong>🏠 숙박 기간:</strong> ${duration}박 ${duration + 1}일</p>
+                        </div>
+                    </div>
+                    <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 16px; padding: 20px; margin: 20px 0;">
+                        <p style="margin: 0; color: var(--warning); font-weight: 600;">
+                            🏡 Ok's 러브하우스에서 편안한 시간 보내시길 바랍니다!
+                        </p>
+                    </div>
+                    <button class="btn" onclick="location.href='index.html'" style="
+                        font-size: 1.2rem;
+                        padding: 16px 32px;
+                        margin-top: 30px;
+                        background: linear-gradient(135deg, var(--success) 0%, #047857 100%);
+                        border: none;
+                        box-shadow: 0 8px 25px rgba(4, 120, 87, 0.3);
+                    ">
+                        🏠 메인으로 돌아가기
+                    </button>
+                </div>
+            `;
         }
 
         function handleCalendarDateSelect(date, duration) {
@@ -725,7 +630,7 @@
 
         function startReservationModification() {
             if (!selectedReservation) {
-                alert('변경할 예약을 선택해주세요.');
+                FeedbackManager.showAlert('변경할 예약을 선택해주세요.', 'warning');
                 return;
             }
 
@@ -749,21 +654,34 @@
 
         function cancelSelectedReservation() {
             if (!selectedReservation) {
-                alert('취소할 예약을 선택해주세요.');
+                FeedbackManager.showAlert('취소할 예약을 선택해주세요.', 'warning');
                 return;
             }
 
             const endDate = new Date(selectedReservation.startDate);
             endDate.setDate(selectedReservation.startDate.getDate() + selectedReservation.duration);
 
-            const confirmCancel = confirm(`정말로 이 예약을 취소하시겠습니까?\n\n예약 날짜: ${ReservationManager.formatKoreanDate(selectedReservation.startDate)} ~ ${ReservationManager.formatKoreanDate(endDate)}\n예약자: ${selectedReservation.name}\n숙박 기간: ${selectedReservation.duration}박 ${selectedReservation.duration + 1}일`);
-            
-            if (confirmCancel) {
-                // 실제로는 서버 API 호출하여 예약 취소
-                alert('예약이 취소되었습니다.');
-                location.href = 'index.html';
-            }
+            // 사용자 확인 팝업
+            FeedbackManager.showConfirm(
+                `이 예약을 취소하시겠습니까?`,
+                `예약자: ${selectedReservation.name}<br>체크인: ${ReservationManager.formatKoreanDate(selectedReservation.startDate)}<br>체크아웃: ${ReservationManager.formatKoreanDate(endDate)}<br>기간: ${selectedReservation.duration}박 ${selectedReservation.duration + 1}일`,
+                () => {
+                    // 확인을 선택한 경우 - 취소 성공 메시지 표시
+                    FeedbackManager.showSuccess(
+                        '👌🏻 예약 취소 완료!',
+                        `${selectedReservation.name}님의 예약이 성공적으로 취소되었습니다.`,
+                        () => {
+                            window.location.href = 'index.html';
+                        }
+                    );
+                },
+                () => {
+                    // 취소를 선택한 경우 - 아무것도 하지 않음
+                    console.log('예약 취소 취소됨');
+                }
+            );
         }
+        
     </script>
 </body>
 </html>

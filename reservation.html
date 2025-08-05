@@ -7,35 +7,42 @@
     <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/calendar.css">
     <link rel="stylesheet" href="css/privacy.css">
-    <style>
-        h1 {
-            color: #2c3e50;
-        }
-        .step h3 {
-            color: #3498db;
-        }
-        .btn {
-            background: #3498db;
-        }
-        .btn:hover {
-            background: #2980b9;
-        }
-    </style>
+    <link rel="stylesheet" href="css/reservation.css">
 </head>
 <body>
     <div class="container">
-        <h1 id="page-title">▶️ 예약</h1>
+        <h1 id="page-title">🏠 Ok's 러브하우스 예약</h1>
         
         <!-- Step Indicator -->
-        <div class="step-indicator">
-            <span class="step-dot active" id="dot1">1</span>
-            <span class="step-dot" id="dot2">2</span>
-            <span class="step-dot" id="dot3">3</span>
-        </div>
+        <nav class="step-indicator" role="navigation" aria-label="예약 단계">
+            <div class="step-indicator-container">
+                <div class="step-indicator-item">
+                    <span class="step-dot active" id="dot1" aria-label="1단계">1</span>
+                    <div class="step-label">기간선택</div>
+                </div>
+                <div class="step-arrow" aria-hidden="true">→</div>
+                <div class="step-indicator-item">
+                    <span class="step-dot" id="dot2" aria-label="2단계">2</span>
+                    <div class="step-label">날짜선택</div>
+                </div>
+                <div class="step-arrow" aria-hidden="true">→</div>
+                <div class="step-indicator-item">
+                    <span class="step-dot" id="dot3" aria-label="3단계">3</span>
+                    <div class="step-label">정보입력</div>
+                </div>
+            </div>
+        </nav>
         
         <!-- Step 1: 숙박 기간 선택 -->
         <div class="step" id="step1">
-            <h3>1단계: 숙박 기간 선택</h3>
+            <div class="progress-guide">
+                <h4>📅 1단계: 숙박 기간 선택</h4>
+                <p>머물고 싶은 날짜 수를 선택해주세요</p>
+            </div>
+            
+            <div class="help-box">
+                <p><strong>💡 2박 3일: 2일 밤을 자고 3일째 체크아웃</strong></p>
+            </div>
             <div class="form-group">
                 <label>숙박 기간:</label>
                 <div class="duration-buttons">
@@ -51,7 +58,7 @@
                     <button class="duration-btn" onclick="selectDuration(10, this)">10박 11일</button>
                 </div>
             </div>
-            <div style="text-align: center; margin-top: 30px;">
+            <div class="button-container">
                 <button class="btn btn-back" onclick="prevStep(1)">이전</button>
                 <button class="btn" onclick="nextStep(1)">다음</button>
             </div>
@@ -59,7 +66,10 @@
 
         <!-- Step 2: 달력에서 시작일 선택 -->
         <div class="step hidden" id="step2">
-            <h3>2단계: 시작일 선택</h3>
+            <div class="progress-guide">
+                <h4>🗓️ 2단계: 체크인 날짜 선택</h4>
+                <p>달력에서 체크인하는 날짜를 클릭해주세요</p>
+            </div>
             
             <!-- 선택된 날짜 범위 표시 -->
             <div class="date-range-display" id="dateRangeDisplay">
@@ -69,15 +79,22 @@
             <!-- 달력 컴포넌트 컨테이너 -->
             <div id="calendar-container"></div>
 
-            <div style="text-align: center; margin-top: 30px;">
+            <div class="button-container">
                 <button class="btn btn-back" onclick="prevStep(2)">이전</button>
-                <button class="btn" id="nextBtn2" onclick="nextStep(2)" disabled style="opacity: 0.5; cursor: not-allowed;">다음</button>
+                <button class="btn" id="nextBtn2" onclick="nextStep(2)" disabled>다음</button>
             </div>
         </div>
 
         <!-- Step 3: 예약자 정보 입력 -->
         <div class="step hidden" id="step3">
-            <h3 id="step3-title">3단계: 예약자 정보</h3>
+            <div class="progress-guide">
+                <h4 id="step3-title">📝 3단계: 예약자 정보 입력</h4>
+                <p>예약자 정보를 정확히 입력해주세요</p>
+            </div>
+            
+            <div class="help-box">
+                <p><strong>💡 실제 이름, 연락처, 4자리 비밀번호 입력</strong></p>
+            </div>
             
             <!-- 선택된 예약 정보 표시 -->
             <div class="date-range-display selected" id="selectedReservationInfo">
@@ -105,7 +122,7 @@
                 </div>
             </div>
             
-            <div style="text-align: center; margin-top: 30px;">
+            <div class="button-container">
                 <button class="btn btn-back" onclick="prevStep(3)">이전</button>
                 <button class="btn" id="complete-btn" onclick="completeReservation()">예약 완료</button>
             </div>
@@ -232,7 +249,7 @@
             const infoElement = document.getElementById('selectedReservationInfo');
             if (infoElement) {
                 const title = isModificationMode ? '새로운 예약 정보' : '선택된 예약 정보';
-                const color = isModificationMode ? '#e67e22' : '#3498db';
+                const color = isModificationMode ? 'var(--warning)' : 'var(--primary)';
                 infoElement.innerHTML = calendar.formatReservationInfo(title, color);
             }
         }
@@ -241,38 +258,134 @@
             // Inject orange theme styles for modification mode
             const style = document.createElement('style');
             style.innerHTML = `
-                /* Override blue theme with orange for modification */
+                /* Override primary theme with warning theme for modification */
                 h1 {
-                    color: #e67e22 !important;
+                    background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%) !important;
+                    background-clip: text !important;
+                    -webkit-background-clip: text !important;
+                    color: transparent !important;
+                    -webkit-text-fill-color: transparent !important;
+                }
+                
+                /* 이모지는 정상 색상으로 표시 */
+                h1 .emoji-normal {
+                    background: transparent !important;
+                    background-clip: initial !important;
+                    -webkit-background-clip: initial !important;
+                    color: initial !important;
+                    -webkit-text-fill-color: initial !important;
                 }
                 .step h3 {
-                    color: #e67e22 !important;
+                    background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%) !important;
+                    background-clip: text !important;
+                    -webkit-background-clip: text !important;
+                    color: transparent !important;
+                    -webkit-text-fill-color: transparent !important;
                 }
                 .btn {
-                    background: #e67e22 !important;
+                    background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%) !important;
                 }
                 .btn:hover {
-                    background: #d35400 !important;
+                    background: linear-gradient(135deg, #d97706 0%, var(--warning) 100%) !important;
                 }
+                
+                /* 이전 버튼은 좀 더 차분한 색상으로 */
+                .btn-back {
+                    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
+                    color: white !important;
+                }
+                .btn-back:hover {
+                    background: linear-gradient(135deg, #4b5563 0%, #374151 100%) !important;
+                    transform: translateY(-1px) !important;
+                }
+                .step-dot {
+                    background: var(--neutral-300) !important;
+                    color: var(--neutral-600) !important;
+                    border: 2px solid var(--neutral-300) !important;
+                }
+                
                 .step-dot.active {
-                    background: #e67e22 !important;
+                    background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%) !important;
+                    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.5) !important;
+                    color: white !important;
+                    border: 2px solid var(--warning) !important;
+                    transform: scale(1.15) !important;
                 }
+                
                 .step-dot.completed {
-                    background: #d35400 !important;
+                    background: linear-gradient(135deg, #b45309 0%, #92400e 100%) !important;
+                    box-shadow: 0 2px 6px rgba(180, 83, 9, 0.4) !important;
+                    color: white !important;
+                    border: 2px solid #b45309 !important;
+                    opacity: 0.9 !important;
                 }
                 .date-range-display.selected {
-                    background: #fdeaa7 !important;
-                    color: #d35400 !important;
-                    border-color: #e67e22 !important;
+                    background: rgba(245, 158, 11, 0.1) !important;
+                    color: var(--warning) !important;
+                    border-color: var(--warning) !important;
+                    border-width: 2px !important;
+                }
+                
+                /* 모든 화면 크기에서 주황색 테마 강제 적용 */
+                @media (max-width: 480px) {
+                    .date-range-display.selected {
+                        background: rgba(245, 158, 11, 0.15) !important;
+                        color: var(--warning) !important;
+                        border: 2px solid var(--warning) !important;
+                        font-weight: 600 !important;
+                    }
+                }
+                
+                @media (max-width: 400px) {
+                    .date-range-display.selected {
+                        background: rgba(245, 158, 11, 0.15) !important;
+                        color: var(--warning) !important;
+                        border: 2px solid var(--warning) !important;
+                        font-weight: 600 !important;
+                    }
                 }
                 .duration-btn.selected {
-                    background: #e67e22 !important;
+                    background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%) !important;
                     color: white !important;
-                    border-color: #d35400 !important;
+                    border-color: var(--warning) !important;
+                    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
                 }
                 .duration-btn:hover {
-                    border-color: #e67e22 !important;
-                    color: #e67e22 !important;
+                    border-color: var(--warning) !important;
+                    color: var(--warning) !important;
+                }
+                
+                /* 달력 선택된 날짜도 주황색 테마로 */
+                .calendar-day.selected {
+                    background: var(--warning) !important;
+                    border-color: var(--warning) !important;
+                    color: white !important;
+                    font-weight: 700 !important;
+                }
+                
+                .calendar-day.in-range {
+                    background: rgba(245, 158, 11, 0.2) !important;
+                    color: var(--warning) !important;
+                    border-color: rgba(245, 158, 11, 0.4) !important;
+                }
+                /* 모바일에서 선택된 버튼 텍스트 가시성 보장 */
+                @media (max-width: 480px) {
+                    .duration-btn.selected {
+                        background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%) !important;
+                        color: #ffffff !important;
+                        border-color: var(--warning) !important;
+                        font-weight: bold !important;
+                        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+                    }
+                }
+                @media (max-width: 400px) {
+                    .duration-btn.selected {
+                        background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%) !important;
+                        color: #ffffff !important;
+                        border-color: var(--warning) !important;
+                        font-weight: bold !important;
+                        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+                    }
                 }
                 #original-reservation-info {
                     background: #fdf6f0 !important;
@@ -281,13 +394,21 @@
                 #original-reservation-info h4 {
                     color: #e67e22 !important;
                 }
+                
+                /* 수정 모드에서 input focus 색상도 주황색으로 */
+                input[type="text"]:focus, input[type="tel"]:focus, input[type="password"]:focus {
+                    outline: 3px solid var(--warning) !important;
+                    outline-offset: 2px !important;
+                    border-color: var(--warning) !important;
+                    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2) !important;
+                }
             `;
             document.head.appendChild(style);
         }
 
         function setupModificationMode() {
             // Update page title and step titles
-            document.getElementById('page-title').textContent = '📋 예약 변경';
+            document.getElementById('page-title').innerHTML = '<span class="emoji-normal">📋</span> 예약 변경';
             document.getElementById('step3-title').textContent = '3단계: 예약 변경 확인';
             document.getElementById('complete-btn').textContent = '예약 변경 완료';
 
@@ -347,18 +468,28 @@
             if (isModificationMode) {
                 // For modifications, we don't need to validate personal info again
                 if (!calendar.getSelectedDate()) {
-                    alert('새로운 예약 날짜를 선택해주세요.');
+                    FeedbackManager.showAlert('새로운 예약 날짜를 선택해주세요.', 'warning');
                     return false;
                 }
 
                 if (!durationSelector.getDuration()) {
-                    alert('숙박 기간을 선택해주세요.');
+                    FeedbackManager.showAlert('숙박 기간을 선택해주세요.', 'warning');
                     return false;
                 }
 
                 // Show success message for modification
-                alert('예약 변경이 완료되었습니다!');
-                location.href = 'index.html';
+                const selectedDate = calendar.getSelectedDate();
+                const duration = durationSelector.getDuration();
+                const endDate = new Date(selectedDate);
+                endDate.setDate(selectedDate.getDate() + duration);
+                
+                FeedbackManager.showSuccess(
+                    '🎉 예약 변경 완료!',
+                    `체크인: ${ReservationManager.formatKoreanDate(selectedDate)}<br>체크아웃: ${ReservationManager.formatKoreanDate(endDate)}<br>기간: ${duration}박 ${duration + 1}일`,
+                    () => {
+                        window.location.href = 'index.html';
+                    }
+                );
                 return true;
             } else {
                 // Original reservation completion logic

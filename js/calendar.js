@@ -33,7 +33,7 @@ class OksCalendar {
         // Constants
         this.monthNames = ["1월", "2월", "3월", "4월", "5월", "6월",
                           "7월", "8월", "9월", "10월", "11월", "12월"];
-        this.dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+        this.dayNames = ['일', '월', '화', '수', '목', '금', '토'];
         
         this.init();
     }
@@ -429,17 +429,17 @@ class OksCalendar {
                     📅 ${title}
                 </div>
                 <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid ${primaryColor};">
-                    <div style="margin-bottom: 10px;">
-                        <strong style="color: #2c3e50;">체크인:</strong> 
-                        <span style="color: ${primaryColor}; font-weight: bold;">${startStr} (${startDay})</span>
+                    <div style="margin-bottom: 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 5px;">
+                        <strong style="color: #2c3e50; white-space: nowrap;">체크인:</strong> 
+                        <span style="color: ${primaryColor}; font-weight: bold; font-size: 14px; word-break: keep-all;">${startStr} (${startDay})</span>
                     </div>
-                    <div style="margin-bottom: 10px;">
-                        <strong style="color: #2c3e50;">체크아웃:</strong> 
-                        <span style="color: #e74c3c; font-weight: bold;">${endStr} (${endDay})</span>
+                    <div style="margin-bottom: 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 5px;">
+                        <strong style="color: #2c3e50; white-space: nowrap;">체크아웃:</strong> 
+                        <span style="color: #e74c3c; font-weight: bold; font-size: 14px; word-break: keep-all;">${endStr} (${endDay})</span>
                     </div>
-                    <div>
-                        <strong style="color: #2c3e50;">숙박 기간:</strong> 
-                        <span style="color: #27ae60; font-weight: bold;">${durationText}</span>
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 5px;">
+                        <strong style="color: #2c3e50; white-space: nowrap;">숙박 기간:</strong> 
+                        <span style="color: #27ae60; font-weight: bold; font-size: 14px; white-space: nowrap;">${durationText}</span>
                     </div>
                 </div>
             </div>

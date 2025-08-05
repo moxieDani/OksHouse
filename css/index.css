@@ -1,0 +1,371 @@
+/* Index Page Specific Styles - OksHouse Reservation System */
+
+/* CSS variables are defined in common.css */
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: linear-gradient(135deg, var(--neutral-50) 0%, var(--neutral-100) 50%, #f0f4f8 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(6, 182, 212, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+.container {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    padding: 60px;
+    border-radius: 32px;
+    box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(255, 255, 255, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    text-align: center;
+    max-width: 520px;
+    width: 100%;
+    transform: translateY(0);
+    animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+h1 {
+    color: var(--neutral-900);
+    margin-bottom: 16px;
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    line-height: 1.2;
+}
+
+h2 {
+    color: var(--neutral-600);
+    margin-bottom: 48px;
+    font-size: 1.375rem;
+    font-weight: 500;
+    opacity: 1;
+    letter-spacing: -0.025em;
+    line-height: 1.5;
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
+    padding: 32px 36px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    color: var(--neutral-800);
+    text-decoration: none;
+    border-radius: 24px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+        0 6px 25px rgba(0, 0, 0, 0.08),
+        0 0 0 2px rgba(255, 255, 255, 0.6),
+        inset 0 2px 0 rgba(255, 255, 255, 0.8);
+    position: relative;
+    overflow: hidden;
+    border: 2px solid var(--neutral-200);
+    letter-spacing: -0.025em;
+    min-height: 80px;
+}
+
+.menu-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.6s ease;
+}
+
+.menu-btn:hover::before {
+    left: 100%;
+}
+
+.menu-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.12),
+        0 0 0 3px var(--primary-light),
+        inset 0 2px 0 rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 1);
+    border-color: var(--primary);
+}
+
+.menu-btn:active {
+    transform: translateY(-1px);
+    transition: transform 0.1s;
+}
+
+.menu-btn:focus {
+    outline: 3px solid var(--primary);
+    outline-offset: 3px;
+}
+
+.menu-btn.modify {
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid var(--neutral-200);
+}
+
+.menu-btn.modify:hover {
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.12),
+        0 0 0 3px var(--primary-light),
+        inset 0 2px 0 rgba(255, 255, 255, 0.9);
+    border-color: var(--primary);
+    transform: translateY(-3px);
+}
+
+.menu-btn.inquiry {
+    background: linear-gradient(45deg, #27ae60, #219a52);
+    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+}
+
+.menu-btn.inquiry:hover {
+    box-shadow: 0 8px 25px rgba(39, 174, 96, 0.4);
+}
+
+.menu-btn .emoji {
+    font-size: 2rem;
+    filter: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border-radius: 18px;
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    flex-shrink: 0;
+}
+
+.menu-btn.modify .emoji {
+    background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+}
+
+.menu-btn .text {
+    flex: 1;
+    text-align: left;
+    margin-left: 0;
+    line-height: 1.4;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.menu-btn .text .main-text {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--neutral-800);
+}
+
+.menu-btn .arrow {
+    font-size: 1.5rem;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--neutral-500);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+}
+
+.menu-btn:hover .arrow {
+    transform: translateX(6px);
+    background: rgba(255, 255, 255, 1);
+    color: var(--primary);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.footer {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    color: var(--neutral-500);
+    font-size: 0.875rem;
+    opacity: 0.8;
+    font-weight: 400;
+    letter-spacing: -0.025em;
+    line-height: 1.5;
+}
+
+.welcome-message {
+    font-size: 1.125rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--neutral-700);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+    .container {
+        padding: 30px;
+        margin: 10px;
+    }
+    
+    h1 {
+        font-size: 2em;
+    }
+    
+    .menu-btn {
+        font-size: 16px;
+        padding: 18px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 35px 25px;
+        margin: 5px;
+        max-width: 100%;
+        border-radius: 18px;
+    }
+    
+    h1 {
+        font-size: 1.8em;
+        margin-bottom: 10px;
+        line-height: 1.2;
+    }
+    
+    h2 {
+        font-size: 1.1em;
+        margin-bottom: 30px;
+        line-height: 1.3;
+    }
+    
+    .menu-btn {
+        font-size: 15px;
+        padding: 18px 15px;
+        gap: 12px;
+        border-radius: 13px;
+        flex-direction: row;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        overflow: hidden;
+    }
+    
+    .menu-btn .text {
+        font-size: 15px;
+        text-align: center;
+        flex: 1;
+        padding: 0 10px;
+        word-break: keep-all;
+    }
+}
+
+@media (max-width: 400px) {
+    body {
+        padding: 10px;
+    }
+    
+    .container {
+        padding: 20px 15px;
+        margin: 0;
+        max-width: 100%;
+        border-radius: 15px;
+    }
+    
+    h1 {
+        font-size: 1.6em;
+        margin-bottom: 8px;
+        line-height: 1.2;
+    }
+    
+    h2 {
+        font-size: 1em;
+        margin-bottom: 25px;
+        line-height: 1.3;
+    }
+    
+    .menu-btn {
+        font-size: 14px;
+        padding: 16px 12px;
+        gap: 10px;
+        border-radius: 12px;
+        flex-direction: row;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        overflow: hidden;
+    }
+    
+    .menu-btn .emoji {
+        font-size: 1.1em;
+        flex-shrink: 0;
+    }
+    
+    .menu-btn .text {
+        font-size: 14px;
+        text-align: center;
+        flex: 1;
+        padding: 0 8px;
+    }
+    
+    .menu-btn .arrow {
+        font-size: 1em;
+        flex-shrink: 0;
+    }
+    
+    .footer {
+        margin-top: 20px;
+        padding-top: 15px;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+}
