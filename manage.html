@@ -428,6 +428,13 @@
             listContainer.innerHTML = reservations.map(reservation => 
                 ReservationManager.createReservationCard(reservation)
             ).join('');
+            
+            // Auto-select the first reservation
+            if (reservations.length > 0) {
+                setTimeout(() => {
+                    selectReservation(reservations[0].id);
+                }, 100);
+            }
         }
 
         function highlightReservationsOnCalendar(reservations) {
@@ -452,8 +459,11 @@
                 card.classList.remove('selected');
             });
             
-            // 새로운 선택
-            event.target.closest('.reservation-card').classList.add('selected');
+            // 새로운 선택 - 이벤트가 있을 때와 없을 때 모두 처리
+            const targetCard = document.querySelector(`[data-reservation-id="${reservationId}"]`);
+            if (targetCard) {
+                targetCard.classList.add('selected');
+            }
             
             selectedReservation = mockReservations.find(res => res.id === reservationId);
             
