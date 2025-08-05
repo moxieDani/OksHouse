@@ -327,6 +327,23 @@
                 onMonthChange: handleMonthChange,
                 readOnly: true // Make calendar read-only - no date selection allowed
             });
+
+            // Check if we need to go to step 2 (from reservation modification)
+            if (window.location.hash === '#step2') {
+                // Show step 2 directly - simulate going through step 1
+                stepNavigator.hideStep(1);
+                stepNavigator.markStepCompleted(1);
+                stepNavigator.showStep(2);
+                stepNavigator.markStepActive(2);
+                
+                // Load some mock data for demonstration
+                document.getElementById('auth-name').value = '홍길동';
+                document.getElementById('auth-phone').value = '010-1234-5678';
+                document.getElementById('password').value = '1234';
+                
+                // Load reservations
+                loadUserReservations();
+            }
         });
 
         // Event handlers
