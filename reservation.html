@@ -158,6 +158,15 @@
             // If modification mode, pre-fill and setup the form
             if (isModificationMode) {
                 setupModificationMode();
+                
+                // Check if we should return to a specific step
+                if (modificationData.returnToStep === 2) {
+                    // Show step 2 instead of step 3
+                    stepNavigator.hideStep(3);
+                    stepNavigator.showStep(2);
+                    stepNavigator.markStepActive(2);
+                    stepNavigator.markStepCompleted(1);
+                }
             }
         });
 
@@ -185,8 +194,8 @@
         }
 
         function prevStep(currentStep) {
-            // Handle modification mode - return to manage.html for step 1 and step 3
-            if (isModificationMode && (currentStep === 1 || currentStep === 3)) {
+            // Handle modification mode - return to manage.html only for step 1
+            if (isModificationMode && currentStep === 1) {
                 location.href = 'manage.html#step2';
                 return;
             }
@@ -323,18 +332,21 @@
                 }
             });
 
-            // Skip to step 3 since we have all required information
-            // First mark steps 1 and 2 as completed
-            stepNavigator.markStepCompleted(1);
-            stepNavigator.markStepCompleted(2);
-            
-            // Move to step 3
-            stepNavigator.hideStep(1);
-            stepNavigator.showStep(3);
-            stepNavigator.markStepActive(3);
-            
-            // Update step 3 with reservation info
-            updateStep3ReservationInfo();
+            // Only skip to step 3 if not returning to a specific step
+            if (!modificationData.returnToStep || modificationData.returnToStep === 3) {
+                // Skip to step 3 since we have all required information
+                // First mark steps 1 and 2 as completed
+                stepNavigator.markStepCompleted(1);
+                stepNavigator.markStepCompleted(2);
+                
+                // Move to step 3
+                stepNavigator.hideStep(1);
+                stepNavigator.showStep(3);
+                stepNavigator.markStepActive(3);
+                
+                // Update step 3 with reservation info
+                updateStep3ReservationInfo();
+            }
         }
 
 

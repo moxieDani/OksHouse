@@ -166,22 +166,26 @@
             background: inherit !important;
             color: inherit !important;
         }
+        /* Cancel button styling */
+        #cancelBtn2 {
+            background: #e74c3c !important;
+        }
+        #cancelBtn2:hover {
+            background: #c0392b !important;
+        }
+        #cancelBtn2:disabled {
+            background: #bdc3c7 !important;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>📋 예약 확인</h1>
         
-        <!-- Step Indicator -->
-        <div class="step-indicator">
-            <span class="step-dot active" id="dot1">1</span>
-            <span class="step-dot" id="dot2">2</span>
-            <span class="step-dot" id="dot3">3</span>
-        </div>
         
         <!-- Step 1: 예약자 정보 입력 -->
         <div class="step" id="step1">
-            <h3>1단계: 예약자 정보 입력</h3>
+            <h3>예약자 정보 입력</h3>
             <div class="form-group">
                 <label for="auth-name">이름:</label>
                 <input type="text" id="auth-name" placeholder="예약자 이름을 입력하세요">
@@ -202,7 +206,7 @@
 
         <!-- Step 2: 예약 목록 확인 -->
         <div class="step hidden" id="step2">
-            <h3>2단계: 예약 현황 확인</h3>
+            <h3>예약 현황 확인</h3>
             
             <!-- 달력 보기 -->
             <div class="calendar-view">
@@ -220,12 +224,13 @@
             <div style="text-align: center; margin-top: 30px;">
                 <button class="btn btn-back" onclick="prevStep(2)">이전</button>
                 <button class="btn" id="nextBtn2" onclick="startReservationModification()" disabled style="opacity: 0.5; cursor: not-allowed;">선택한 예약 변경</button>
+                <button class="btn" id="cancelBtn2" onclick="cancelSelectedReservation()" disabled style="opacity: 0.5; cursor: not-allowed; background: #e74c3c;">선택한 예약 취소</button>
             </div>
         </div>
 
         <!-- Step 3: 예약 변경/삭제 -->
         <div class="step hidden" id="step3">
-            <h3>3단계: 예약 변경</h3>
+            <h3>예약 변경</h3>
             
             <!-- 현재 선택된 예약 정보 -->
             <div class="current-reservation" id="selected-reservation-info">
@@ -388,10 +393,34 @@
         }
 
         function prevStep(currentStep) {
+            console.log('prevStep called with:', currentStep);
+            
+            if (currentStep === 3) {
+                console.log('Going from step 3 to reservation.html step 2');
+                // Going from step 3 (manage.html) back to reservation.html step 2
+                hideModifyForm();
+                
+                // Store reservation data for returning to reservation.html
+                const modificationData = {
+                    isModification: true,
+                    originalReservation: selectedReservation,
+                    userInfo: {
+                        name: document.getElementById('auth-name').value,
+                        phone: document.getElementById('auth-phone').value,
+                        password: document.getElementById('password').value
+                    },
+                    returnToStep: 2  // Return to step 2 (date selection)
+                };
+
+                console.log('Storing modificationData:', modificationData);
+                sessionStorage.setItem('modificationData', JSON.stringify(modificationData));
+                console.log('Redirecting to reservation.html');
+                window.location.href = 'reservation.html';
+                return;
+            }
+            
             const prevStepNum = stepNavigator.prevStep(currentStep, (current, prev) => {
-                if (current === 3) {
-                    hideModifyForm();
-                } else if (current === 2) {
+                if (current === 2) {
                     selectedReservation = null;
                     document.getElementById('reservations-list').innerHTML = '';
                     // Clear calendar highlights when going back from step 2
@@ -509,11 +538,17 @@
                 }, 200);
             }
             
-            // 다음 버튼 활성화
+            // 변경 및 취소 버튼 활성화
             const nextBtn = document.getElementById('nextBtn2');
+            const cancelBtn = document.getElementById('cancelBtn2');
+            
             nextBtn.disabled = false;
             nextBtn.style.opacity = '1';
             nextBtn.style.cursor = 'pointer';
+            
+            cancelBtn.disabled = false;
+            cancelBtn.style.opacity = '1';
+            cancelBtn.style.cursor = 'pointer';
         }
 
         function highlightOtherReservations(reservations, selectedId) {
@@ -710,6 +745,24 @@
 
             // Redirect to reservation page
             window.location.href = 'reservation.html';
+        }
+
+        function cancelSelectedReservation() {
+            if (!selectedReservation) {
+                alert('취소할 예약을 선택해주세요.');
+                return;
+            }
+
+            const endDate = new Date(selectedReservation.startDate);
+            endDate.setDate(selectedReservation.startDate.getDate() + selectedReservation.duration);
+
+            const confirmCancel = confirm(`정말로 이 예약을 취소하시겠습니까?\n\n예약 날짜: ${ReservationManager.formatKoreanDate(selectedReservation.startDate)} ~ ${ReservationManager.formatKoreanDate(endDate)}\n예약자: ${selectedReservation.name}\n숙박 기간: ${selectedReservation.duration}박 ${selectedReservation.duration + 1}일`);
+            
+            if (confirmCancel) {
+                // 실제로는 서버 API 호출하여 예약 취소
+                alert('예약이 취소되었습니다.');
+                location.href = 'index.html';
+            }
         }
     </script>
 </body>
