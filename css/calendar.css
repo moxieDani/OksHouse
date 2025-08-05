@@ -1,0 +1,118 @@
+/* Calendar Component Styles */
+.calendar {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: white;
+    margin: 10px 0;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #ddd;
+}
+
+.calendar-nav {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 3px;
+}
+
+.calendar-nav:hover {
+    background: #e9ecef;
+}
+
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background: #f8f9fa;
+}
+
+.calendar-weekday {
+    padding: 10px;
+    text-align: center;
+    font-weight: bold;
+    border: 1px solid #f0f0f0;
+    font-size: 12px;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-day {
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.calendar-day:hover {
+    background: #f8f9fa;
+}
+
+.calendar-day.disabled {
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+.calendar-day.disabled:hover {
+    background: white;
+}
+
+.calendar-day.selected {
+    background: var(--primary-color, #3498db);
+    color: white !important;
+}
+
+.calendar-day.in-range {
+    background: var(--range-bg-color, #e3f2fd);
+    color: var(--range-text-color, #1976d2);
+}
+
+.calendar-day.saturday {
+    color: #1565c0;
+}
+
+.calendar-day.sunday {
+    color: #f44336;
+}
+
+.calendar-day.other-month {
+    color: #bbb;
+}
+
+.calendar-day.other-month.disabled {
+    color: #ddd;
+}
+
+.calendar-day.today {
+    background: #fff3e0;
+    border: 2px solid #ff9800;
+    font-weight: bold;
+}
+
+.date-range-display {
+    text-align: center;
+    padding: 15px;
+    margin: 10px 0;
+    background: #f8f9fa;
+    border-radius: 5px;
+    font-weight: bold;
+    color: #2c3e50;
+    border: 2px solid #e9ecef;
+}
+
+.date-range-display.selected {
+    background: var(--range-bg-color, #e3f2fd);
+    border-color: var(--primary-color, #3498db);
+    color: var(--range-text-color, #1976d2);
+}

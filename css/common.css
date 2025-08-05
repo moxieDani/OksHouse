@@ -1,0 +1,126 @@
+/* Common Styles for OksHouse Reservation System */
+body {
+    font-family: 'Malgun Gothic', sans-serif;
+    max-width: 600px;
+    margin: 30px auto;
+    padding: 20px;
+    background-color: #f8f9fa;
+}
+
+.container {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.step {
+    margin: 30px 0;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.step h3 {
+    margin-top: 0;
+}
+
+select, input {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.btn {
+    padding: 12px 30px;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.btn-back {
+    background: #95a5a6;
+    margin-right: 10px;
+}
+
+.btn-back:hover {
+    background: #7f8c8d;
+}
+
+.form-group {
+    margin: 15px 0;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.hidden {
+    display: none;
+}
+
+.step-indicator {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.step-dot {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #ddd;
+    color: white;
+    line-height: 30px;
+    margin: 0 5px;
+    font-weight: bold;
+}
+
+.step-dot.active {
+    background: var(--primary-color, #3498db);
+}
+
+.step-dot.completed {
+    background: #27ae60;
+}
+
+.duration-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.duration-btn {
+    padding: 12px;
+    border: 2px solid #ddd;
+    background: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.duration-btn:hover {
+    border-color: var(--primary-color, #3498db);
+    background: #f8f9fa;
+}
+
+.duration-btn.selected {
+    border-color: var(--primary-color, #3498db);
+    background: var(--primary-color, #3498db);
+    color: white;
+}

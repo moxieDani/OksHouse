@@ -4,225 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>예약 - Ok's House</title>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/calendar.css">
     <style>
-        body {
-            font-family: 'Malgun Gothic', sans-serif;
-            max-width: 600px;
-            margin: 30px auto;
-            padding: 20px;
-            background-color: #f8f9fa;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
         h1 {
             color: #2c3e50;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .step {
-            margin: 30px 0;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
         }
         .step h3 {
             color: #3498db;
-            margin-top: 0;
-        }
-        select, input {
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        .calendar-placeholder {
-            width: 100%;
-            height: 200px;
-            border: 2px dashed #ddd;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #999;
-            margin: 10px 0;
         }
         .btn {
-            padding: 12px 30px;
             background: #3498db;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
         }
         .btn:hover {
             background: #2980b9;
-        }
-        .btn-back {
-            background: #95a5a6;
-            margin-right: 10px;
-        }
-        .btn-back:hover {
-            background: #7f8c8d;
-        }
-        .form-group {
-            margin: 15px 0;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        .hidden {
-            display: none;
-        }
-        .step-indicator {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .step-dot {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: #ddd;
-            color: white;
-            line-height: 30px;
-            margin: 0 5px;
-            font-weight: bold;
-        }
-        .step-dot.active {
-            background: #3498db;
-        }
-        .step-dot.completed {
-            background: #27ae60;
-        }
-        .duration-buttons {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin: 10px 0;
-        }
-        .duration-btn {
-            padding: 12px;
-            border: 2px solid #ddd;
-            background: white;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-        .duration-btn:hover {
-            border-color: #3498db;
-            background: #f8f9fa;
-        }
-        .duration-btn.selected {
-            border-color: #3498db;
-            background: #3498db;
-            color: white;
-        }
-        .calendar {
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background: white;
-            margin: 10px 0;
-        }
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #ddd;
-        }
-        .calendar-nav {
-            background: none;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-            padding: 5px 10px;
-            border-radius: 3px;
-        }
-        .calendar-nav:hover {
-            background: #e9ecef;
-        }
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-        }
-        .calendar-day {
-            padding: 10px;
-            text-align: center;
-            border: 1px solid #f0f0f0;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .calendar-day:hover {
-            background: #f8f9fa;
-        }
-        .calendar-day.disabled {
-            color: #ccc;
-            cursor: not-allowed;
-        }
-        .calendar-day.disabled:hover {
-            background: white;
-        }
-        .calendar-day.selected {
-            background: #3498db;
-            color: white !important;
-        }
-        .calendar-day.in-range {
-            background: #e3f2fd;
-            color: #1976d2;
-        }
-        .calendar-day.saturday {
-            color: #1565c0;
-        }
-        .calendar-day.sunday {
-            color: #f44336;
-        }
-        .calendar-day.other-month {
-            color: #bbb;
-        }
-        .calendar-day.other-month.disabled {
-            color: #ddd;
-        }
-        .calendar-day.today {
-            background: #fff3e0;
-            border: 2px solid #ff9800;
-            font-weight: bold;
-        }
-        .calendar-weekdays {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            background: #f8f9fa;
-        }
-        .calendar-weekday {
-            padding: 10px;
-            text-align: center;
-            font-weight: bold;
-            border: 1px solid #f0f0f0;
-            font-size: 12px;
-        }
-        .date-range-display {
-            text-align: center;
-            padding: 15px;
-            margin: 10px 0;
-            background: #f8f9fa;
-            border-radius: 5px;
-            font-weight: bold;
-            color: #2c3e50;
-            border: 2px solid #e9ecef;
-        }
-        .date-range-display.selected {
-            background: #e3f2fd;
-            border-color: #3498db;
-            color: #1976d2;
         }
     </style>
 </head>
@@ -270,23 +65,9 @@
                 날짜를 선택해주세요
             </div>
             
-            <div class="calendar">
-                <div class="calendar-header">
-                    <button class="calendar-nav" onclick="changeMonth(-1)">‹</button>
-                    <span id="currentMonth"></span>
-                    <button class="calendar-nav" onclick="changeMonth(1)">›</button>
-                </div>
-                <div class="calendar-weekdays">
-                    <div class="calendar-weekday">일</div>
-                    <div class="calendar-weekday">월</div>
-                    <div class="calendar-weekday">화</div>
-                    <div class="calendar-weekday">수</div>
-                    <div class="calendar-weekday">목</div>
-                    <div class="calendar-weekday">금</div>
-                    <div class="calendar-weekday">토</div>
-                </div>
-                <div class="calendar-grid" id="calendarGrid"></div>
-            </div>
+            <!-- 달력 컴포넌트 컨테이너 -->
+            <div id="calendar-container"></div>
+
             <div style="text-align: center; margin-top: 30px;">
                 <button class="btn btn-back" onclick="prevStep(2)">이전</button>
                 <button class="btn" id="nextBtn2" onclick="nextStep(2)" disabled style="opacity: 0.5; cursor: not-allowed;">다음</button>
@@ -321,505 +102,84 @@
         </div>
     </div>
 
+    <script src="js/common.js"></script>
+    <script src="js/calendar.js"></script>
     <script>
-        let selectedDuration = 0;
-        let selectedStartDate = null;
-        let currentDate = new Date();
-        let currentMonth = new Date().getMonth();
-        let currentYear = new Date().getFullYear();
+        // Initialize components
+        let stepNavigator, durationSelector, calendar;
 
-        // 페이지 로드시 달력 초기화
         document.addEventListener('DOMContentLoaded', function() {
-            renderCalendar();
+            // Set theme
+            ThemeManager.setReservationTheme();
+            
+            // Initialize components
+            stepNavigator = new StepNavigator(3);
+            durationSelector = new DurationSelector();
+            
+            calendar = new OksCalendar({
+                containerId: 'calendar-container',
+                onDateSelect: handleDateSelection,
+                onMonthChange: handleMonthChange
+            });
         });
 
+        // Event handlers
         function selectDuration(days, button) {
-            // 모든 버튼에서 selected 클래스 제거
-            document.querySelectorAll('.duration-btn').forEach(btn => {
-                btn.classList.remove('selected');
-            });
-            
-            // 선택된 버튼에 selected 클래스 추가
-            button.classList.add('selected');
-            selectedDuration = days;
+            const selectedDays = durationSelector.selectDuration(days, button);
+            calendar.setDuration(selectedDays);
         }
 
         function nextStep(currentStep) {
-            // 현재 스텝 유효성 검사
-            if (currentStep === 1) {
-                if (selectedDuration === 0) {
-                    alert('숙박 기간을 선택해주세요.');
-                    return;
-                }
-            } else if (currentStep === 2) {
-                if (!selectedStartDate) {
-                    alert('시작일을 선택해주세요.');
-                    return;
-                }
-            }
+            const validationFunctions = {
+                1: () => FormValidator.validateStep1(durationSelector.getDuration()),
+                2: () => FormValidator.validateStep2(calendar.getSelectedDate())
+            };
+
+            const nextStepNum = stepNavigator.nextStep(currentStep, validationFunctions[currentStep]);
             
-            // 현재 스텝 숨기기
-            document.getElementById('step' + currentStep).classList.add('hidden');
-            document.getElementById('dot' + currentStep).classList.remove('active');
-            document.getElementById('dot' + currentStep).classList.add('completed');
-            
-            // 다음 스텝 보이기
-            const nextStepNum = currentStep + 1;
-            document.getElementById('step' + nextStepNum).classList.remove('hidden');
-            document.getElementById('dot' + nextStepNum).classList.add('active');
-            
-            // 3단계로 넘어갈 때 선택된 예약 정보 표시
-            if (nextStepNum === 3 && selectedStartDate && selectedDuration > 0) {
+            if (nextStepNum === 3 && calendar.getSelectedDate() && calendar.getDuration() > 0) {
                 updateStep3ReservationInfo();
             }
-            // 2단계로 돌아갈 때 선택된 날짜로 달력 이돔 및 범위 표시
-            if (nextStepNum === 2 && selectedStartDate && selectedDuration > 0) {
-                showSelectedDateRange();
+            
+            if (nextStepNum === 2 && calendar.getSelectedDate() && calendar.getDuration() > 0) {
+                calendar.navigateToDate(calendar.getSelectedDate());
             }
         }
 
         function prevStep(currentStep) {
-            // 현재 스텝 숨기기
-            document.getElementById('step' + currentStep).classList.add('hidden');
-            document.getElementById('dot' + currentStep).classList.remove('active');
-            
-            // 이전 스텝 보이기
-            const prevStepNum = currentStep - 1;
-            document.getElementById('step' + prevStepNum).classList.remove('hidden');
-            document.getElementById('dot' + prevStepNum).classList.remove('completed');
-            document.getElementById('dot' + prevStepNum).classList.add('active');
-            
-            // Step 2에서 이전으로 돌아갈 때 모든 선택 사항 초기화
-            if (currentStep === 2) {
-                resetSelection();
-                // 현재 달로 돌아가기
-                const today = new Date();
-                currentMonth = today.getMonth();
-                currentYear = today.getFullYear();
-                renderCalendar();
-            }
-            // 3단계에서 2단계로 돌아갈 때 선택된 날짜로 이동
-            else if (currentStep === 3 && prevStepNum === 2) {
-                showSelectedDateRange();
-            }
+            const prevStepNum = stepNavigator.prevStep(currentStep, (current, prev) => {
+                if (current === 2) {
+                    // Reset to current month when going back from step 2
+                    calendar.reset();
+                    calendar.navigateToDate(new Date());
+                } else if (current === 3 && prev === 2) {
+                    // Navigate back to selected date when going from step 3 to 2
+                    if (calendar.getSelectedDate()) {
+                        calendar.navigateToDate(calendar.getSelectedDate());
+                    }
+                }
+            });
         }
 
         function completeReservation() {
-            // 예약자 정보 유효성 검사
-            const name = document.getElementById('name').value;
-            const phone = document.getElementById('phone').value;
-            const password = document.getElementById('password').value;
-            
-            if (!name || !phone || !password) {
-                alert('모든 정보를 입력해주세요.');
-                return;
-            }
-            
-            alert('예약이 완료되었습니다!');
-            location.href = 'index.html';
+            CompletionHandler.completeReservation();
         }
 
-        function changeMonth(direction) {
-            currentMonth += direction;
-            if (currentMonth > 11) {
-                currentMonth = 0;
-                currentYear++;
-            } else if (currentMonth < 0) {
-                currentMonth = 11;
-                currentYear--;
-            }
-            renderCalendar();
-            
-            // 달력 렌더링 후 선택 상태 복원
-            if (selectedStartDate && selectedDuration > 0) {
-                setTimeout(() => {
-                    const endDate = new Date(selectedStartDate);
-                    endDate.setDate(selectedStartDate.getDate() + selectedDuration);
-                    restoreSelection(selectedStartDate, endDate);
-                }, 50);
-            }
+        function handleDateSelection(date, duration) {
+            // Additional handling when date is selected
+            console.log('Date selected:', date, 'Duration:', duration);
         }
 
-        function renderCalendar() {
-            const monthNames = ["1월", "2월", "3월", "4월", "5월", "6월",
-                              "7월", "8월", "9월", "10월", "11월", "12월"];
-            
-            document.getElementById('currentMonth').textContent = 
-                `${currentYear}년 ${monthNames[currentMonth]}`;
-            
-            const firstDay = new Date(currentYear, currentMonth, 1);
-            const lastDay = new Date(currentYear, currentMonth + 1, 0);
-            const firstDayOfWeek = firstDay.getDay();
-            const daysInMonth = lastDay.getDate();
-            
-            // 이전 달의 마지막 날
-            const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
-            
-            const calendarGrid = document.getElementById('calendarGrid');
-            calendarGrid.innerHTML = '';
-            
-            // 이전 달의 날짜들
-            for (let i = firstDayOfWeek - 1; i >= 0; i--) {
-                const prevDate = prevMonthLastDay - i;
-                const dayElement = document.createElement('div');
-                dayElement.className = 'calendar-day other-month';
-                dayElement.textContent = prevDate;
-                
-                const prevMonthDate = new Date(currentYear, currentMonth - 1, prevDate);
-                const today = new Date().setHours(0, 0, 0, 0);
-                
-                // 오늘 이전 날짜는 비활성화 (주말 색상도 제거)
-                if (prevMonthDate < today) {
-                    dayElement.classList.add('disabled');
-                } else {
-                    // 오늘 이후 날짜만 주말 색상 적용
-                    const dayOfWeek = prevMonthDate.getDay();
-                    if (dayOfWeek === 0) dayElement.classList.add('sunday');
-                    if (dayOfWeek === 6) dayElement.classList.add('saturday');
-                    
-                    // 클릭 가능하게 만들기
-                    dayElement.onclick = () => selectStartDate(prevMonthDate, dayElement);
-                }
-                
-                calendarGrid.appendChild(dayElement);
-            }
-            
-            // 현재 달의 날짜들
-            const today = new Date();
-            const todayStr = today.setHours(0, 0, 0, 0);
-            
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dayElement = document.createElement('div');
-                dayElement.className = 'calendar-day';
-                dayElement.textContent = day;
-                
-                const dayDate = new Date(currentYear, currentMonth, day);
-                const dayOfWeek = dayDate.getDay();
-                const dayStr = dayDate.setHours(0, 0, 0, 0);
-                
-                // 오늘 날짜 표시
-                if (dayStr === todayStr) {
-                    dayElement.classList.add('today');
-                }
-                
-                // 오늘 이전 날짜는 비활성화 (주말 색상도 제거)
-                if (dayStr < todayStr) {
-                    dayElement.classList.add('disabled');
-                } else {
-                    // 오늘 이후 날짜만 주말 색상 적용
-                    if (dayOfWeek === 0) dayElement.classList.add('sunday');
-                    if (dayOfWeek === 6) dayElement.classList.add('saturday');
-                    
-                    dayElement.onclick = () => selectStartDate(dayDate, dayElement);
-                }
-                
-                calendarGrid.appendChild(dayElement);
-            }
-            
-            // 다음 달의 날짜들 (6주 달력을 위해)
-            const totalCells = 42; // 6주 × 7일
-            const remainingCells = totalCells - (firstDayOfWeek + daysInMonth);
-            
-            for (let day = 1; day <= remainingCells; day++) {
-                const dayElement = document.createElement('div');
-                dayElement.className = 'calendar-day other-month';
-                dayElement.textContent = day;
-                
-                const nextMonthDate = new Date(currentYear, currentMonth + 1, day);
-                const dayOfWeek = nextMonthDate.getDay();
-                const today = new Date().setHours(0, 0, 0, 0);
-                
-                // 오늘 이전 날짜는 비활성화 (주말 색상도 제거)
-                if (nextMonthDate < today) {
-                    dayElement.classList.add('disabled');
-                } else {
-                    // 오늘 이후 날짜만 주말 색상 적용
-                    if (dayOfWeek === 0) dayElement.classList.add('sunday');
-                    if (dayOfWeek === 6) dayElement.classList.add('saturday');
-                    
-                    // 다음 달 날짜도 선택 가능하게 만들기
-                    dayElement.onclick = () => selectStartDate(nextMonthDate, dayElement);
-                }
-                
-                calendarGrid.appendChild(dayElement);
-            }
+        function handleMonthChange(month, year) {
+            // Additional handling when month changes
+            console.log('Month changed to:', year, month + 1);
         }
 
-        function selectStartDate(date, element) {
-            // 같은 날짜를 다시 클릭하면 선택 해제
-            if (selectedStartDate && selectedStartDate.getTime() === date.getTime()) {
-                resetSelection();
-                return;
-            }
-            
-            // 모든 날짜에서 선택 상태 제거 (오늘 표시는 유지)
-            document.querySelectorAll('.calendar-day').forEach(day => {
-                day.classList.remove('selected', 'in-range');
-            });
-            
-            // 오늘 날짜 표시 복원
-            const today = new Date();
-            const todayStr = today.setHours(0, 0, 0, 0);
-            document.querySelectorAll('.calendar-day').forEach(day => {
-                if (day.textContent && !day.classList.contains('disabled')) {
-                    const dayNum = parseInt(day.textContent);
-                    let dayDate;
-                    
-                    if (day.classList.contains('other-month')) {
-                        if (dayNum > 15) {
-                            dayDate = new Date(currentYear, currentMonth - 1, dayNum);
-                        } else {
-                            dayDate = new Date(currentYear, currentMonth + 1, dayNum);
-                        }
-                    } else {
-                        dayDate = new Date(currentYear, currentMonth, dayNum);
-                    }
-                    
-                    // 오늘 날짜면 today 클래스 추가
-                    if (dayDate && dayDate.setHours(0, 0, 0, 0) === todayStr) {
-                        day.classList.add('today');
-                    }
-                }
-            });
-            
-            selectedStartDate = date;
-            element.classList.add('selected');
-            
-            // 선택된 날짜에서 today 클래스 제거 (선택 상태가 우선)
-            element.classList.remove('today');
-            
-            // 다음 버튼 활성화
-            enableNextButton();
-            
-            // 선택된 기간만큼 날짜 범위 표시
-            if (selectedDuration > 0) {
-                const endDate = new Date(date);
-                endDate.setDate(date.getDate() + selectedDuration);
-                
-                // 날짜 범위 텍스트 업데이트
-                updateDateRangeDisplay(date, endDate);
-                
-                // 시작일이 이전 달에 있으면 이전 달로 이동
-                if (date.getMonth() !== currentMonth || date.getFullYear() !== currentYear) {
-                    currentMonth = date.getMonth();
-                    currentYear = date.getFullYear();
-                    renderCalendar();
-                    
-                    // 달력을 다시 렌더링한 후 선택 상태 복원
-                    setTimeout(() => {
-                        restoreSelection(date, endDate);
-                    }, 50);
-                    return;
-                }
-                // 종료일이 다음 달에 있으면 달력을 다음 달로 이동
-                else if (endDate.getMonth() !== currentMonth || endDate.getFullYear() !== currentYear) {
-                    // 종료일이 현재 달력에서 2주 이상 벗어나면 달력 이동
-                    const currentMonthEnd = new Date(currentYear, currentMonth + 1, 0);
-                    const daysFromMonthEnd = Math.ceil((endDate - currentMonthEnd) / (1000 * 60 * 60 * 24));
-                    
-                    if (daysFromMonthEnd > 7) {
-                        // 다음 달로 이동
-                        currentMonth = endDate.getMonth();
-                        currentYear = endDate.getFullYear();
-                        renderCalendar();
-                        
-                        // 달력을 다시 렌더링한 후 선택 상태 복원
-                        setTimeout(() => {
-                            restoreSelection(date, endDate);
-                        }, 50);
-                        return;
-                    }
-                }
-                
-                // 현재 달력에서 범위 표시
-                highlightDateRange(date, endDate);
-            }
-        }
-
-        function resetSelection() {
-            // 선택 상태 초기화
-            selectedStartDate = null;
-            
-            // 모든 날짜에서 선택 상태 제거
-            document.querySelectorAll('.calendar-day').forEach(day => {
-                day.classList.remove('selected', 'in-range');
-            });
-            
-            // 오늘 날짜 다시 강조하기
-            const today = new Date();
-            const todayStr = today.setHours(0, 0, 0, 0);
-            
-            document.querySelectorAll('.calendar-day').forEach(day => {
-                if (day.textContent && !day.classList.contains('disabled')) {
-                    const dayNum = parseInt(day.textContent);
-                    let dayDate;
-                    
-                    // 현재 달, 이전 달, 다음 달 날짜 구분
-                    if (day.classList.contains('other-month')) {
-                        if (dayNum > 15) {
-                            dayDate = new Date(currentYear, currentMonth - 1, dayNum);
-                        } else {
-                            dayDate = new Date(currentYear, currentMonth + 1, dayNum);
-                        }
-                    } else {
-                        dayDate = new Date(currentYear, currentMonth, dayNum);
-                    }
-                    
-                    // 오늘 날짜면 today 클래스 추가
-                    if (dayDate.setHours(0, 0, 0, 0) === todayStr) {
-                        day.classList.add('today');
-                    }
-                }
-            });
-            
-            // 날짜 범위 표시 초기화
-            const displayElement = document.getElementById('dateRangeDisplay');
-            if (displayElement) {
-                displayElement.textContent = '날짜를 선택해주세요';
-                displayElement.classList.remove('selected');
-            }
-            
-            // 다음 버튼 비활성화
-            disableNextButton();
-        }
-
-        function enableNextButton() {
-            const nextBtn = document.getElementById('nextBtn2');
-            if (nextBtn) {
-                nextBtn.disabled = false;
-                nextBtn.style.opacity = '1';
-                nextBtn.style.cursor = 'pointer';
-            }
-        }
-
-        function disableNextButton() {
-            const nextBtn = document.getElementById('nextBtn2');
-            if (nextBtn) {
-                nextBtn.disabled = true;
-                nextBtn.style.opacity = '0.5';
-                nextBtn.style.cursor = 'not-allowed';
-            }
-        }
-
-        function updateDateRangeDisplay(startDate, endDate) {
-            const displayElement = document.getElementById('dateRangeDisplay');
-            if (displayElement) {
-                const startStr = formatKoreanDate(startDate);
-                const endStr = formatKoreanDate(endDate);
-                displayElement.textContent = `${startStr} - ${endStr}`;
-                displayElement.classList.add('selected');
-            }
-        }
-
-        function formatKoreanDate(date) {
-            return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
-        }
-        
         function updateStep3ReservationInfo() {
             const infoElement = document.getElementById('selectedReservationInfo');
-            if (infoElement && selectedStartDate && selectedDuration > 0) {
-                const endDate = new Date(selectedStartDate);
-                endDate.setDate(selectedStartDate.getDate() + selectedDuration);
-                
-                const startStr = formatKoreanDate(selectedStartDate);
-                const endStr = formatKoreanDate(endDate);
-                const durationText = `${selectedDuration}박 ${selectedDuration + 1}일`;
-                
-                // 요일 정보 추가
-                const startDay = formatDayOfWeek(selectedStartDate);
-                const endDay = formatDayOfWeek(endDate);
-                
-                infoElement.innerHTML = `
-                    <div style="text-align: center; padding: 10px;">
-                        <div style="font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 15px;">
-                            📅 선택된 예약 정보
-                        </div>
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #3498db;">
-                            <div style="margin-bottom: 10px;">
-                                <strong style="color: #2c3e50;">체크인:</strong> 
-                                <span style="color: #3498db; font-weight: bold;">${startStr} (${startDay})</span>
-                            </div>
-                            <div style="margin-bottom: 10px;">
-                                <strong style="color: #2c3e50;">체크아웃:</strong> 
-                                <span style="color: #e74c3c; font-weight: bold;">${endStr} (${endDay})</span>
-                            </div>
-                            <div>
-                                <strong style="color: #2c3e50;">숙박 기간:</strong> 
-                                <span style="color: #27ae60; font-weight: bold;">${durationText}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
+            if (infoElement) {
+                infoElement.innerHTML = calendar.formatReservationInfo('선택된 예약 정보', '#3498db');
             }
-        }
-        
-        function formatDayOfWeek(date) {
-            const days = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
-            return days[date.getDay()];
-        }
-        
-        function showSelectedDateRange() {
-            if (selectedStartDate && selectedDuration > 0) {
-                // 선택된 시작일의 달로 이동
-                currentMonth = selectedStartDate.getMonth();
-                currentYear = selectedStartDate.getFullYear();
-                renderCalendar();
-                
-                // 달력 렌더링 후 선택 범위 표시
-                setTimeout(() => {
-                    const endDate = new Date(selectedStartDate);
-                    endDate.setDate(selectedStartDate.getDate() + selectedDuration);
-                    
-                    // 날짜 범위 텍스트 업데이트
-                    updateDateRangeDisplay(selectedStartDate, endDate);
-                    
-                    // 범위 표시
-                    highlightDateRange(selectedStartDate, endDate);
-                    
-                    // 다음 버튼 활성화
-                    enableNextButton();
-                }, 50);
-            }
-        }
-
-        function highlightDateRange(startDate, endDate) {
-            // 모든 달력 날짜 요소들을 순회하며 범위 체크
-            const allDays = document.querySelectorAll('.calendar-day');
-            allDays.forEach(day => {
-                if (day.textContent && !day.classList.contains('disabled')) {
-                    const dayNum = parseInt(day.textContent);
-                    let dayDate;
-                    
-                    // 현재 달, 이전 달, 다음 달 날짜 구분
-                    if (day.classList.contains('other-month')) {
-                        // 이전 달 날짜 (첫 주)
-                        if (dayNum > 15) {
-                            dayDate = new Date(currentYear, currentMonth - 1, dayNum);
-                        } 
-                        // 다음 달 날짜 (마지막 주)
-                        else {
-                            dayDate = new Date(currentYear, currentMonth + 1, dayNum);
-                        }
-                    } else {
-                        // 현재 달 날짜
-                        dayDate = new Date(currentYear, currentMonth, dayNum);
-                    }
-                    
-                    // 시작일과 같은 날짜면 selected 클래스 추가
-                    if (dayDate.getTime() === startDate.getTime()) {
-                        day.classList.add('selected');
-                    }
-                    // 범위 내에 있는지 확인
-                    else if (dayDate > startDate && dayDate <= endDate) {
-                        day.classList.add('in-range');
-                    }
-                }
-            });
-        }
-
-        function restoreSelection(startDate, endDate) {
-            // 달력 이동 후 선택 상태 복원
-            highlightDateRange(startDate, endDate);
         }
     </script>
 </body>
