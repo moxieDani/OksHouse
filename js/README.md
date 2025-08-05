@@ -16,11 +16,13 @@ This directory contains the refactored JavaScript modules for the OksHouse reser
 js/
 ├── README.md           # This file
 ├── common.js          # Common utilities and form handling
-└── calendar.js        # Reusable calendar component
+├── calendar.js        # Reusable calendar component
+└── privacy.js         # Privacy consent management
 
 css/
 ├── common.css         # Shared styles across pages
-└── calendar.css       # Calendar-specific styles
+├── calendar.css       # Calendar-specific styles
+└── privacy.css        # Privacy modal styles
 ```
 
 ## Modules
@@ -53,6 +55,39 @@ calendar.selectDate(new Date());      // Select date
 calendar.reset();                     // Clear selection
 ```
 
+### privacy.js - PrivacyConsent Class
+**Purpose**: Privacy policy consent management with Korean legal compliance
+
+**Key Features**:
+- ✅ **Legal Compliance**: GDPR-style consent with Korean personal data protection laws
+- ✅ **Persistent Storage**: LocalStorage with expiration (365 days default)
+- ✅ **Modal Interface**: Beautiful, accessible consent modal
+- ✅ **Form Protection**: Prevents access to forms without consent
+- ✅ **Easy Integration**: Simple static method for quick setup
+- ✅ **Mobile Responsive**: Optimized for all screen sizes
+
+**Usage**:
+```javascript
+// Simple integration - protect a URL
+PrivacyConsent.requireConsent('reservation.html');
+
+// Advanced usage with callbacks
+const privacy = new PrivacyConsent({
+    onConsent: (consentData) => {
+        console.log('User consented:', consentData);
+        window.location.href = 'reservation.html';
+    },
+    onDecline: () => {
+        alert('동의가 필요합니다.');
+    },
+    expirationDays: 365,
+    storageKey: 'custom_consent_key'
+});
+
+privacy.showModal();                  // Show consent modal
+privacy.hasValidConsent();           // Check if user has valid consent
+```
+
 ### common.js - Utility Classes
 **Purpose**: Shared utilities for step navigation, form validation, and completion handling
 
@@ -75,8 +110,8 @@ calendar.reset();                     // Clear selection
 - **Methods**: `setReservationTheme()`, `setModifyTheme()`, `setInquiryTheme()`
 
 #### CompletionHandler
-- **Purpose**: Final step completion handlers
-- **Methods**: `completeReservation()`, `completeModification()`
+- **Purpose**: Final step completion handlers with privacy consent validation
+- **Methods**: `completeReservation()`, `completeModification()`, `validatePrivacyConsent()`
 
 ## Performance Improvements
 
@@ -126,6 +161,7 @@ calendar.reset();                     // Clear selection
 <!-- Include CSS -->
 <link rel="stylesheet" href="css/common.css">
 <link rel="stylesheet" href="css/calendar.css">
+<link rel="stylesheet" href="css/privacy.css">
 
 <!-- HTML Structure -->
 <div class="date-range-display" id="dateRangeDisplay">
@@ -137,16 +173,37 @@ calendar.reset();                     // Clear selection
 <!-- Include JavaScript -->
 <script src="js/common.js"></script>
 <script src="js/calendar.js"></script>
+<script src="js/privacy.js"></script>
 
 <!-- Initialize -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Check privacy consent first (for protected pages)
+    if (!CompletionHandler.validatePrivacyConsent()) {
+        alert('개인정보 수집·이용 동의가 필요합니다.');
+        location.href = 'index.html';
+        return;
+    }
+    
     ThemeManager.setReservationTheme(); // or setModifyTheme()
     const calendar = new OksCalendar({
         containerId: 'calendar-container',
         nextButtonId: 'nextBtn',
         primaryColor: '#3498db'
     });
+});
+</script>
+```
+
+### Privacy Consent Integration
+```html
+<!-- On index.html or main pages -->
+<a href="#" id="protected-link">Protected Action</a>
+
+<script>
+document.getElementById('protected-link').addEventListener('click', function(e) {
+    e.preventDefault();
+    PrivacyConsent.requireConsent('target-page.html');
 });
 </script>
 ```
