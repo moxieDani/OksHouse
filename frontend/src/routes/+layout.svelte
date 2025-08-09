@@ -1,11 +1,11 @@
-<script lang="ts">
-	import favicon from '$lib/assets/favicon.svg';
-
-	let { children } = $props();
+<script>
+	import '../app.css';
+	
+	// SvelteKit automatically provides these props to layout components - declare them to avoid warnings
+	export let data = {};
+	export let params = {};
 </script>
 
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
-
-{@render children?.()}
+<main class="container">
+	<slot />
+</main>

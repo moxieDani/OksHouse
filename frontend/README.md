@@ -1,38 +1,105 @@
-# sv
+# Ok's House - SvelteKit Version
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A vacation rental booking system converted from vanilla HTML/CSS/JS to SvelteKit.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- 🏠 **Home Page**: Welcome screen with navigation to reservation and management
+- 📅 **Reservation System**: 3-step booking process
+  - Step 1: Select duration (1-10 nights)
+  - Step 2: Choose check-in date with calendar
+  - Step 3: Enter guest information
+- ⚙️ **Management**: View and modify existing reservations
+- 🔒 **Privacy Consent**: GDPR-compliant privacy policy modal
+- 📱 **Responsive Design**: Mobile-first, accessible UI
 
-```sh
-# create a new project in the current directory
-npx sv create
+## Technology Stack
 
-# create a new project in my-app
-npx sv create my-app
+- **Framework**: SvelteKit
+- **Styling**: CSS Custom Properties (CSS Variables)
+- **State Management**: Svelte Stores
+- **Navigation**: SvelteKit routing
+- **Build Tool**: Vite
+
+## Project Structure
+
+```
+src/
+├── lib/
+│   ├── components/
+│   │   ├── Calendar.svelte          # Interactive calendar component
+│   │   ├── DurationSelector.svelte  # Duration selection buttons
+│   │   ├── PrivacyConsent.svelte   # Privacy policy modal
+│   │   └── StepIndicator.svelte    # Progress indicator
+│   └── stores/
+│       └── reservation.js          # Reservation state management
+├── routes/
+│   ├── +layout.svelte              # Main layout
+│   ├── +page.svelte                # Home page
+│   ├── manage/
+│   │   └── +page.svelte            # Reservation management
+│   └── reservation/
+│       └── +page.svelte            # Booking process
+├── app.css                         # Global styles
+└── app.html                        # HTML template
 ```
 
-## Developing
+## Getting Started
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-```sh
-npm run dev
+2. **Start development server**:
+   ```bash
+   npm run dev
+   ```
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+3. **Build for production**:
+   ```bash
+   npm run build
+   ```
 
-## Building
+4. **Preview production build**:
+   ```bash
+   npm run preview
+   ```
 
-To create a production version of your app:
+## Design System
 
-```sh
-npm run build
-```
+### Colors
+- **Primary**: Blue gradient (`#4338ca` to `#312e81`)
+- **Warning**: Orange gradient (`#d97706` to `#b45309`)
+- **Success**: Green (`#047857`)
+- **Error**: Red (`#dc2626`)
 
-You can preview the production build with `npm run preview`.
+### Typography
+- **Font**: Inter (Google Fonts)
+- **Scale**: Accessible sizing for 50-60+ users
+- **Contrast**: WCAG AA compliant
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+### Components
+- **Buttons**: Gradient backgrounds with hover effects
+- **Form inputs**: Large touch targets (50px min height)
+- **Calendar**: Grid-based with weekend highlighting
+- **Cards**: Elevated with subtle shadows
+
+## Accessibility Features
+
+- ✅ **Keyboard Navigation**: Full keyboard support
+- ✅ **Screen Readers**: Proper ARIA labels and landmarks
+- ✅ **High Contrast**: WCAG AA compliant color combinations
+- ✅ **Large Targets**: 44px minimum touch target size
+- ✅ **Focus Indicators**: Visible focus states
+- ✅ **Responsive Text**: Scales appropriately on mobile
+
+## Browser Support
+
+- ✅ Modern browsers (Chrome, Firefox, Safari, Edge)
+- ✅ Mobile browsers (iOS Safari, Android Chrome)
+- ✅ CSS Grid and Flexbox support required
+
+## License
+
+Private project for Ok's House vacation rental system.
