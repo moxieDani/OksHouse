@@ -16,7 +16,25 @@ class ReservationBase(BaseModel):
 
 class ReservationCreate(ReservationBase):
     """예약 생성 스키마"""
-    pass
+    password: Optional[str] = Field(None, min_length=4, description="예약자 비밀번호")
+
+
+class ReservationWithAuth(BaseModel):
+    """예약 인증 스키마"""
+    name: str = Field(..., min_length=1, description="예약자명")
+    phone: str = Field(..., min_length=1, description="연락처")
+    password: str = Field(..., min_length=4, description="예약자 비밀번호")
+
+
+class ReservationDelete(ReservationWithAuth):
+    """예약 삭제 스키마"""
+    reservation_id: int = Field(..., description="예약 ID")
+
+
+class AdminStatusUpdate(BaseModel):
+    """관리자 상태 업데이트 스키마"""
+    status: str = Field(..., pattern="^(pending|confirmed|denied)$", description="예약상태")
+    admin_name: str = Field(..., min_length=1, description="관리자명")
 
 
 class ReservationUpdate(BaseModel):
@@ -28,8 +46,21 @@ class ReservationResponse(ReservationBase):
     """예약 응답 스키마"""
     id: int
     status: str = Field(..., description="예약상태: pending(예약신청), confirmed(예약확정), denied(예약거부)")
+    confirmed_by: Optional[int] = Field(None, description="확정 관리자 ID")
     created_at: datetime
     updated_at: datetime
     
     class Config:
         from_attributes = True
+
+
+class MonthlyReservationsQuery(BaseModel):
+    """월별 예약 조회 스키마"""
+    year: str = Field(..., pattern="^[0-9]{4}$", description="년도 (YYYY)")
+    month: str = Field(..., pattern="^(0[1-9]|1[0-2])$", description="월 (MM)")
+
+
+class ReservationVerifyResponse(BaseModel):
+    """예약 인증 응답 스키마"""
+    reservation_id: Optional[int] = Field(None, description="인증된 예약 ID")
+    verified: bool = Field(..., description="인증 성공 여부")
