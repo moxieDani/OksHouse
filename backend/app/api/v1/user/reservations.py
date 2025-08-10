@@ -1,0 +1,67 @@
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List
+
+from app.db.database import get_async_db
+from app.services.extended_reservation_service import ExtendedReservationService
+from app.schemas.reservation import (
+    ReservationCreate, ReservationResponse, MonthlyReservationsQuery,
+    ReservationDelete
+)
+
+router = APIRouter()
+
+
+@router.get("/monthly/{year}/{month}", response_model=List[ReservationResponse])
+async def get_monthly_reservations(
+    year: str,
+    month: str,
+    db: Session = Depends(get_async_db)
+):
+    """특정 년/월 예약 조회 (1번 기능) - 사용자용"""
+    if not year.isdigit() or len(year) != 4:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="년도는 4자리 숫자여야 합니다."
+        )
+    
+    if not month.isdigit() or int(month) < 1 or int(month) > 12:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="월은 01-12 사이의 값이어야 합니다."
+        )
+    
+    # 월을 2자리로 포맷팅
+    month = f"{int(month):02d}"
+    
+    return await ExtendedReservationService.get_reservations_by_month(db, year, month)
+
+
+@router.post("/", response_model=ReservationResponse, status_code=status.HTTP_201_CREATED)
+async def create_reservation_with_password(
+    reservation: ReservationCreate,
+    db: Session = Depends(get_async_db)
+):
+    """비밀번호를 포함한 예약 생성 (2번 기능) - 사용자용"""
+    return await ExtendedReservationService.add_reservation_with_password(db=db, reservation=reservation)
+
+
+@router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_reservation_with_auth(
+    delete_request: ReservationDelete,
+    db: Session = Depends(get_async_db)
+):
+    """인증을 통한 예약 삭제 (5번 기능) - 사용자용"""
+    success = await ExtendedReservationService.delete_reservation_with_auth(
+        db,
+        delete_request.reservation_id,
+        delete_request.name,
+        delete_request.phone,
+        delete_request.password
+    )
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="예약 정보가 일치하지 않거나 권한이 없습니다."
+        )

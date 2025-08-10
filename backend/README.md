@@ -80,32 +80,30 @@ python -m uvicorn app.main:app --reload
 
 ## API 엔드포인트
 
-### 기본 예약 관리
+### 구조화된 API 엔드포인트
 
-- `POST /api/v1/reservations/` - 새 예약 생성
+#### 사용자 API (`/api/v1/user/`)
+- `POST /api/v1/user/reservations/` - 비밀번호를 포함한 예약 생성 (2번 기능)
+- `GET /api/v1/user/reservations/monthly/{year}/{month}` - 특정 년/월 예약 조회 (1번 기능)
+- `DELETE /api/v1/user/reservations/` - 인증을 통한 예약 삭제 (5번 기능)
+- `POST /api/v1/user/auth/verify` - 오늘 날짜 기준 예약자 인증 (3번 기능)
+
+#### 관리자 API (`/api/v1/admin/`)
+- `PATCH /api/v1/admin/reservations/{id}/status` - 관리자 예약 상태 변경 (6번 기능)
+- `POST /api/v1/admin/admins/` - 새 관리자 생성
+- `GET /api/v1/admin/admins/{name}` - 관리자 정보 조회
+- `GET /api/v1/admin/admins/exists/{name}` - 관리자 존재 여부 확인 (7번 기능)
+
+#### 공개 API (`/api/v1/public/`)
+- `GET /api/v1/public/` - 기본 정보
+- `GET /api/v1/public/health` - 헬스 체크
+
+#### 레거시 API (하위 호환성)
+- `POST /api/v1/reservations/` - 새 예약 생성 (기본 기능)
 - `GET /api/v1/reservations/` - 예약 목록 조회
 - `GET /api/v1/reservations/{id}` - 특정 예약 조회
 - `PATCH /api/v1/reservations/{id}/status` - 예약 상태 업데이트
 - `DELETE /api/v1/reservations/{id}` - 예약 삭제
-
-### 확장 예약 관리 (test.py 기반)
-
-- `GET /api/v1/reservations-extended/monthly/{year}/{month}` - 특정 년/월 예약 조회 (1번 기능)
-- `POST /api/v1/reservations-extended/with-password` - 비밀번호를 포함한 예약 추가 (2번 기능)
-- `POST /api/v1/reservations-extended/verify` - 오늘 날짜 기준 예약자 인증 (3번 기능)
-- `DELETE /api/v1/reservations-extended/auth-delete` - 인증을 통한 예약 삭제 (5번 기능)
-- `PATCH /api/v1/reservations-extended/{id}/admin-status` - 관리자 예약 상태 변경 (6번 기능)
-
-### 관리자 관리
-
-- `POST /api/v1/admins/` - 새 관리자 생성
-- `GET /api/v1/admins/{name}` - 관리자 정보 조회
-- `GET /api/v1/admins/exists/{name}` - 관리자 존재 여부 확인 (7번 기능)
-
-### 헬스 체크
-
-- `GET /` - 기본 정보
-- `GET /health` - 헬스 체크
 
 ## 테스트 실행
 

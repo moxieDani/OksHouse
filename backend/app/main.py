@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
-    description="Ok's House 별장 예약시스템 Backend API (Async)",
+    description="Ok's House 별장 예약시스템 Backend API (Structured)",
     lifespan=lifespan
 )
 
@@ -31,15 +31,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# API 라우터 포함
+# API 라우터 포함 - 구조화된 라우팅
 app.include_router(api_router, prefix="/api/v1")
-
-
-@app.get("/")
-async def root():
-    return {"message": "Ok's House 별장 예약시스템 API", "version": settings.app_version}
-
-
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy", "async": True}

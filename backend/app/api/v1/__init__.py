@@ -1,9 +1,15 @@
 from fastapi import APIRouter
-from .reservations import router as reservations_router
-from .extended_reservations import router as extended_reservations_router
-from .admins import router as admins_router
+from .user import user_router
+from .admin import admin_router
+from .public import public_router
+from .reservations import router as legacy_reservations_router
 
 api_router = APIRouter()
-api_router.include_router(reservations_router, prefix="/reservations", tags=["reservations"])
-api_router.include_router(extended_reservations_router, prefix="/reservations-extended", tags=["extended-reservations"])
-api_router.include_router(admins_router, prefix="/admins", tags=["admins"])
+
+# New structured API routes
+api_router.include_router(user_router, prefix="/user")
+api_router.include_router(admin_router, prefix="/admin")
+api_router.include_router(public_router, prefix="/public")
+
+# Legacy routes for backward compatibility (deprecated)
+api_router.include_router(legacy_reservations_router, prefix="/reservations", tags=["legacy-reservations"])
