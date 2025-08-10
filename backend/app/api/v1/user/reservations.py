@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.db.database import get_async_db
-from app.services.extended_reservation_service import ExtendedReservationService
+from app.services.reservation_service import ReservationService
 from app.schemas.reservation import (
     ReservationCreate, ReservationResponse, MonthlyReservationsQuery,
     ReservationDelete
@@ -34,7 +34,7 @@ async def get_monthly_reservations(
     # 월을 2자리로 포맷팅
     month = f"{int(month):02d}"
     
-    return await ExtendedReservationService.get_reservations_by_month(db, year, month)
+    return await ReservationService.get_reservations_by_month(db, year, month)
 
 
 @router.post("/", response_model=ReservationResponse, status_code=status.HTTP_201_CREATED)
@@ -43,7 +43,7 @@ async def create_reservation_with_password(
     db: Session = Depends(get_async_db)
 ):
     """비밀번호를 포함한 예약 생성 (2번 기능) - 사용자용"""
-    return await ExtendedReservationService.add_reservation_with_password(db=db, reservation=reservation)
+    return await ReservationService.add_reservation_with_password(db=db, reservation=reservation)
 
 
 @router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
@@ -52,7 +52,7 @@ async def delete_reservation_with_auth(
     db: Session = Depends(get_async_db)
 ):
     """인증을 통한 예약 삭제 (5번 기능) - 사용자용"""
-    success = await ExtendedReservationService.delete_reservation_with_auth(
+    success = await ReservationService.delete_reservation_with_auth(
         db,
         delete_request.reservation_id,
         delete_request.name,

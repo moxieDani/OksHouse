@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db.database import get_async_db
-from app.services.extended_reservation_service import ExtendedReservationService
+from app.services.reservation_service import ReservationService
 from app.schemas.reservation import AdminStatusUpdate, ReservationResponse
 
 router = APIRouter()
@@ -15,7 +15,7 @@ async def update_reservation_status(
     db: Session = Depends(get_async_db)
 ):
     """관리자 예약 상태 변경 (6번 기능) - 관리자 전용"""
-    reservation = await ExtendedReservationService.update_reservation_status_by_admin(
+    reservation = await ReservationService.update_reservation_status_by_admin(
         db, reservation_id, status_update
     )
     

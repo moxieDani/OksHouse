@@ -37,9 +37,6 @@ class AdminStatusUpdate(BaseModel):
     admin_name: str = Field(..., min_length=1, description="관리자명")
 
 
-class ReservationUpdate(BaseModel):
-    """예약 업데이트 스키마"""
-    status: str = Field(..., pattern="^(pending|confirmed|denied)$", description="예약상태")
 
 
 class ReservationResponse(ReservationBase):
@@ -54,10 +51,6 @@ class ReservationResponse(ReservationBase):
         from_attributes = True
 
 
-class MonthlyReservationsQuery(BaseModel):
-    """월별 예약 조회 스키마"""
-    year: str = Field(..., pattern="^[0-9]{4}$", description="년도 (YYYY)")
-    month: str = Field(..., pattern="^(0[1-9]|1[0-2])$", description="월 (MM)")
 
 
 class ReservationVerifyResponse(BaseModel):

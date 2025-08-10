@@ -98,12 +98,6 @@ python -m uvicorn app.main:app --reload
 - `GET /api/v1/public/` - 기본 정보
 - `GET /api/v1/public/health` - 헬스 체크
 
-#### 레거시 API (하위 호환성)
-- `POST /api/v1/reservations/` - 새 예약 생성 (기본 기능)
-- `GET /api/v1/reservations/` - 예약 목록 조회
-- `GET /api/v1/reservations/{id}` - 특정 예약 조회
-- `PATCH /api/v1/reservations/{id}/status` - 예약 상태 업데이트
-- `DELETE /api/v1/reservations/{id}` - 예약 삭제
 
 ## 테스트 실행
 
