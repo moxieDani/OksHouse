@@ -158,3 +158,58 @@ class ReservationService:
             return reservation
         
         return await loop.run_in_executor(None, sync_admin_update)
+    
+    @staticmethod
+    async def get_all_reservations_by_month_admin(db: Session, year: str, month: str) -> List[Reservation]:
+        """관리자용 특정 년/월 모든 예약 조회 (8번 기능) - 상태 무관"""
+        loop = asyncio.get_event_loop()
+        
+        def sync_get_all_monthly():
+            year_int = int(year)
+            month_int = int(month)
+            
+            # 해당 월의 첫째 날과 마지막 날
+            first_day = date(year_int, month_int, 1)
+            if month_int == 12:
+                last_day = date(year_int + 1, 1, 1)
+            else:
+                last_day = date(year_int, month_int + 1, 1)
+            
+            # 관리자는 모든 상태의 예약을 볼 수 있음
+            return db.query(Reservation).filter(
+                or_(
+                    # 체크인 날짜가 해당 월에 포함
+                    and_(
+                        extract('year', Reservation.start_date) == year_int,
+                        extract('month', Reservation.start_date) == month_int
+                    ),
+                    # 체크아웃 날짜가 해당 월에 포함
+                    and_(
+                        extract('year', Reservation.end_date) == year_int,
+                        extract('month', Reservation.end_date) == month_int
+                    ),
+                    # 예약 기간이 해당 월을 포함
+                    and_(
+                        Reservation.start_date <= last_day,
+                        Reservation.end_date >= first_day
+                    )
+                )
+            ).order_by(Reservation.start_date).all()
+        
+        result = await loop.run_in_executor(None, sync_get_all_monthly)
+        return list(result)
+    
+    @staticmethod
+    async def delete_reservation_by_admin(db: Session, reservation_id: int) -> bool:
+        """관리자용 예약 삭제 (9번 기능) - 인증 없이 삭제 가능"""
+        loop = asyncio.get_event_loop()
+        
+        def sync_admin_delete():
+            reservation = db.query(Reservation).filter(Reservation.id == reservation_id).first()
+            if reservation:
+                db.delete(reservation)
+                db.commit()
+                return True
+            return False
+        
+        return await loop.run_in_executor(None, sync_admin_delete)

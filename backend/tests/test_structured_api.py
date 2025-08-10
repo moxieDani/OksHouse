@@ -236,6 +236,91 @@ class TestAdminAPI:
             # 관리자가 자동 생성되었는지 확인
             admin_check = await ac.get("/api/v1/admin/admins/exists/확인관리자")
             assert admin_check.json()["exists"] is True
+    
+    @pytest.mark.asyncio
+    async def test_admin_get_all_monthly_reservations(self):
+        """관리자용 월별 모든 예약 조회 테스트 (8번 기능)"""
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            # 여러 상태의 예약 생성
+            reservations = [
+                {
+                    "name": "관리자조회1",
+                    "phone": "010-1111-1111",
+                    "start_date": "2024-12-01",
+                    "end_date": "2024-12-03",
+                    "duration": 2,
+                    "guests": 2,
+                    "password": "admin1"
+                },
+                {
+                    "name": "관리자조회2", 
+                    "phone": "010-2222-2222",
+                    "start_date": "2024-12-10",
+                    "end_date": "2024-12-12",
+                    "duration": 2,
+                    "guests": 3,
+                    "password": "admin2"
+                }
+            ]
+            
+            reservation_ids = []
+            for res_data in reservations:
+                create_response = await ac.post("/api/v1/user/reservations/", json=res_data)
+                reservation_ids.append(create_response.json()["id"])
+            
+            # 첫 번째 예약을 확정 상태로 변경
+            status_update = {
+                "status": "confirmed",
+                "admin_name": "테스트관리자"
+            }
+            await ac.patch(f"/api/v1/admin/reservations/{reservation_ids[0]}/status", json=status_update)
+            
+            # 두 번째 예약을 거부 상태로 변경
+            status_update["status"] = "denied"
+            await ac.patch(f"/api/v1/admin/reservations/{reservation_ids[1]}/status", json=status_update)
+            
+            # 관리자용 월별 조회 (모든 상태 포함)
+            admin_response = await ac.get("/api/v1/admin/reservations/monthly/2024/12")
+            assert admin_response.status_code == 200
+            admin_reservations = admin_response.json()
+            assert len(admin_reservations) == 2
+            
+            # 상태가 다른 예약들이 모두 조회되는지 확인
+            statuses = [res["status"] for res in admin_reservations]
+            assert "confirmed" in statuses
+            assert "denied" in statuses
+    
+    @pytest.mark.asyncio
+    async def test_admin_delete_reservation(self):
+        """관리자용 예약 삭제 테스트 (9번 기능)"""
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            # 예약 생성
+            reservation_data = {
+                "name": "관리자삭제테스트",
+                "phone": "010-8888-9999",
+                "start_date": "2024-12-30",
+                "end_date": "2025-01-01",
+                "duration": 2,
+                "guests": 4,
+                "password": "admin_delete"
+            }
+            
+            create_response = await ac.post("/api/v1/user/reservations/", json=reservation_data)
+            reservation_id = create_response.json()["id"]
+            
+            # 관리자가 예약 삭제 (인증 없이)
+            delete_response = await ac.delete(f"/api/v1/admin/reservations/{reservation_id}")
+            assert delete_response.status_code == 204
+            
+            # 삭제된 예약이 조회되지 않는지 확인
+            monthly_response = await ac.get("/api/v1/admin/reservations/monthly/2024/12")
+            reservations = monthly_response.json()
+            reservation_ids = [res["id"] for res in reservations]
+            assert reservation_id not in reservation_ids
+            
+            # 존재하지 않는 예약 삭제 시도
+            not_found_response = await ac.delete(f"/api/v1/admin/reservations/99999")
+            assert not_found_response.status_code == 404
 
 
 class TestAPIStructure:

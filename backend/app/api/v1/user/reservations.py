@@ -5,7 +5,7 @@ from typing import List
 from app.db.database import get_async_db
 from app.services.reservation_service import ReservationService
 from app.schemas.reservation import (
-    ReservationCreate, ReservationResponse, MonthlyReservationsQuery,
+    ReservationCreate, ReservationResponse,
     ReservationDelete
 )
 
