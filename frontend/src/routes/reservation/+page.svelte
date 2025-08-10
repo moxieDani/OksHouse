@@ -21,12 +21,17 @@
 		resetReservation,
 		updateReservationData 
 	} from '$lib/stores/reservation.js';
+	import { userAPI } from '$lib/services/api.js';
 
 	let calendarComponent;
 	let isModificationMode = false;
 	let modificationData = null;
 	let currentMonth = new Date().getMonth();
 	let currentYear = new Date().getFullYear();
+	
+	// Existing reservations for blocking dates
+	let existingReservations = [];
+	let isLoadingReservations = false;
 	
 	// FeedbackManager state
 	let showFeedback = false;
@@ -42,6 +47,11 @@
 	
 	// Reactive date range display for Step 2
 	$: step2DateRangeText = formatStep2DateRange(startDate, duration);
+	
+	// Load reservations when entering step 2 or when month/year changes
+	$: if (currentStep === 2) {
+		loadMonthlyReservations(currentYear, currentMonth);
+	}
 	
 
 	onMount(() => {
@@ -69,6 +79,11 @@
 		} else {
 			// Force reset to normal reservation mode
 			resetToNormalMode();
+		}
+		
+		// If we're on step 2, load current month's reservations
+		if ($reservationState.currentStep === 2) {
+			loadMonthlyReservations(currentYear, currentMonth);
 		}
 	});
 	
@@ -134,6 +149,52 @@
 		}
 		
 		nextStep();
+	}
+
+	// Load existing reservations for the current month
+	async function loadMonthlyReservations(year, month) {
+		// Convert JavaScript 0-based month to 1-based month for API
+		const apiMonth = month + 1;
+		const cacheKey = `${year}-${apiMonth}`;
+		
+		// Skip if already loading the same month
+		if (isLoadingReservations) return;
+		
+		try {
+			isLoadingReservations = true;
+			
+			const reservations = await userAPI.getMonthlyReservations(year, apiMonth);
+			existingReservations = reservations || [];
+		} catch (error) {
+			existingReservations = [];
+		} finally {
+			isLoadingReservations = false;
+		}
+	}
+
+	// Handle calendar month changes to load new data
+	function handleMonthChange(event) {
+		const { month, year } = event.detail;
+		currentMonth = month;
+		currentYear = year;
+		
+		// Force reload reservations for the new month
+		if (currentStep === 2) {
+			isLoadingReservations = false; // Reset loading state
+			loadMonthlyReservations(year, month);
+		}
+	}
+
+	// Handle blocked date clicks
+	function handleBlockedDateClick(event) {
+		const { message } = event.detail;
+		showAlert(message, 'warning');
+	}
+
+	// Handle conflict detection
+	function handleConflictDetected(event) {
+		const { message } = event.detail;
+		showAlert(message, 'warning');
 	}
 
 	function handlePrev() {
@@ -342,7 +403,13 @@
 			{step2DateRangeText}
 		</div>
 		
-		{#key `${$reservationState.duration}-${$reservationState.startDate?.getTime() || 'none'}-${currentMonth}-${currentYear}`}
+		{#if isLoadingReservations}
+			<div class="loading-indicator">
+				<p>🔄 예약 정보를 불러오는 중...</p>
+			</div>
+		{/if}
+		
+		{#key `${$reservationState.duration}-${$reservationState.startDate?.getTime() || 'none'}-${currentMonth}-${currentYear}-${isLoadingReservations}-${JSON.stringify(existingReservations)}`}
 			<Calendar 
 				bind:this={calendarComponent}
 				selectedDate={$reservationState.startDate}
@@ -350,13 +417,14 @@
 				{isModificationMode}
 				bind:currentMonth={currentMonth}
 				bind:currentYear={currentYear}
+				{existingReservations}
 				on:dateSelect={(e) => {
 					// Update the store - this will automatically update startDate via reactive statement
 					updateReservationData({ startDate: e.detail });
 				}}
-				on:monthChange={() => {
-					// Month and year are automatically synced via bind
-				}}
+				on:monthChange={handleMonthChange}
+				on:blockedDateClick={handleBlockedDateClick}
+				on:conflictDetected={handleConflictDetected}
 			/>
 		{/key}
 
@@ -564,6 +632,26 @@
 	.reservation-details :global(p) {
 		margin-bottom: var(--space-2);
 		color: var(--neutral-600);
+	}
+
+	.loading-indicator {
+		text-align: center;
+		padding: var(--space-4);
+		color: var(--primary);
+		font-weight: 500;
+		background: rgba(67, 56, 202, 0.05);
+		border-radius: var(--radius-lg);
+		margin-bottom: var(--space-4);
+	}
+
+	.loading-indicator p {
+		margin: 0;
+		animation: pulse 1.5s ease-in-out infinite;
+	}
+
+	@keyframes pulse {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.5; }
 	}
 
 	.personal-info-form {
