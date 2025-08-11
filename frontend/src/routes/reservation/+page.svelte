@@ -21,7 +21,7 @@
 		resetReservation,
 		updateReservationData 
 	} from '$lib/stores/reservation.js';
-	import { userAPI } from '$lib/services/api.js';
+	import { userAPI, formatDateForAPI } from '$lib/services/api.js';
 
 	let calendarComponent;
 	let isModificationMode = false;
@@ -219,7 +219,7 @@
 		prevStep();
 	}
 
-	function handleComplete() {
+	async function handleComplete() {
 		if (isModificationMode) {
 			// For modifications, we don't need to validate personal info again
 			if (!startDate) {
@@ -267,17 +267,39 @@
 			return;
 		}
 
-		const endDate = new Date(startDate);
-		endDate.setDate(startDate.getDate() + duration);
-		
-		showSuccess(
-			'🎉 예약 완료!',
-			`예약이 성공적으로 저장되었습니다.<br><br>예약자: ${name}<br>체크인: ${formatKoreanDate(startDate)}<br>체크아웃: ${formatKoreanDate(endDate)}<br>기간: ${duration}박 ${duration + 1}일`,
-			() => {
-				resetReservation();
-				goto('/');
-			}
-		);
+		// Create reservation via API
+		try {
+			const endDate = new Date(startDate);
+			endDate.setDate(startDate.getDate() + duration);
+			
+			const reservationData = {
+				name: name.trim(),
+				phone: phone.trim(),
+				start_date: formatDateForAPI(startDate),
+				end_date: formatDateForAPI(endDate),
+				duration: duration,
+				guests: 1, // Default to 1 guest
+				purpose: null,
+				password: password
+			};
+			
+			const response = await userAPI.createReservation(reservationData);
+			
+			showSuccess(
+				'🎉 예약 완료!',
+				`예약이 성공적으로 저장되었습니다.<br><br>예약자: ${name}<br>체크인: ${formatKoreanDate(startDate)}<br>체크아웃: ${formatKoreanDate(endDate)}<br>기간: ${duration}박 ${duration + 1}일<br>예약번호: ${response.id}`,
+				() => {
+					// Clear existing reservations cache to force reload
+					existingReservations = [];
+					resetReservation();
+					goto('/');
+				}
+			);
+		} catch (error) {
+			console.error('Reservation creation failed:', error);
+			const errorMessage = error.message || '알 수 없는 오류가 발생했습니다.';
+			showAlert(`예약 저장에 실패했습니다: ${errorMessage}`, 'error');
+		}
 	}
 
 	// 사용자 대면 날짜 포매팅 유틸리티
