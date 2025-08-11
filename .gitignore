@@ -226,7 +226,6 @@ backtests/results/
 analysis/output/
 
 # Model files (if using ML)
-models/
 *.pkl
 *.joblib
 *.model
