@@ -10,6 +10,7 @@
 	import StepIndicator from '$lib/components/StepIndicator.svelte';
 	import Calendar from '$lib/components/Calendar.svelte';
 	import FeedbackManager from '$lib/components/FeedbackManager.svelte';
+	import { userAPI } from '$lib/services/api.js';
 
 	let currentStep = 1;
 	let authName = '';
@@ -18,6 +19,7 @@
 	let reservations = [];
 	let selectedReservation = null;
 	let calendar;
+	let authenticatedReservationId = null; // Store the authenticated reservation ID
 
 	// FeedbackManager state
 	let showFeedback = false;
@@ -92,18 +94,50 @@
 		}
 	});
 
-	function handleNext() {
+	async function handleNext() {
 		if (currentStep === 1) {
 			if (!validateAuthInfo()) return;
 			
-			const userReservations = findUserReservations();
-			if (userReservations.length === 0) {
-				showAlert('일치하는 예약 정보를 찾을 수 없습니다.', 'warning');
-				return;
+			try {
+				// Show loading state
+				const originalButtonText = '확인';
+				const confirmButton = document.querySelector('.btn:not(.btn-back)');
+				if (confirmButton) {
+					confirmButton.textContent = '확인 중...';
+					confirmButton.disabled = true;
+				}
+
+				// Call API to verify user authentication
+				const authData = {
+					name: authName.trim(),
+					phone: authPhone.trim(),
+					password: password.trim()
+				};
+
+				const response = await userAPI.verifyReservation(authData);
+				
+				if (response.verified && response.reservation_id) {
+					// Authentication successful, store the authenticated reservation ID
+					authenticatedReservationId = response.reservation_id;
+					currentStep = 2;
+					await loadUserReservations();
+				} else {
+					// Authentication failed
+					showAlert('입력하신 정보와 일치하는 예약을 찾을 수 없습니다. 이름, 전화번호, 비밀번호를 다시 확인해주세요.', 'warning');
+				}
+
+			} catch (error) {
+				console.error('Authentication failed:', error);
+				const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';
+				showAlert(`인증 중 오류가 발생했습니다: ${errorMessage}`, 'error');
+			} finally {
+				// Restore button state
+				const confirmButton = document.querySelector('.btn:not(.btn-back)');
+				if (confirmButton) {
+					confirmButton.textContent = '확인';
+					confirmButton.disabled = false;
+				}
 			}
-			
-			currentStep = 2;
-			loadUserReservations();
 		}
 	}
 
@@ -166,18 +200,37 @@
 		return '예약신청'; // default
 	}
 
-	function loadUserReservations() {
-		const userReservations = findUserReservations();
-		reservations = userReservations;
-		
-		if (reservations.length > 0) {
-			// Use longer timeout to ensure calendar is properly initialized
-			setTimeout(() => selectReservation(reservations[0].id), 300);
+	async function loadUserReservations() {
+		try {
+			// Fetch all reservations for the authenticated user
+			const userReservations = await userAPI.getUserReservations(authName.trim(), authPhone.trim());
+			
+			// Convert API date strings to Date objects ensuring local timezone
+			reservations = userReservations.map(reservation => {
+				// Parse dates as local timezone to avoid UTC conversion issues
+				const startParts = reservation.start_date.split('-');
+				const endParts = reservation.end_date.split('-');
+				
+				return {
+					...reservation,
+					startDate: new Date(parseInt(startParts[0]), parseInt(startParts[1]) - 1, parseInt(startParts[2])),
+					endDate: new Date(parseInt(endParts[0]), parseInt(endParts[1]) - 1, parseInt(endParts[2]))
+				};
+			});
+			
+			// Auto-select the first reservation if available
+			if (reservations.length > 0) {
+				setTimeout(() => selectReservation(reservations[0].id), 300);
+			}
+		} catch (error) {
+			console.error('Failed to load user reservations:', error);
+			showAlert('예약 목록을 불러오는 중 오류가 발생했습니다.', 'error');
+			reservations = [];
 		}
 	}
 
 	function selectReservation(reservationId) {
-		selectedReservation = mockReservations.find(res => res.id === reservationId);
+		selectedReservation = reservations.find(res => res.id === reservationId);
 		
 		if (selectedReservation && calendar) {
 			calendar.navigateToDate(selectedReservation.startDate);
@@ -239,10 +292,17 @@
 		return `${year}.${month.toString().padStart(2, '0')}.${day.toString().padStart(2, '0')} (${weekday})`;
 	}
 
+	// Calculate duration in days between start and end dates for calendar highlighting
+	function calculateDurationInDays(startDate, endDate) {
+		if (!startDate || !endDate) return 0;
+		const timeDiff = endDate.getTime() - startDate.getTime();
+		return Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+	}
+
 	// 예약 카드 데이터 처리 - 성능 최적화
 	function createReservationCard(reservation) {
-		const endDate = new Date(reservation.startDate);
-		endDate.setDate(reservation.startDate.getDate() + reservation.duration);
+		// API에서 이미 endDate를 제공하므로 계산하지 않음
+		const endDate = reservation.endDate || new Date(reservation.startDate.getTime() + reservation.duration * 24 * 60 * 60 * 1000);
 		
 		return {
 			...reservation,
@@ -365,8 +425,12 @@
 {#if currentStep === 2}
 	<div class="step">
 		<h3><span class="emoji-normal">📊</span> 2단계: 예약 현황 확인</h3>
+		<div class="auth-success-message">
+			<p>✅ <strong>{authName}</strong>님, 인증이 완료되었습니다!</p>
+			<p class="auth-details">예약 ID: {authenticatedReservationId} | 연락처: {authPhone}</p>
+		</div>
 		<p class="step-description">
-			아래 예약 목록에서 변경 또는 취소할 예약을 선택해주세요.
+			현재 이용 중이거나 향후 예정된 예약을 확인하실 수 있습니다.
 		</p>
 		
 		<!-- 달력 보기 -->
@@ -375,7 +439,7 @@
 				bind:this={calendar}
 				readOnly={true}
 				selectedDate={selectedReservation?.startDate}
-				duration={selectedReservation?.duration || 0}
+				duration={selectedReservation ? calculateDurationInDays(selectedReservation.startDate, selectedReservation.endDate) : 0}
 			/>
 		</div>
 		
@@ -475,6 +539,28 @@
 		color: var(--neutral-600);
 		margin-bottom: var(--space-6);
 		line-height: 1.6;
+	}
+
+	.auth-success-message {
+		background: rgba(16, 185, 129, 0.1);
+		border: 1px solid rgba(16, 185, 129, 0.3);
+		border-radius: var(--radius-lg);
+		padding: var(--space-4);
+		margin-bottom: var(--space-4);
+		text-align: center;
+	}
+
+	.auth-success-message p {
+		margin: 0;
+		color: var(--success);
+		font-weight: 500;
+	}
+
+	.auth-success-message .auth-details {
+		font-size: var(--text-sm);
+		color: var(--neutral-600);
+		margin-top: var(--space-2);
+		font-weight: 400;
 	}
 
 	.calendar-view {

@@ -169,8 +169,8 @@
 		const dateTime = date.getTime();
 		const startTime = selectedDate.getTime();
 		const endTime = selectedDate.getTime() + (duration * 24 * 60 * 60 * 1000);
-		// Include the checkout day in the range (use <= for end)
-		return dateTime > startTime && dateTime <= endTime;
+		// Include both checkin and checkout days in the range
+		return dateTime >= startTime && dateTime <= endTime;
 	}
 	
 	function isDisabled(date) {

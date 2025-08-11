@@ -80,16 +80,15 @@ class ReservationService:
     
     @staticmethod
     async def verify_reservation(db: Session, auth: ReservationWithAuth) -> Optional[int]:
-        """오늘 날짜 기준 예약자 인증 (3번 기능)"""
+        """예약자 인증 - 해당 사용자의 모든 유효한 예약 확인 (예약 관리용)"""
         loop = asyncio.get_event_loop()
         
         def sync_verify():
-            today = date.today()
+            # 해당 사용자의 모든 예약을 조회 (취소되지 않은 예약)
             reservations = db.query(Reservation).filter(
                 Reservation.name == auth.name,
                 Reservation.phone == auth.phone,
-                Reservation.start_date <= today,
-                Reservation.end_date >= today
+                Reservation.status.in_(["pending", "confirmed"])  # 유효한 예약만
             ).all()
             
             for reservation in reservations:
@@ -213,3 +212,18 @@ class ReservationService:
             return False
         
         return await loop.run_in_executor(None, sync_admin_delete)
+    
+    @staticmethod
+    async def get_user_reservations(db: Session, name: str, phone: str) -> List[Reservation]:
+        """사용자의 현재/미래 예약 조회 (이름, 전화번호 기준)"""
+        loop = asyncio.get_event_loop()
+        
+        def sync_get_user_reservations():
+            today = date.today()
+            return db.query(Reservation).filter(
+                Reservation.name == name,
+                Reservation.phone == phone,
+                Reservation.end_date >= today  # 체크아웃 날짜가 오늘 이후인 예약만
+            ).order_by(Reservation.start_date.asc()).all()
+        
+        return await loop.run_in_executor(None, sync_get_user_reservations)

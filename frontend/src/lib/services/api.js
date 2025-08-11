@@ -62,6 +62,26 @@ export const userAPI = {
 	async getMonthlyReservations(year, month) {
 		const formattedMonth = month.toString().padStart(2, '0');
 		return await apiRequest(`/user/reservations/monthly/${year}/${formattedMonth}`);
+	},
+
+	/**
+	 * Verify user authentication for reservation management
+	 */
+	async verifyReservation(authData) {
+		return await apiRequest('/user/auth/verify', {
+			method: 'POST',
+			body: JSON.stringify(authData)
+		});
+	},
+
+	/**
+	 * Get all reservations for a user (by name and phone)
+	 */
+	async getUserReservations(name, phone) {
+		return await apiRequest('/user/reservations/user', {
+			method: 'POST',
+			body: JSON.stringify({ name, phone })
+		});
 	}
 };
 

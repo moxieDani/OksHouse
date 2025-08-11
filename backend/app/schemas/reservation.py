@@ -57,3 +57,9 @@ class ReservationVerifyResponse(BaseModel):
     """예약 인증 응답 스키마"""
     reservation_id: Optional[int] = Field(None, description="인증된 예약 ID")
     verified: bool = Field(..., description="인증 성공 여부")
+
+
+class UserReservationsRequest(BaseModel):
+    """사용자 예약 목록 조회 요청 스키마"""
+    name: str = Field(..., min_length=1, description="예약자명")
+    phone: str = Field(..., min_length=1, description="연락처")

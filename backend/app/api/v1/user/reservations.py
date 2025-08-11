@@ -6,7 +6,7 @@ from app.db.database import get_async_db
 from app.services.reservation_service import ReservationService
 from app.schemas.reservation import (
     ReservationCreate, ReservationResponse,
-    ReservationDelete
+    ReservationDelete, UserReservationsRequest
 )
 
 router = APIRouter()
@@ -65,3 +65,16 @@ async def delete_reservation_with_auth(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="예약 정보가 일치하지 않거나 권한이 없습니다."
         )
+
+
+@router.post("/user", response_model=List[ReservationResponse])
+async def get_user_reservations(
+    user_request: UserReservationsRequest,
+    db: Session = Depends(get_async_db)
+):
+    """사용자의 모든 예약 조회 (이름, 전화번호 기준)"""
+    return await ReservationService.get_user_reservations(
+        db=db, 
+        name=user_request.name, 
+        phone=user_request.phone
+    )
