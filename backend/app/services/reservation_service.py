@@ -69,7 +69,7 @@ class ReservationService:
             
             db_reservation = Reservation(
                 **reservation_data,
-                password_hash=password_hash
+                password=password_hash
             )
             db.add(db_reservation)
             db.commit()
@@ -93,7 +93,7 @@ class ReservationService:
             ).all()
             
             for reservation in reservations:
-                if reservation.password_hash and verify_password(auth.password, reservation.password_hash):
+                if reservation.password and verify_password(auth.password, reservation.password):
                     return reservation.id
             return None
         
@@ -117,10 +117,10 @@ class ReservationService:
                 Reservation.phone == phone
             ).first()
             
-            if not reservation or not reservation.password_hash:
+            if not reservation or not reservation.password:
                 return False
             
-            if not verify_password(password, reservation.password_hash):
+            if not verify_password(password, reservation.password):
                 return False
             
             db.delete(reservation)
