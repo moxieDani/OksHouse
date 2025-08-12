@@ -21,6 +21,7 @@ class ReservationService:
         def sync_get_monthly():
             year_int = int(year)
             month_int = int(month)
+            today = date.today()
             
             # 해당 월의 첫째 날과 마지막 날
             first_day = date(year_int, month_int, 1)
@@ -31,6 +32,7 @@ class ReservationService:
             
             return db.query(Reservation).filter(
                 Reservation.status.in_(["confirmed", "pending"]),
+                Reservation.end_date >= today,  # 체크아웃 날짜가 오늘 이후인 예약만
                 or_(
                     # 체크인 날짜가 해당 월에 포함
                     and_(

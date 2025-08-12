@@ -82,6 +82,21 @@ export const userAPI = {
 			method: 'POST',
 			body: JSON.stringify({ name, phone })
 		});
+	},
+
+	/**
+	 * Delete a reservation with authentication
+	 */
+	async deleteReservation(reservationId, name, phone, password) {
+		return await apiRequest('/user/reservations/', {
+			method: 'DELETE',
+			body: JSON.stringify({
+				reservation_id: reservationId,
+				name,
+				phone,
+				password
+			})
+		});
 	}
 };
 

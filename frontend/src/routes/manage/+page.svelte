@@ -99,9 +99,9 @@
 			if (!validateAuthInfo()) return;
 			
 			try {
-				// Show loading state
+				// Show loading state - only target step 1 confirm button
 				const originalButtonText = '확인';
-				const confirmButton = document.querySelector('.btn:not(.btn-back)');
+				const confirmButton = currentStep === 1 ? document.querySelector('#step1-confirm-button') : null;
 				if (confirmButton) {
 					confirmButton.textContent = '확인 중...';
 					confirmButton.disabled = true;
@@ -131,8 +131,8 @@
 				const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';
 				showAlert(`인증 중 오류가 발생했습니다: ${errorMessage}`, 'error');
 			} finally {
-				// Restore button state
-				const confirmButton = document.querySelector('.btn:not(.btn-back)');
+				// Restore button state - only target step 1 confirm button
+				const confirmButton = currentStep === 1 ? document.querySelector('#step1-confirm-button') : null;
 				if (confirmButton) {
 					confirmButton.textContent = '확인';
 					confirmButton.disabled = false;
@@ -259,24 +259,42 @@
 		goto('/reservation');
 	}
 
-	function cancelSelectedReservation() {
+	async function cancelSelectedReservation() {
 		if (!selectedReservation) {
 			showAlert('취소할 예약을 선택해주세요.', 'warning');
 			return;
 		}
 
-		const endDate = new Date(selectedReservation.startDate);
-		endDate.setDate(selectedReservation.startDate.getDate() + selectedReservation.duration);
+		const endDate = selectedReservation.endDate || new Date(selectedReservation.startDate.getTime() + selectedReservation.duration * 24 * 60 * 60 * 1000);
 
 		showConfirm(
 			'이 예약을 취소하시겠습니까?',
 			`예약자: ${selectedReservation.name}<br>체크인: ${formatKoreanDate(selectedReservation.startDate)}<br>체크아웃: ${formatKoreanDate(endDate)}<br>기간: ${selectedReservation.duration}박 ${selectedReservation.duration + 1}일`,
-			() => {
-				showSuccess(
-					'👌🏻 예약 취소 완료!',
-					`${selectedReservation.name}님의 예약이 성공적으로 취소되었습니다.`,
-					() => goto('/')
-				);
+			async () => {
+				try {
+					// Call API to delete the reservation
+					await userAPI.deleteReservation(
+						selectedReservation.id,
+						authName.trim(),
+						authPhone.trim(),
+						password.trim()
+					);
+
+					// Show success message and reload reservations
+					showSuccess(
+						'👌🏻 예약 취소 완료!',
+						`${selectedReservation.name}님의 예약이 성공적으로 취소되었습니다.`,
+						async () => {
+							// Clear selection and reload reservations
+							selectedReservation = null;
+							await loadUserReservations();
+						}
+					);
+				} catch (error) {
+					console.error('Failed to delete reservation:', error);
+					const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';
+					showAlert(`예약 취소 중 오류가 발생했습니다: ${errorMessage}`, 'error');
+				}
 			}
 		);
 	}
@@ -416,7 +434,7 @@
 		</div>
 		<div class="button-container">
 			<button class="btn btn-back" on:click={handlePrev}>이전</button>
-			<button class="btn" on:click={handleNext}>확인</button>
+			<button id="step1-confirm-button" class="btn" on:click={handleNext}>확인</button>
 		</div>
 	</div>
 {/if}
@@ -425,12 +443,8 @@
 {#if currentStep === 2}
 	<div class="step">
 		<h3><span class="emoji-normal">📊</span> 2단계: 예약 현황 확인</h3>
-		<div class="auth-success-message">
-			<p>✅ <strong>{authName}</strong>님, 인증이 완료되었습니다!</p>
-			<p class="auth-details">예약 ID: {authenticatedReservationId} | 연락처: {authPhone}</p>
-		</div>
 		<p class="step-description">
-			현재 이용 중이거나 향후 예정된 예약을 확인하실 수 있습니다.
+			<strong>{authName}</strong>님의 예약을 확인하실 수 있습니다.
 		</p>
 		
 		<!-- 달력 보기 -->
@@ -539,28 +553,6 @@
 		color: var(--neutral-600);
 		margin-bottom: var(--space-6);
 		line-height: 1.6;
-	}
-
-	.auth-success-message {
-		background: rgba(16, 185, 129, 0.1);
-		border: 1px solid rgba(16, 185, 129, 0.3);
-		border-radius: var(--radius-lg);
-		padding: var(--space-4);
-		margin-bottom: var(--space-4);
-		text-align: center;
-	}
-
-	.auth-success-message p {
-		margin: 0;
-		color: var(--success);
-		font-weight: 500;
-	}
-
-	.auth-success-message .auth-details {
-		font-size: var(--text-sm);
-		color: var(--neutral-600);
-		margin-top: var(--space-2);
-		font-weight: 400;
 	}
 
 	.calendar-view {

@@ -437,6 +437,7 @@
 				selectedDate={$reservationState.startDate}
 				duration={$reservationState.duration}
 				{isModificationMode}
+				originalReservation={$reservationState.originalReservation}
 				bind:currentMonth={currentMonth}
 				bind:currentYear={currentYear}
 				{existingReservations}
@@ -447,6 +448,10 @@
 				on:monthChange={handleMonthChange}
 				on:blockedDateClick={handleBlockedDateClick}
 				on:conflictDetected={handleConflictDetected}
+				on:sameDatesSelected={(e) => {
+					const { message } = e.detail;
+					showAlert(message, 'warning');
+				}}
 			/>
 		{/key}
 

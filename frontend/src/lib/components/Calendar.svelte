@@ -13,6 +13,7 @@
 	export let currentMonth = new Date().getMonth();
 	export let currentYear = new Date().getFullYear();
 	export let existingReservations = [];
+	export let originalReservation = null; // 수정 중인 원본 예약 정보
 	
 	
 	
@@ -93,6 +94,16 @@
 				date: dayInfo.date, 
 				duration: duration,
 				message: '선택하신 기간에 이미 예약된 날짜가 포함되어 있습니다.' 
+			});
+			return;
+		}
+
+		// In modification mode, prevent selecting the same dates as original
+		if (isModificationMode && duration > 0 && isSameDatesAsOriginal(dayInfo.date, duration)) {
+			dispatch('sameDatesSelected', { 
+				date: dayInfo.date, 
+				duration: duration,
+				message: '기존 예약과 동일한 날짜입니다. 다른 날짜를 선택해주세요.' 
 			});
 			return;
 		}
@@ -177,20 +188,62 @@
 		return date < today;
 	}
 
+	// Check if a date is part of the original reservation being modified
+	function isOriginalReservation(date) {
+		if (!isModificationMode || !originalReservation) return false;
+		
+		const dateTime = date.getTime();
+		const originalStartDate = originalReservation.startDate instanceof Date 
+			? originalReservation.startDate 
+			: new Date(originalReservation.start_date + 'T00:00:00');
+		const originalEndDate = originalReservation.endDate instanceof Date
+			? originalReservation.endDate
+			: new Date(originalReservation.end_date + 'T00:00:00');
+		
+		return dateTime >= originalStartDate.getTime() && dateTime <= originalEndDate.getTime();
+	}
+
+	// Check if the selected dates are identical to original reservation
+	function isSameDatesAsOriginal(startDate, duration) {
+		if (!isModificationMode || !originalReservation || !startDate || !duration) return false;
+		
+		const newStartTime = startDate.getTime();
+		const newEndTime = startDate.getTime() + (duration * 24 * 60 * 60 * 1000);
+		
+		const originalStartDate = originalReservation.startDate instanceof Date 
+			? originalReservation.startDate 
+			: new Date(originalReservation.start_date + 'T00:00:00');
+		const originalEndDate = originalReservation.endDate instanceof Date
+			? originalReservation.endDate
+			: new Date(originalReservation.end_date + 'T00:00:00');
+		
+		return newStartTime === originalStartDate.getTime() && newEndTime === originalEndDate.getTime();
+	}
+
 	// Check if a date is blocked by existing reservations
 	function isBlocked(date) {
 		if (!existingReservations || existingReservations.length === 0) return false;
 		
+		// In modification mode, original reservation dates should not be blocked
+		if (isModificationMode && isOriginalReservation(date)) {
+			return false;
+		}
+		
 		const dateTime = date.getTime();
 		
 		return existingReservations.some(reservation => {
+			// Skip the original reservation being modified
+			if (isModificationMode && originalReservation && 
+				reservation.id === originalReservation.id) {
+				return false;
+			}
+			
 			const startDate = reservation.startDate instanceof Date 
 				? reservation.startDate 
 				: new Date(reservation.start_date + 'T00:00:00');
 			const endDate = reservation.endDate instanceof Date
 				? reservation.endDate
 				: new Date(reservation.end_date + 'T00:00:00');
-			
 			
 			// Check if date falls within existing reservation period (inclusive)
 			return dateTime >= startDate.getTime() && dateTime <= endDate.getTime();
@@ -226,6 +279,7 @@
 		if (isInRange(date)) classes.push('in-range');
 		if (isDisabled(date)) classes.push('disabled');
 		if (isBlocked(date)) classes.push('blocked');
+		if (isOriginalReservation(date)) classes.push('original-reservation');
 		if (dayOfWeek === 0) classes.push('sunday');
 		if (dayOfWeek === 6) classes.push('saturday');
 		if (isModificationMode) classes.push('modification');
@@ -275,7 +329,12 @@
 				on:click={() => handleDateClick(dayInfo)}
 				aria-label="{currentYear}년 {currentMonth + 1}월 {dayInfo.day}일"
 			>
-				{#if isBlocked(dayInfo.date)}
+				{#if isOriginalReservation(dayInfo.date)}
+					<span class="original-date-content">
+						<span class="original-indicator">📝</span>
+						<span class="original-day">{dayInfo.day}</span>
+					</span>
+				{:else if isBlocked(dayInfo.date)}
 					<span class="blocked-date-content">
 						<span class="blocked-x">✕</span>
 						<span class="blocked-day">{dayInfo.day}</span>
@@ -502,6 +561,59 @@
 		border-color: var(--error);
 	}
 
+	/* Original reservation styling - special highlighting for reservation being modified */
+	.calendar-day.original-reservation {
+		background: rgba(16, 185, 129, 0.15);
+		border-color: #10b981;
+		color: #059669;
+		position: relative;
+	}
+
+	.calendar-day.original-reservation:hover {
+		background: rgba(16, 185, 129, 0.25);
+		color: #059669;
+		transform: none;
+	}
+
+	/* Original reservation + Today styling */
+	.calendar-day.today.original-reservation {
+		background: var(--accent) !important;
+		border-color: #10b981;
+		color: #059669;
+		position: relative;
+	}
+
+	.calendar-day.today.original-reservation:hover {
+		background: var(--accent) !important;
+		color: #059669;
+		transform: none;
+	}
+
+	.original-date-content {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		height: 100%;
+	}
+
+	.original-indicator {
+		position: absolute;
+		font-size: var(--text-sm);
+		line-height: 1;
+		z-index: 2;
+		top: 2px;
+		right: 2px;
+	}
+
+	.original-day {
+		font-size: var(--text-base);
+		font-weight: 600;
+		color: #059669;
+		z-index: 1;
+	}
+
 	@media (max-width: 640px) {
 		.calendar-day {
 			font-size: var(--text-sm);
@@ -529,6 +641,14 @@
 		}
 
 		.blocked-day {
+			font-size: var(--text-sm);
+		}
+
+		.original-indicator {
+			font-size: var(--text-xs);
+		}
+
+		.original-day {
 			font-size: var(--text-sm);
 		}
 	}
