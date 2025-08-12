@@ -637,7 +637,7 @@
 	.reservation-date {
 		font-weight: 600;
 		color: var(--neutral-800);
-		font-size: var(--text-base);
+		font-size: var(--text-sm);
 	}
 
 	.reservation-badges {
