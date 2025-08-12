@@ -27,40 +27,44 @@
 	<title>Ok's House - 별장 예약시스템</title>
 </svelte:head>
 
-<header class="page-header">
-	<h1><span class="emoji-normal">🏡</span> Ok's 러브하우스</h1>
-	<h2>장사 별장 예약시스템</h2>
-</header>
+<div class="main-container">
+	<div class="content-wrapper">
+		<header class="page-header">
+			<h1><span class="emoji-normal">🏡</span> Ok's 러브하우스</h1>
+			<h2>장사 별장 예약시스템</h2>
+		</header>
 
-<nav class="menu" role="navigation" aria-label="예약 메뉴">
-	<button 
-		class="menu-btn" 
-		on:click={handleReservationClick}
-		role="button" 
-		aria-label="새로운 예약하기"
-		style="text-align: left;"
-	>
-		<span class="emoji" aria-hidden="true">🏠</span>
-		<div class="text">
-			<div class="main-text">새로운 예약하기</div>
-		</div>
-		<span class="arrow" aria-hidden="true">→</span>
-	</button>
-	
-	<a href="/manage" class="menu-btn modify" role="button" aria-label="예약 확인하기">
-		<span class="emoji" aria-hidden="true">📋</span>
-		<div class="text">
-			<div class="main-text">예약 확인·변경하기</div>
-		</div>
-		<span class="arrow" aria-hidden="true">→</span>
-	</a>
-</nav>
-
-<footer class="footer">
-	<div class="welcome-message">
-		Ok's 러브하우스에서 특별한 휴식을 🌟
+		<nav class="menu" role="navigation" aria-label="예약 메뉴">
+			<button 
+				class="menu-btn" 
+				on:click={handleReservationClick}
+				role="button" 
+				aria-label="새로운 예약하기"
+				style="text-align: left;"
+			>
+				<span class="emoji" aria-hidden="true">🕰️</span>
+				<div class="text">
+					<div class="main-text">새로운 예약하기</div>
+				</div>
+				<span class="arrow" aria-hidden="true">→</span>
+			</button>
+			
+			<a href="/manage" class="menu-btn modify" role="button" aria-label="예약 확인하기">
+				<span class="emoji" aria-hidden="true">📝</span>
+				<div class="text">
+					<div class="main-text">예약 확인·변경하기</div>
+				</div>
+				<span class="arrow" aria-hidden="true">→</span>
+			</a>
+		</nav>
 	</div>
-</footer>
+	
+	<footer class="footer">
+		<div class="welcome-message">
+			Ok's 러브하우스에서 특별한 휴식을 🌟
+		</div>
+	</footer>
+</div>
 
 {#if showPrivacyModal}
 	<PrivacyConsent 
@@ -70,9 +74,25 @@
 {/if}
 
 <style>
+	.main-container {
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+	}
+
+	.content-wrapper {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		flex: 1;
+		padding: var(--space-6);
+		min-height: 0;
+	}
+
 	.page-header {
 		text-align: center;
-		margin-top: var(--space-10);
 		margin-bottom: var(--space-10);
 	}
 
@@ -87,7 +107,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-4);
-		margin-bottom: var(--space-10);
+		width: 100%;
+		max-width: 400px;
 	}
 
 	.menu-btn {
@@ -141,8 +162,7 @@
 	}
 
 	.footer {
-		margin-top: 40px;
-		padding-top: 24px;
+		padding: var(--space-6) var(--space-6) var(--space-8);
 		border-top: 1px solid rgba(0, 0, 0, 0.08);
 		color: var(--neutral-500);
 		font-size: 0.875rem;
@@ -156,7 +176,7 @@
 		text-align: center;
 		font-size: 1.125rem;
 		font-weight: 500;
-		margin-bottom: 8px;
+		margin: 0;
 		color: var(--neutral-700);
 	}
 
@@ -170,6 +190,14 @@
 	}
 
 	@media (max-width: 640px) {
+		.content-wrapper {
+			padding: var(--space-4);
+		}
+
+		.menu {
+			max-width: 100%;
+		}
+
 		.menu-btn {
 			padding: var(--space-4);
 			min-height: 70px;
@@ -182,6 +210,10 @@
 
 		.main-text {
 			font-size: var(--text-base);
+		}
+
+		.footer {
+			padding: var(--space-4) var(--space-4) var(--space-6);
 		}
 
 		.welcome-message {
