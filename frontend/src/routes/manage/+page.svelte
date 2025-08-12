@@ -454,6 +454,7 @@
 				readOnly={true}
 				selectedDate={selectedReservation?.startDate}
 				duration={selectedReservation ? calculateDurationInDays(selectedReservation.startDate, selectedReservation.endDate) : 0}
+				selectedReservation={selectedReservation}
 			/>
 		</div>
 		

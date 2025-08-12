@@ -336,6 +336,17 @@
 		return `<strong>체크인:</strong> ${formatKoreanDate(range.startDate)}<br><strong>체크아웃:</strong> ${formatKoreanDate(range.endDate)}<br><strong>숙박기간:</strong> ${range.duration}박 ${range.duration + 1}일`;
 	}
 
+	function formatOriginalReservationInfo() {
+		if (!modificationData?.originalReservation) return '원본 예약 정보 없음';
+		
+		const original = modificationData.originalReservation;
+		const originalStartDate = original.startDate instanceof Date ? original.startDate : new Date(original.start_date);
+		const originalEndDate = original.endDate instanceof Date ? original.endDate : new Date(original.end_date);
+		const originalDuration = original.duration || Math.ceil((originalEndDate - originalStartDate) / (1000 * 60 * 60 * 24));
+		
+		return `<strong>체크인:</strong> ${formatKoreanDate(originalStartDate)}<br><strong>체크아웃:</strong> ${formatKoreanDate(originalEndDate)}<br><strong>숙박기간:</strong> ${originalDuration}박 ${originalDuration + 1}일`;
+	}
+
 	function formatStep2DateRange(selectedDate, selectedDuration) {
 		const range = calculateDateRange(selectedDate, selectedDuration);
 		if (!range) return '날짜를 선택해주세요';
@@ -490,14 +501,29 @@
 		{/if}
 
 		{#if isModificationMode && modificationData}
-			<div 
-				class="date-range-display selected"
-				class:modification={isModificationMode}
-			>
-				<h4>📅 변경된 예약 정보</h4>
-				<div class="reservation-info">
-					<div class="reservation-details">
-						{@html formatReservationInfo()}
+			<div class="modification-info-container">
+				<!-- 기존 예약 정보 -->
+				<div class="date-range-display original-reservation-info">
+					<h4>📋 기존 예약 정보</h4>
+					<div class="reservation-info original">
+						<div class="reservation-details">
+							{@html formatOriginalReservationInfo()}
+						</div>
+					</div>
+				</div>
+				
+				<!-- 화살표 -->
+				<div class="change-arrow">
+					<span class="arrow-icon">⬇</span>
+				</div>
+				
+				<!-- 새로운 예약 정보 -->
+				<div class="date-range-display new-reservation-info">
+					<h4>🔄 변경될 예약 정보</h4>
+					<div class="reservation-info new">
+						<div class="reservation-details">
+							{@html formatReservationInfo()}
+						</div>
 					</div>
 				</div>
 			</div>
@@ -661,6 +687,78 @@
 		color: var(--neutral-600);
 	}
 
+	/* Modification info styling */
+	.modification-info-container {
+		margin-bottom: var(--space-6);
+	}
+
+	.original-reservation-info {
+		background: rgba(107, 114, 128, 0.1);
+		border-color: #6b7280;
+		color: #4b5563;
+		margin-bottom: var(--space-4);
+	}
+
+	.original-reservation-info h4 {
+		color: #4b5563;
+	}
+
+	.new-reservation-info {
+		background: rgba(67, 56, 202, 0.15);
+		border-color: var(--primary);
+		color: var(--primary);
+		border-width: 3px;
+		box-shadow: 0 4px 6px -1px rgba(67, 56, 202, 0.1), 0 2px 4px -1px rgba(67, 56, 202, 0.06);
+		margin-bottom: var(--space-4);
+	}
+
+	.new-reservation-info h4 {
+		color: var(--primary);
+		font-weight: 700;
+	}
+
+	.change-arrow {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		margin: var(--space-3) 0;
+		width: 100%;
+		height: 50px;
+	}
+
+	.arrow-icon {
+		font-size: 2.5rem;
+		color: var(--primary);
+		filter: drop-shadow(0 2px 4px rgba(67, 56, 202, 0.3));
+		animation: bounce 2s infinite;
+		transform: scaleX(1.2);
+	}
+
+	@keyframes bounce {
+		0%, 20%, 50%, 80%, 100% {
+			transform: scaleX(1.2) translateY(0);
+		}
+		40% {
+			transform: scaleX(1.2) translateY(-3px);
+		}
+		60% {
+			transform: scaleX(1.2) translateY(-2px);
+		}
+	}
+
+	.reservation-info.original {
+		border-left: 4px solid #6b7280;
+	}
+
+	.reservation-info.new {
+		border-left: 4px solid var(--primary);
+		background: rgba(67, 56, 202, 0.05);
+	}
+
+	.reservation-info.new .reservation-details :global(strong) {
+		color: var(--primary);
+	}
+
 	.loading-indicator {
 		text-align: center;
 		padding: var(--space-4);
@@ -723,6 +821,28 @@
 		.date-range-display {
 			padding: var(--space-3);
 			font-size: var(--text-sm);
+		}
+
+		.change-arrow {
+			margin: var(--space-2) 0;
+			height: 40px;
+		}
+
+		.arrow-icon {
+			font-size: 2rem;
+			transform: scaleX(1.15);
+		}
+
+		@keyframes bounce {
+			0%, 20%, 50%, 80%, 100% {
+				transform: scaleX(1.15) translateY(0);
+			}
+			40% {
+				transform: scaleX(1.15) translateY(-2px);
+			}
+			60% {
+				transform: scaleX(1.15) translateY(-1px);
+			}
 		}
 	}
 </style>

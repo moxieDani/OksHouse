@@ -14,6 +14,7 @@
 	export let currentYear = new Date().getFullYear();
 	export let existingReservations = [];
 	export let originalReservation = null; // 수정 중인 원본 예약 정보
+	export let selectedReservation = null; // manage 페이지에서 선택된 예약 정보
 	
 	
 	
@@ -203,6 +204,33 @@
 		return dateTime >= originalStartDate.getTime() && dateTime <= originalEndDate.getTime();
 	}
 
+	// Get the status of the original reservation for styling
+	function getOriginalReservationStatus() {
+		if (!isModificationMode || !originalReservation) return null;
+		return originalReservation.status || 'pending';
+	}
+
+	// Check if a date is part of the selected reservation (for manage page)
+	function isSelectedReservation(date) {
+		if (!readOnly || !selectedReservation) return false;
+		
+		const dateTime = date.getTime();
+		const selectedStartDate = selectedReservation.startDate instanceof Date 
+			? selectedReservation.startDate 
+			: new Date(selectedReservation.start_date + 'T00:00:00');
+		const selectedEndDate = selectedReservation.endDate instanceof Date
+			? selectedReservation.endDate
+			: new Date(selectedReservation.end_date + 'T00:00:00');
+		
+		return dateTime >= selectedStartDate.getTime() && dateTime <= selectedEndDate.getTime();
+	}
+
+	// Get the status of the selected reservation for styling
+	function getSelectedReservationStatus() {
+		if (!readOnly || !selectedReservation) return null;
+		return selectedReservation.status || 'pending';
+	}
+
 	// Check if the selected dates are identical to original reservation
 	function isSameDatesAsOriginal(startDate, duration) {
 		if (!isModificationMode || !originalReservation || !startDate || !duration) return false;
@@ -275,11 +303,20 @@
 		
 		if (isOtherMonth) classes.push('other-month');
 		if (isToday(date)) classes.push('today');
-		if (currentSelectedDate && currentSelectedDate.getTime() === date.getTime()) classes.push('selected');
+		if (!readOnly && currentSelectedDate && currentSelectedDate.getTime() === date.getTime()) classes.push('selected');
 		if (isInRange(date)) classes.push('in-range');
 		if (isDisabled(date)) classes.push('disabled');
 		if (isBlocked(date)) classes.push('blocked');
-		if (isOriginalReservation(date)) classes.push('original-reservation');
+		if (isOriginalReservation(date)) {
+			classes.push('original-reservation');
+			const status = getOriginalReservationStatus();
+			if (status) classes.push(`original-reservation-${status}`);
+		}
+		if (isSelectedReservation(date)) {
+			classes.push('selected-reservation');
+			const status = getSelectedReservationStatus();
+			if (status) classes.push(`selected-reservation-${status}`);
+		}
 		if (dayOfWeek === 0) classes.push('sunday');
 		if (dayOfWeek === 6) classes.push('saturday');
 		if (isModificationMode) classes.push('modification');
@@ -475,25 +512,25 @@
 		color: var(--primary);
 	}
 
-	/* Modification mode styling */
+	/* Modification mode styling - use same colors as normal reservation */
 	.calendar-day.modification.selected {
-		background: var(--warning);
+		background: var(--primary);
 		color: white !important;
-		box-shadow: inset 0 0 0 2px #d97706;
+		box-shadow: inset 0 0 0 2px var(--primary-dark);
 	}
 
 	.calendar-day.modification.in-range {
-		background: rgba(245, 158, 11, 0.2);
-		color: var(--warning);
+		background: rgba(67, 56, 202, 0.2);
+		color: var(--primary);
 	}
 
 	.calendar-day.modification:not(.disabled):not(.other-month):not(.readonly):hover {
-		background: var(--warning);
+		background: var(--primary-light);
 		color: white !important;
 	}
 
 	.calendar-header.modification {
-		background: var(--warning);
+		background: var(--primary);
 	}
 
 	/* Blocked dates styling */
@@ -561,31 +598,87 @@
 		border-color: var(--error);
 	}
 
-	/* Original reservation styling - special highlighting for reservation being modified */
+	/* Original reservation styling - match reservation status colors */
 	.calendar-day.original-reservation {
-		background: rgba(16, 185, 129, 0.15);
-		border-color: #10b981;
-		color: #059669;
 		position: relative;
 	}
 
-	.calendar-day.original-reservation:hover {
-		background: rgba(16, 185, 129, 0.25);
-		color: #059669;
+	/* Confirmed reservation styling (예약확정) - green */
+	.calendar-day.original-reservation-confirmed {
+		background: rgba(5, 150, 105, 0.15);
+		border-color: #059669;
+		color: #047857;
+	}
+
+	.calendar-day.original-reservation-confirmed:hover {
+		background: rgba(5, 150, 105, 0.25);
+		color: #047857;
+		transform: none;
+	}
+
+	/* Pending reservation styling (예약신청) - orange */
+	.calendar-day.original-reservation-pending {
+		background: rgba(245, 158, 11, 0.15);
+		border-color: #f59e0b;
+		color: #d97706;
+	}
+
+	.calendar-day.original-reservation-pending:hover {
+		background: rgba(245, 158, 11, 0.25);
+		color: #d97706;
+		transform: none;
+	}
+
+	/* Denied reservation styling (예약거부) - red */
+	.calendar-day.original-reservation-denied {
+		background: rgba(220, 38, 38, 0.15);
+		border-color: #dc2626;
+		color: #b91c1c;
+	}
+
+	.calendar-day.original-reservation-denied:hover {
+		background: rgba(220, 38, 38, 0.25);
+		color: #b91c1c;
 		transform: none;
 	}
 
 	/* Original reservation + Today styling */
-	.calendar-day.today.original-reservation {
+	.calendar-day.today.original-reservation-confirmed {
 		background: var(--accent) !important;
-		border-color: #10b981;
-		color: #059669;
+		border-color: #059669;
+		color: #047857;
 		position: relative;
 	}
 
-	.calendar-day.today.original-reservation:hover {
+	.calendar-day.today.original-reservation-confirmed:hover {
 		background: var(--accent) !important;
-		color: #059669;
+		color: #047857;
+		transform: none;
+	}
+
+	.calendar-day.today.original-reservation-pending {
+		background: var(--accent) !important;
+		border-color: #f59e0b;
+		color: #d97706;
+		position: relative;
+	}
+
+	.calendar-day.today.original-reservation-pending:hover {
+		background: var(--accent) !important;
+		color: #d97706;
+		transform: none;
+	}
+
+	.calendar-day.today.original-reservation-denied {
+		background: var(--accent) !important;
+		border-color: #dc2626;
+		color: #b91c1c;
+		position: relative;
+	}
+
+	.calendar-day.today.original-reservation-denied:hover {
+		background: var(--accent) !important;
+		color: #b91c1c;
 		transform: none;
 	}
 
@@ -610,8 +703,104 @@
 	.original-day {
 		font-size: var(--text-base);
 		font-weight: 600;
-		color: #059669;
 		z-index: 1;
+	}
+
+	/* Status-specific text colors for original reservation day numbers */
+	.calendar-day.original-reservation-confirmed .original-day {
+		color: #047857;
+	}
+
+	.calendar-day.original-reservation-pending .original-day {
+		color: #d97706;
+	}
+
+	.calendar-day.original-reservation-denied .original-day {
+		color: #b91c1c;
+	}
+
+	/* Selected reservation styling (for manage page readonly calendar) */
+	.calendar-day.selected-reservation {
+		position: relative;
+	}
+
+	/* Confirmed selected reservation styling - green */
+	.calendar-day.selected-reservation-confirmed {
+		background: rgba(5, 150, 105, 0.15);
+		border-color: #059669;
+		color: #047857;
+	}
+
+	.calendar-day.selected-reservation-confirmed:hover {
+		background: rgba(5, 150, 105, 0.25);
+		color: #047857;
+		transform: none;
+	}
+
+	/* Pending selected reservation styling - orange */
+	.calendar-day.selected-reservation-pending {
+		background: rgba(245, 158, 11, 0.15);
+		border-color: #f59e0b;
+		color: #d97706;
+	}
+
+	.calendar-day.selected-reservation-pending:hover {
+		background: rgba(245, 158, 11, 0.25);
+		color: #d97706;
+		transform: none;
+	}
+
+	/* Denied selected reservation styling - red */
+	.calendar-day.selected-reservation-denied {
+		background: rgba(220, 38, 38, 0.15);
+		border-color: #dc2626;
+		color: #b91c1c;
+	}
+
+	.calendar-day.selected-reservation-denied:hover {
+		background: rgba(220, 38, 38, 0.25);
+		color: #b91c1c;
+		transform: none;
+	}
+
+	/* Selected reservation + Today styling */
+	.calendar-day.today.selected-reservation-confirmed {
+		background: var(--accent) !important;
+		border-color: #059669;
+		color: #047857;
+		position: relative;
+	}
+
+	.calendar-day.today.selected-reservation-confirmed:hover {
+		background: var(--accent) !important;
+		color: #047857;
+		transform: none;
+	}
+
+	.calendar-day.today.selected-reservation-pending {
+		background: var(--accent) !important;
+		border-color: #f59e0b;
+		color: #d97706;
+		position: relative;
+	}
+
+	.calendar-day.today.selected-reservation-pending:hover {
+		background: var(--accent) !important;
+		color: #d97706;
+		transform: none;
+	}
+
+	.calendar-day.today.selected-reservation-denied {
+		background: var(--accent) !important;
+		border-color: #dc2626;
+		color: #b91c1c;
+		position: relative;
+	}
+
+	.calendar-day.today.selected-reservation-denied:hover {
+		background: var(--accent) !important;
+		color: #b91c1c;
+		transform: none;
 	}
 
 	@media (max-width: 640px) {
