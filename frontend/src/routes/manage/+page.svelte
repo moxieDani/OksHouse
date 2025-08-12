@@ -384,9 +384,10 @@
 <!-- Step 1: 예약자 정보 입력 -->
 {#if currentStep === 1}
 	<div class="step">
-		<h3><span class="emoji-normal">🔑</span> 1단계: 예약자 인증</h3>
+		<h3><span class="emoji-normal">🔑</span> 예약자 인증</h3>
 		<p class="step-description">
-			예약 시 입력하신 정보를 동일하게 입력해주세요. 비밀번호는 예약 시 설정하신 4자리 숫자입니다.
+			예약에 사용하신 정보를 입력해주세요.<br>
+			비밀번호는 4자리 숫자입니다.
 		</p>
 		<div class="form-group">
 			<label for="auth-name">이름:</label>
@@ -442,7 +443,7 @@
 <!-- Step 2: 예약 목록 확인 -->
 {#if currentStep === 2}
 	<div class="step">
-		<h3><span class="emoji-normal">📊</span> 2단계: 예약 현황 확인</h3>
+		<h3><span class="emoji-normal">📊</span> 예약 현황 확인</h3>
 		<p class="step-description">
 			<strong>{authName}</strong>님의 예약을 확인하실 수 있습니다.
 		</p>
