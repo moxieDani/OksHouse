@@ -22,38 +22,77 @@
 		updateReservationData 
 	} from '$lib/stores/reservation.js';
 	import { userAPI, formatDateForAPI } from '$lib/services/api.js';
+	import { RESERVATION_STEPS, DEFAULT_MESSAGES, PLACEHOLDERS } from '$lib/constants/reservationConstants.js';
+	import { formatKoreanDate, calculateDateRange } from '$lib/utils/dateUtils.js';
+	import { formatPhoneNumber, formatPassword, validateReservationInfo, VALIDATION_CONSTANTS } from '$lib/utils/validationUtils.js';
+	import { handleError, safeAsync, retryAsync } from '$lib/utils/errorUtils.js';
 
-	let calendarComponent;
-	let isModificationMode = false;
-	let modificationData = null;
-	let currentMonth = new Date().getMonth();
-	let currentYear = new Date().getFullYear();
+	// === 상수 정의 ===
+	const STEPS = RESERVATION_STEPS;
 	
-	// Existing reservations for blocking dates
+	// === 컴포넌트 상태 관리 ===
+	/** @type {any} 달력 컴포넌트 참조 */
+	let calendarComponent;
+	/** @type {boolean} 예약 변경 모드 여부 */
+	let isModificationMode = false;
+	/** @type {Object|null} 변경 예약 데이터 */
+	let modificationData = null;
+	
+	// === 달력 상태 관리 ===
+	/** @type {number} 현재 달 */
+	let currentMonth = new Date().getMonth();
+	/** @type {number} 현재 년도 */
+	let currentYear = new Date().getFullYear();
+	/** @type {string} 마지막 로드된 달 */
+	let lastLoadedMonth = '';
+	
+	// === 예약 데이터 관리 ===
+	/** @type {Array<Object>} 기존 예약 목록 (날짜 차단용) */
 	let existingReservations = [];
+	/** @type {boolean} 예약 데이터 로딩 상태 */
 	let isLoadingReservations = false;
 	
-	// FeedbackManager state
+	// === 피드백 매니저 상태 ===
+	/** @type {boolean} 피드백 모달 표시 여부 */
 	let showFeedback = false;
+	/** @type {string} 피드백 타입 */
 	let feedbackType = 'info';
+	/** @type {string} 피드백 제목 */
 	let feedbackTitle = '';
+	/** @type {string} 피드백 메시지 */
 	let feedbackMessage = '';
+	/** @type {Function|null} 피드백 콜백 함수 */
 	let feedbackCallback = null;
 
+	// === 성능 최적화된 반응형 문 ===
+	
+	// 기본 상태 추출 (메모이제이션 적용)
 	$: currentStep = $reservationState.currentStep;
 	$: duration = $reservationState.duration;
 	$: startDate = $reservationState.startDate;
 	$: guestInfo = $reservationState.guestInfo;
 	
-	// Reactive date range display for Step 2
-	$: step2DateRangeText = formatStep2DateRange(startDate, duration);
+	// 날짜 범위 표시 최적화 (매개변수 변경 시에만 재계산)
+	$: step2DateRangeText = startDate && duration ? formatStep2DateRange(startDate, duration) : '날짜를 선택해주세요';
 	
-	// Load reservations when entering step 2 or when month/year changes
-	$: if (currentStep === 2) {
-		loadMonthlyReservations(currentYear, currentMonth);
+	// 예약 데이터 로드 최적화 (중복 로드 방지)
+	let lastLoadKey = '';
+	$: {
+		const loadKey = `${currentStep}-${currentYear}-${currentMonth}`;
+		if (currentStep === 2 && loadKey !== lastLoadKey) {
+			lastLoadKey = loadKey;
+			loadMonthlyReservations(currentYear, currentMonth);
+		}
 	}
 	
 
+	// === 페이지 라이프사이클 함수 ===
+	
+	/**
+	 * 컴포넌트 마운트 시 초기화 작업
+	 * - 세션 스토리지에서 변경 예약 데이터 복원
+	 * - 예약 모드 (새로운 예약/변경) 설정
+	 */
 	onMount(() => {
 		// Always initialize properly regardless of browser state
 		const storedModificationData = browser ? sessionStorage.getItem('modificationData') : null;
@@ -135,15 +174,21 @@
 		}));
 	}
 
+	// === 단계 내비게이션 함수 ===
+	
+	/**
+	 * 다음 단계로 이동
+	 * 각 단계별로 필수 입력 값 검증 후 진행
+	 */
 	function handleNext() {
 		if (currentStep === 1) {
 			if (!duration) {
-				showAlert('숙박 기간을 선택해주세요.', 'warning');
+				showAlert(DEFAULT_MESSAGES.SELECT_DURATION, 'warning');
 				return;
 			}
 		} else if (currentStep === 2) {
 			if (!startDate) {
-				showAlert('체크인 날짜를 선택해주세요.', 'warning');
+				showAlert(DEFAULT_MESSAGES.SELECT_CHECKIN, 'warning');
 				return;
 			}
 		}
@@ -151,12 +196,19 @@
 		nextStep();
 	}
 
-	// Load existing reservations for the current month and adjacent months
+	// === 예약 데이터 관리 함수 ===
+	
+	/**
+	 * 월별 예약 데이터 로드 (인접 달 포함)
+	 * 달력에서 날짜 차단을 위해 이전/다음 달 데이터도 함께 로드
+	 * @param {number} year - 년도
+	 * @param {number} month - 달 (0-11)
+	 */
 	async function loadMonthlyReservations(year, month) {
 		// Skip if already loading the same month
 		if (isLoadingReservations) return;
 		
-		try {
+		const result = await safeAsync(async () => {
 			isLoadingReservations = true;
 			
 			// Calculate previous and next month
@@ -184,16 +236,17 @@
 				index === self.findIndex(r => r.id === reservation.id)
 			);
 			
-			existingReservations = uniqueReservations;
-		} catch (error) {
-			console.error('Failed to load monthly reservations:', error);
-			existingReservations = [];
-		} finally {
-			isLoadingReservations = false;
-		}
+			return uniqueReservations;
+		}, '예약 데이터 로드', showAlert);
+		
+		existingReservations = result || [];
+		isLoadingReservations = false;
 	}
 
-	// Handle calendar month changes to load new data
+	/**
+	 * 달력 달 변경 시 데이터 로드
+	 * @param {Object} event - 달 변경 이벤트
+	 */
 	function handleMonthChange(event) {
 		const { month, year } = event.detail;
 		currentMonth = month;
@@ -206,30 +259,34 @@
 		}
 	}
 
-	// Keep track of last loaded month to avoid duplicate requests
-	let lastLoadedMonth = '';
 	
-	// Watch for month/year changes to load data - prevent duplicate loads
-	$: if (currentStep === 2 && currentMonth !== undefined && currentYear !== undefined) {
-		const monthKey = `${currentYear}-${currentMonth}`;
-		if (monthKey !== lastLoadedMonth && !isLoadingReservations) {
-			lastLoadedMonth = monthKey;
-			loadMonthlyReservations(currentYear, currentMonth);
-		}
-	}
+	// 중복 로드 방지를 위한 라이프사이클 관리는 위에서 처리
 
-	// Handle blocked date clicks
+	// === 달력 이벤트 처리 함수 ===
+	
+	/**
+	 * 차단된 날짜 클릭 시 경고 메시지 표시
+	 * @param {Object} event - 차단된 날짜 클릭 이벤트
+	 */
 	function handleBlockedDateClick(event) {
 		const { message } = event.detail;
 		showAlert(message, 'warning');
 	}
 
-	// Handle conflict detection
+	/**
+	 * 예약 충돌 감지 시 경고 메시지 표시
+	 * @param {Object} event - 충돌 감지 이벤트
+	 */
 	function handleConflictDetected(event) {
 		const { message } = event.detail;
 		showAlert(message, 'warning');
 	}
 
+	/**
+	 * 이전 단계로 이동
+	 * - 변경 모드: 관리 페이지로 돌아가기
+	 * - 새 예약 모드: 메인 페이지 또는 이전 단계로 이동
+	 */
 	function handlePrev() {
 		if (isModificationMode && currentStep === 1) {
 			// Save current auth info to return to manage page step2
@@ -297,33 +354,16 @@
 					}
 				);
 			} catch (error) {
-				console.error('Reservation update failed:', error);
-				const errorMessage = error.message || '알 수 없는 오류가 발생했습니다.';
-				showAlert(`예약 변경에 실패했습니다: ${errorMessage}`, 'error');
+				handleError(error, '예약 변경', showAlert);
 			}
 			return;
 		}
 
 		// Original reservation completion logic
-		const { name, phone, password } = guestInfo;
-		
-		if (!name.trim()) {
-			showAlert('이름을 입력해주세요.', 'warning');
-			return;
-		}
-		
-		if (!phone.trim()) {
-			showAlert('전화번호를 입력해주세요.', 'warning');
-			return;
-		}
-		
-		if (!password.trim()) {
-			showAlert('비밀번호를 입력해주세요.', 'warning');
-			return;
-		}
-		
-		if (password.length !== 4 || !/^\d{4}$/.test(password)) {
-			showAlert('비밀번호는 4자리 숫자여야 합니다.', 'warning');
+		// 예약 정보 유효성 검사 (유틸리티 함수 사용)
+		const validation = validateReservationInfo(startDate, duration, guestInfo);
+		if (!validation.isValid) {
+			showAlert(validation.message, 'warning');
 			return;
 		}
 
@@ -333,26 +373,26 @@
 			endDate.setDate(startDate.getDate() + duration);
 			
 			const reservationData = {
-				name: name.trim(),
-				phone: phone.trim(),
+				name: guestInfo.name.trim(),
+				phone: guestInfo.phone.trim(),
 				start_date: formatDateForAPI(startDate),
 				end_date: formatDateForAPI(endDate),
 				duration: duration,
-				password: password
+				password: guestInfo.password
 			};
 			
 			const response = await userAPI.createReservation(reservationData);
 			
 			showSuccess(
-				'🎉 예약 완료!',
-				`예약이 성공적으로 저장되었습니다.<br><br>예약자: ${name}<br>체크인: ${formatKoreanDate(startDate)}<br>체크아웃: ${formatKoreanDate(endDate)}<br>기간: ${duration}박 ${duration + 1}일<br>예약번호: ${response.id}`,
+				DEFAULT_MESSAGES.RESERVATION_SUCCESS,
+				`예약이 성공적으로 저장되었습니다.<br><br>예약자: ${guestInfo.name}<br>체크인: ${formatKoreanDate(startDate)}<br>체크아웃: ${formatKoreanDate(endDate)}<br>기간: ${duration}박 ${duration + 1}일<br>예약번호: ${response.id}`,
 				() => {
 					// Store auth data for automatic login to manage page
 					if (browser) {
 						sessionStorage.setItem('returnToManageStep2', JSON.stringify({
-							authName: name.trim(),
-							authPhone: phone.trim(),
-							password: password
+							authName: guestInfo.name.trim(),
+							authPhone: guestInfo.phone.trim(),
+							password: guestInfo.password
 						}));
 					}
 					// Clear existing reservations cache to force reload
@@ -362,42 +402,15 @@
 				}
 			);
 		} catch (error) {
-			console.error('Reservation creation failed:', error);
-			const errorMessage = error.message || '알 수 없는 오류가 발생했습니다.';
-			showAlert(`예약 저장에 실패했습니다: ${errorMessage}`, 'error');
+			handleError(error, '예약 생성', showAlert);
 		}
 	}
 
-	// 사용자 대면 날짜 포매팅 유틸리티
-	function formatKoreanDate(date) {
-		if (!date) return '';
-		
-		// Date 객체 보장 및 유효성 검증
-		const dateObj = date instanceof Date ? date : new Date(date);
-		if (isNaN(dateObj.getTime())) {
-			console.error('Invalid date passed to formatKoreanDate:', date);
-			return '';
-		}
-		
-		const year = dateObj.getFullYear();
-		const month = dateObj.getMonth() + 1;
-		const day = dateObj.getDate();
-		const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-		const weekday = weekdays[dateObj.getDay()];
-		return `${year}.${month.toString().padStart(2, '0')}.${day.toString().padStart(2, '0')} (${weekday})`;
-	}
-
-	// 날짜 범위 계산 유틸리티 함수
-	function calculateDateRange(startDate, duration) {
-		if (!startDate || !duration) return null;
-		const endDate = new Date(startDate);
-		endDate.setDate(startDate.getDate() + duration);
-		return { startDate, endDate, duration };
-	}
+	// 날짜 범위 표시 유틸리티 (유틸리티 함수 사용)
 
 	function formatReservationInfo() {
 		const range = calculateDateRange(startDate, duration);
-		if (!range) return '날짜를 선택해주세요';
+		if (!range) return DEFAULT_MESSAGES.SELECT_DATE;
 		
 		return `<strong>체크인:</strong> ${formatKoreanDate(range.startDate)}<br><strong>체크아웃:</strong> ${formatKoreanDate(range.endDate)}<br><strong>숙박기간:</strong> ${range.duration}박 ${range.duration + 1}일`;
 	}
@@ -612,21 +625,13 @@
 					<input 
 						type="tel" 
 						id="phone" 
-						placeholder="010-1234-5678"
+						placeholder={PLACEHOLDERS.PHONE}
 						bind:value={guestInfo.phone}
 						on:input={(e) => {
-							// 전화번호 자동 포맷팅
-							let value = e.target.value.replace(/[^0-9]/g, '');
-							if (value.length > 3 && value.length <= 7) {
-								value = value.replace(/(\d{3})(\d+)/, '$1-$2');
-							} else if (value.length > 7) {
-								value = value.replace(/(\d{3})(\d{4})(\d+)/, '$1-$2-$3');
-							}
-							if (value.length > 13) {
-								value = value.substring(0, 13);
-							}
-							e.target.value = value;
-							handleGuestInfoChange('phone', value);
+							// 전화번호 자동 포매팅 (유틸리티 함수 사용)
+							const formattedValue = formatPhoneNumber(e.target.value);
+							e.target.value = formattedValue;
+							handleGuestInfoChange('phone', formattedValue);
 						}}
 					>
 				</div>
@@ -635,17 +640,14 @@
 					<input 
 						type="password" 
 						id="password" 
-						placeholder="4자리 숫자 비밀번호"
-						maxlength="4"
+						placeholder={PLACEHOLDERS.PASSWORD}
+						maxlength={VALIDATION_CONSTANTS.PASSWORD_LENGTH}
 						bind:value={guestInfo.password}
 						on:input={(e) => {
-							// 숫자만 허용, 4자리 제한
-							let value = e.target.value.replace(/[^0-9]/g, '');
-							if (value.length > 4) {
-								value = value.substring(0, 4);
-							}
-							e.target.value = value;
-							handleGuestInfoChange('password', value);
+							// 비밀번호 포매팅 (유틸리티 함수 사용)
+							const formattedValue = formatPassword(e.target.value);
+							e.target.value = formattedValue;
+							handleGuestInfoChange('password', formattedValue);
 						}}
 					>
 				</div>

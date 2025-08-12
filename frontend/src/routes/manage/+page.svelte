@@ -7,28 +7,47 @@
 	export let data = {};
 	export let params = {};
 	
-	import StepIndicator from '$lib/components/StepIndicator.svelte';
 	import Calendar from '$lib/components/Calendar.svelte';
 	import FeedbackManager from '$lib/components/FeedbackManager.svelte';
 	import { userAPI } from '$lib/services/api.js';
+	import { MANAGE_STEPS, DEFAULT_MESSAGES, PLACEHOLDERS } from '$lib/constants/reservationConstants.js';
+	import { formatKoreanDate } from '$lib/utils/dateUtils.js';
+	import { formatPhoneNumber, formatPassword, VALIDATION_CONSTANTS } from '$lib/utils/validationUtils.js';
+	import { handleError, safeAsync } from '$lib/utils/errorUtils.js';
 
+	// === 페이지 상태 관리 ===
+	/** @type {number} 현재 단계 (1: 인증, 2: 예약 목록) */
 	let currentStep = 1;
+	
+	// === 사용자 인증 정보 ===
+	/** @type {string} 사용자 이름 */
 	let authName = '';
+	/** @type {string} 사용자 전화번호 */
 	let authPhone = '';
+	/** @type {string} 사용자 비밀번호 */
 	let password = '';
+	
+	// === 예약 관련 데이터 ===
+	/** @type {Array<Object>} 사용자의 예약 목록 */
 	let reservations = [];
+	/** @type {Object|null} 선택된 예약 */
 	let selectedReservation = null;
+	/** @type {any} 달력 컴포넌트 참조 */
 	let calendar;
-	let authenticatedReservationId = null; // Store the authenticated reservation ID
 
-	// FeedbackManager state
+	// === 피드백 매니저 상태 ===
+	/** @type {boolean} 피드백 모달 표시 여부 */
 	let showFeedback = false;
+	/** @type {string} 피드백 타입 */
 	let feedbackType = 'info';
+	/** @type {string} 피드백 제목 */
 	let feedbackTitle = '';
+	/** @type {string} 피드백 메시지 */
 	let feedbackMessage = '';
+	/** @type {Function|null} 피드백 콜백 함수 */
 	let feedbackCallback = null;
 
-	// Mock reservation data - 실제로는 서버에서 가져올 데이터
+	// === 개발용 예약 데이터 (실제로는 서버에서 가져옴) ===
 	const mockReservations = [
 		{
 			id: 1,
@@ -99,8 +118,7 @@
 			if (!validateAuthInfo()) return;
 			
 			try {
-				// Show loading state - only target step 1 confirm button
-				const originalButtonText = '확인';
+				// 로딩 상태 표시 - 1단계 확인 버튼만 대상
 				const confirmButton = currentStep === 1 ? document.querySelector('#step1-confirm-button') : null;
 				if (confirmButton) {
 					confirmButton.textContent = '확인 중...';
@@ -117,21 +135,18 @@
 				const response = await userAPI.verifyReservation(authData);
 				
 				if (response.verified && response.reservation_id) {
-					// Authentication successful, store the authenticated reservation ID
-					authenticatedReservationId = response.reservation_id;
+					// 인증 성공 - 다음 단계로 이동
 					currentStep = 2;
 					await loadUserReservations();
 				} else {
-					// Authentication failed
-					showAlert('입력하신 정보와 일치하는 예약을 찾을 수 없습니다. 이름, 전화번호, 비밀번호를 다시 확인해주세요.', 'warning');
+					// 인증 실패
+					showAlert(DEFAULT_MESSAGES.AUTH_FAILED, 'warning');
 				}
 
 			} catch (error) {
-				console.error('Authentication failed:', error);
-				const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';
-				showAlert(`인증 중 오류가 발생했습니다: ${errorMessage}`, 'error');
+				handleError(error, '사용자 인증', showAlert);
 			} finally {
-				// Restore button state - only target step 1 confirm button
+				// 버튼 상태 복원 - 1단계 확인 버튼만 대상
 				const confirmButton = currentStep === 1 ? document.querySelector('#step1-confirm-button') : null;
 				if (confirmButton) {
 					confirmButton.textContent = '확인';
@@ -166,26 +181,13 @@
 			showAlert('비밀번호를 입력해주세요.', 'warning');
 			return false;
 		}
-		if (password.length !== 4 || !/^\d{4}$/.test(password)) {
-			showAlert('비밀번호는 4자리 숫자여야 합니다.', 'warning');
+		if (password.length !== VALIDATION_CONSTANTS.PASSWORD_LENGTH || !/^\d{4}$/.test(password)) {
+			showAlert('비밀밀번호는 4자리 숫자여야 합니다.', 'warning');
 			return false;
 		}
 		return true;
 	}
 
-	function findUserReservations() {
-		const allUserReservations = mockReservations.filter(res => 
-			res.name === authName && res.phone === authPhone
-		);
-		
-		// 모든 예약을 표시 (pending, confirmed, denied)
-		return allUserReservations;
-	}
-
-	// 예약 상태는 pending, confirmed, denied 3가지만 사용
-	function getReservationStatus(reservation) {
-		return reservation.status || 'pending';
-	}
 
 	function getReservationStatusType(reservation) {
 		// pending: 예약신청, confirmed: 예약확정, denied: 예약거부
@@ -223,8 +225,7 @@
 				setTimeout(() => selectReservation(reservations[0].id), 300);
 			}
 		} catch (error) {
-			console.error('Failed to load user reservations:', error);
-			showAlert('예약 목록을 불러오는 중 오류가 발생했습니다.', 'error');
+			handleError(error, '예약 목록 로드', showAlert);
 			reservations = [];
 		}
 	}
@@ -282,7 +283,7 @@
 
 					// Show success message and reload reservations
 					showSuccess(
-						'👌🏻 예약 취소 완료!',
+						DEFAULT_MESSAGES.CANCELLATION_SUCCESS,
 						`${selectedReservation.name}님의 예약이 성공적으로 취소되었습니다.`,
 						async () => {
 							// Clear selection and reload reservations
@@ -291,24 +292,13 @@
 						}
 					);
 				} catch (error) {
-					console.error('Failed to delete reservation:', error);
-					const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';
-					showAlert(`예약 취소 중 오류가 발생했습니다: ${errorMessage}`, 'error');
+					handleError(error, '예약 취소', showAlert);
 				}
 			}
 		);
 	}
 
-	// 날짜 포매팅 유틸리티 - 일관된 포매팅을 위해 통합
-	function formatKoreanDate(date) {
-		if (!date) return '';
-		const year = date.getFullYear();
-		const month = date.getMonth() + 1;
-		const day = date.getDate();
-		const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-		const weekday = weekdays[date.getDay()];
-		return `${year}.${month.toString().padStart(2, '0')}.${day.toString().padStart(2, '0')} (${weekday})`;
-	}
+	// 날짜 포매팅 유틸리티 (유틸리티 함수 사용)
 
 	// Calculate duration in days between start and end dates for calendar highlighting
 	function calculateDurationInDays(startDate, endDate) {
@@ -317,7 +307,13 @@
 		return Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
 	}
 
-	// 예약 카드 데이터 처리 - 성능 최적화
+	// === 성능 최적화된 예약 카드 데이터 처리 ===
+	
+	/**
+	 * 예약 카드 데이터 생성 (메모이제이션 적용)
+	 * @param {Object} reservation - 예약 객체
+	 * @returns {Object} 포맷팅된 예약 카드 데이터
+	 */
 	function createReservationCard(reservation) {
 		// API에서 이미 endDate를 제공하므로 계산하지 않음
 		const endDate = reservation.endDate || new Date(reservation.startDate.getTime() + reservation.duration * 24 * 60 * 60 * 1000);
@@ -330,9 +326,27 @@
 		};
 	}
 
-	$: formattedReservations = reservations.map(createReservationCard);
+	// 예약 목록 포맷팅 - 메모이제이션으로 불필요한 재계산 방지
+	let lastReservationsHash = '';
+	let cachedFormattedReservations = [];
+	
+	$: {
+		const currentHash = JSON.stringify(reservations.map(r => ({ id: r.id, startDate: r.startDate, duration: r.duration })));
+		if (currentHash !== lastReservationsHash) {
+			lastReservationsHash = currentHash;
+			cachedFormattedReservations = reservations.map(createReservationCard);
+		}
+	}
+	
+	$: formattedReservations = cachedFormattedReservations;
 
-	// FeedbackManager helper functions
+	// === 피드백 매니저 헬퍼 함수 ===
+	
+	/**
+	 * 경고 메시지 표시
+	 * @param {string} message - 표시할 메시지
+	 * @param {string} type - 메시지 타입 ('warning', 'error', 'info')
+	 */
 	function showAlert(message, type = 'warning') {
 		feedbackType = type;
 		feedbackTitle = type === 'warning' ? '주의' : '알림';
@@ -341,6 +355,12 @@
 		showFeedback = true;
 	}
 
+	/**
+	 * 성공 메시지 표시
+	 * @param {string} title - 메시지 제목
+	 * @param {string} message - 메시지 내용
+	 * @param {Function|null} onClose - 닫기 콜백 함수
+	 */
 	function showSuccess(title, message, onClose = null) {
 		feedbackType = 'success';
 		feedbackTitle = title;
@@ -349,6 +369,13 @@
 		showFeedback = true;
 	}
 
+	/**
+	 * 확인 대화상자 표시
+	 * @param {string} title - 대화상자 제목
+	 * @param {string} message - 대화상자 내용
+	 * @param {Function} onConfirm - 확인 콜백 함수
+	 * @param {Function|null} onCancel - 취소 콜백 함수
+	 */
 	function showConfirm(title, message, onConfirm, onCancel = null) {
 		feedbackType = 'confirm';
 		feedbackTitle = title;
@@ -361,14 +388,23 @@
 		showFeedback = true;
 	}
 
+	// === 확인 대화상자 콜백 관리 ===
+	/** @type {Function|null} 확인 콜백 함수 */
 	let confirmCallback = null;
+	/** @type {Function|null} 취소 콜백 함수 */
 	let cancelCallback = null;
 
+	/**
+	 * 확인 버튼 클릭 처리
+	 */
 	function handleConfirm() {
 		showFeedback = false;
 		if (confirmCallback) confirmCallback();
 	}
 
+	/**
+	 * 취소 버튼 클릭 처리
+	 */
 	function handleCancel() {
 		showFeedback = false;
 		if (cancelCallback) cancelCallback();
@@ -398,20 +434,13 @@
 			<input 
 				type="tel" 
 				id="auth-phone" 
-				placeholder="010-1234-5678" 
+				placeholder={PLACEHOLDERS.PHONE} 
 				bind:value={authPhone}
 				on:input={(e) => {
-					let value = e.target.value.replace(/[^0-9]/g, '');
-					if (value.length > 3 && value.length <= 7) {
-						value = value.replace(/(\d{3})(\d+)/, '$1-$2');
-					} else if (value.length > 7) {
-						value = value.replace(/(\d{3})(\d{4})(\d+)/, '$1-$2-$3');
-					}
-					if (value.length > 13) {
-						value = value.substring(0, 13);
-					}
-					authPhone = value;
-					e.target.value = value;
+					// 전화번호 자동 포매팅 (유틸리티 함수 사용)
+					const formattedValue = formatPhoneNumber(e.target.value);
+					authPhone = formattedValue;
+					e.target.value = formattedValue;
 				}}
 			>
 		</div>
@@ -420,16 +449,14 @@
 			<input 
 				type="password" 
 				id="password" 
-				placeholder="4자리 숫자 비밀번호" 
-				maxlength="4"
+				placeholder={PLACEHOLDERS.PASSWORD}
+				maxlength={VALIDATION_CONSTANTS.PASSWORD_LENGTH}
 				bind:value={password}
 				on:input={(e) => {
-					let value = e.target.value.replace(/[^0-9]/g, '');
-					if (value.length > 4) {
-						value = value.substring(0, 4);
-					}
-					password = value;
-					e.target.value = value;
+					// 비밀번호 포매팅 (유틸리티 함수 사용)
+					const formattedValue = formatPassword(e.target.value);
+					password = formattedValue;
+					e.target.value = formattedValue;
 				}}
 			>
 		</div>
