@@ -2,12 +2,10 @@ import asyncio
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, func, extract
 from app.models.reservation import Reservation
-from app.models.admin import Admin
 from app.schemas.reservation import ReservationCreate, ReservationWithAuth, AdminStatusUpdate
-from app.services.admin_service import AdminService
 from app.core.security import encrypt_password, verify_password
-from typing import List, Optional, Tuple
-from datetime import date, datetime
+from typing import List, Optional
+from datetime import date
 
 
 class ReservationService:
@@ -106,7 +104,7 @@ class ReservationService:
         reservation_id: int, 
         name: str, 
         phone: str, 
-        password: str
+        password: str = None
     ) -> bool:
         """ID 기반 예약 삭제 (5번 기능) - 이미 인증된 사용자의 예약 삭제"""
         loop = asyncio.get_event_loop()
@@ -138,19 +136,11 @@ class ReservationService:
         loop = asyncio.get_event_loop()
         
         def sync_admin_update():
-            # 관리자 조회 또는 생성
-            admin = db.query(Admin).filter(Admin.name == status_update.admin_name).first()
-            if not admin:
-                admin = Admin(name=status_update.admin_name)
-                db.add(admin)
-                db.commit()
-                db.refresh(admin)
-            
             # 예약 상태 업데이트
             reservation = db.query(Reservation).filter(Reservation.id == reservation_id).first()
             if reservation:
                 reservation.status = status_update.status
-                reservation.confirmed_by = admin.admin_id
+                reservation.confirmed_by = status_update.admin_name
                 db.commit()
                 db.refresh(reservation)
             
@@ -227,3 +217,39 @@ class ReservationService:
             ).order_by(Reservation.start_date.asc()).all()
         
         return await loop.run_in_executor(None, sync_get_user_reservations)
+    
+    @staticmethod
+    async def update_reservation(
+        db: Session,
+        reservation_id: int,
+        name: str,
+        phone: str,
+        start_date: date,
+        end_date: date,
+        duration: int
+    ) -> Optional[Reservation]:
+        """예약 정보 업데이트 - 상태를 pending으로 초기화"""
+        loop = asyncio.get_event_loop()
+        
+        def sync_update():
+            reservation = db.query(Reservation).filter(
+                Reservation.id == reservation_id,
+                Reservation.name == name,
+                Reservation.phone == phone
+            ).first()
+            
+            if not reservation:
+                return None
+            
+            # 예약 정보 업데이트
+            reservation.start_date = start_date
+            reservation.end_date = end_date
+            reservation.duration = duration
+            reservation.status = "pending"  # 상태를 pending으로 변경
+            reservation.confirmed_by = None  # 확정자 정보 초기화
+            
+            db.commit()
+            db.refresh(reservation)
+            return reservation
+        
+        return await loop.run_in_executor(None, sync_update)

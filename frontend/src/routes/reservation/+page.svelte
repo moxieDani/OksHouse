@@ -232,15 +232,42 @@
 				return;
 			}
 
-			// Show success message for modification
-			const endDate = new Date(startDate);
-			endDate.setDate(startDate.getDate() + duration);
-			
-			showSuccess(
-				'🎉 예약 변경 완료!',
-				`체크인: ${formatKoreanDate(startDate)}<br>체크아웃: ${formatKoreanDate(endDate)}<br>기간: ${duration}박 ${duration + 1}일`,
-				() => goto('/')
-			);
+			try {
+				// Calculate end date
+				const endDate = new Date(startDate);
+				endDate.setDate(startDate.getDate() + duration);
+
+				// Call update API
+				await userAPI.updateReservation(
+					modificationData.originalReservation.id,
+					modificationData.userInfo.name,
+					modificationData.userInfo.phone,
+					formatDateForAPI(startDate),
+					formatDateForAPI(endDate),
+					duration
+				);
+
+				// Show success message for modification
+				showSuccess(
+					'🎉 예약 변경 완료!',
+					`체크인: ${formatKoreanDate(startDate)}<br>체크아웃: ${formatKoreanDate(endDate)}<br>기간: ${duration}박 ${duration + 1}일`,
+					() => {
+						// Store auth data for returning to manage page
+						if (browser) {
+							sessionStorage.setItem('returnToManageStep2', JSON.stringify({
+								authName: modificationData.userInfo.name,
+								authPhone: modificationData.userInfo.phone,
+								password: modificationData.userInfo.password
+							}));
+						}
+						goto('/manage#step2');
+					}
+				);
+			} catch (error) {
+				console.error('Reservation update failed:', error);
+				const errorMessage = error.message || '알 수 없는 오류가 발생했습니다.';
+				showAlert(`예약 변경에 실패했습니다: ${errorMessage}`, 'error');
+			}
 			return;
 		}
 

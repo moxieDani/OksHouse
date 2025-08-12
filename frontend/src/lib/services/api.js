@@ -97,6 +97,23 @@ export const userAPI = {
 				password
 			})
 		});
+	},
+
+	/**
+	 * Update a reservation
+	 */
+	async updateReservation(reservationId, name, phone, startDate, endDate, duration) {
+		return await apiRequest('/user/reservations/', {
+			method: 'PUT',
+			body: JSON.stringify({
+				reservation_id: reservationId,
+				name,
+				phone,
+				start_date: startDate,
+				end_date: endDate,
+				duration
+			})
+		});
 	}
 };
 

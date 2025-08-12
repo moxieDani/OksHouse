@@ -6,7 +6,7 @@ from app.db.database import get_async_db
 from app.services.reservation_service import ReservationService
 from app.schemas.reservation import (
     ReservationCreate, ReservationResponse,
-    ReservationDelete, UserReservationsRequest
+    ReservationDelete, UserReservationsRequest, ReservationUpdate
 )
 
 router = APIRouter()
@@ -78,3 +78,28 @@ async def get_user_reservations(
         name=user_request.name, 
         phone=user_request.phone
     )
+
+
+@router.put("/", response_model=ReservationResponse)
+async def update_reservation(
+    update_request: ReservationUpdate,
+    db: Session = Depends(get_async_db)
+):
+    """예약 정보 업데이트 - 상태를 pending으로 초기화"""
+    updated_reservation = await ReservationService.update_reservation(
+        db=db,
+        reservation_id=update_request.reservation_id,
+        name=update_request.name,
+        phone=update_request.phone,
+        start_date=update_request.start_date,
+        end_date=update_request.end_date,
+        duration=update_request.duration
+    )
+    
+    if not updated_reservation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="예약을 찾을 수 없거나 권한이 없습니다."
+        )
+    
+    return updated_reservation

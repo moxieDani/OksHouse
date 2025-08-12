@@ -445,7 +445,7 @@
 	<div class="step">
 		<h3><span class="emoji-normal">📊</span> 예약 현황 확인</h3>
 		<p class="step-description">
-			<strong>{authName}</strong>님의 예약을 확인하실 수 있습니다.
+			<strong>{authName}</strong>님의 예약 현황입니다.
 		</p>
 		
 		<!-- 달력 보기 -->

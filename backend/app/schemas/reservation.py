@@ -10,8 +10,6 @@ class ReservationBase(BaseModel):
     start_date: date = Field(..., description="시작일")
     end_date: date = Field(..., description="종료일")
     duration: int = Field(..., gt=0, description="숙박일수")
-    guests: int = Field(..., gt=0, description="인원수")
-    purpose: Optional[str] = Field(None, description="목적")
 
 
 class ReservationCreate(ReservationBase):
@@ -43,7 +41,7 @@ class ReservationResponse(ReservationBase):
     """예약 응답 스키마"""
     id: int
     status: str = Field(..., description="예약상태: pending(예약신청), confirmed(예약확정), denied(예약거부)")
-    confirmed_by: Optional[int] = Field(None, description="확정 관리자 ID")
+    confirmed_by: Optional[str] = Field(None, description="확정 관리자명")
     created_at: datetime
     updated_at: datetime
     
@@ -63,3 +61,13 @@ class UserReservationsRequest(BaseModel):
     """사용자 예약 목록 조회 요청 스키마"""
     name: str = Field(..., min_length=1, description="예약자명")
     phone: str = Field(..., min_length=1, description="연락처")
+
+
+class ReservationUpdate(BaseModel):
+    """예약 업데이트 스키마"""
+    reservation_id: int = Field(..., description="예약 ID")
+    name: str = Field(..., min_length=1, description="예약자명")
+    phone: str = Field(..., min_length=1, description="연락처")
+    start_date: date = Field(..., description="새로운 시작일")
+    end_date: date = Field(..., description="새로운 종료일")
+    duration: int = Field(..., gt=0, description="새로운 숙박일수")
