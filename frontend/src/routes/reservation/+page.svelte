@@ -459,7 +459,7 @@
 	<title>{isModificationMode ? '예약 변경' : '예약'} - Ok's House</title>
 </svelte:head>
 
-<h1 id="page-title" style="margin-top: 10%;">
+<h1 id="page-title" style="margin-top: 80px; padding-top: 20px;">
 	{#if isModificationMode}
 		<span class="emoji-normal">📋</span> 예약 변경
 	{:else}

@@ -415,7 +415,7 @@
 	<title>예약 확인·변경 - Ok's House</title>
 </svelte:head>
 
-<h1 style="margin-top: 10%;"><span class="emoji-normal">⚙️</span> 예약 확인·변경하기</h1>
+<h1 style="margin-top: 80px; padding-top: 20px;"><span class="emoji-normal">⚙️</span> 예약 확인·변경하기</h1>
 
 <!-- Step 1: 예약자 정보 입력 -->
 {#if currentStep === 1}
