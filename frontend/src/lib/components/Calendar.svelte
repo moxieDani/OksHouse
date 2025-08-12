@@ -115,6 +115,9 @@
 			currentMonth = dayInfo.date.getMonth();
 			currentYear = dayInfo.date.getFullYear();
 			
+			// Dispatch month change event first to load new data
+			dispatch('monthChange', { month: currentMonth, year: currentYear });
+			
 			// Then select the date after month change
 			selectedDate = dayInfo.date;
 			setStartDate(dayInfo.date);
@@ -124,8 +127,7 @@
 				endDate = new Date(dayInfo.date.getTime() + (duration * 24 * 60 * 60 * 1000));
 			}
 			
-			// Dispatch events
-			dispatch('monthChange', { month: currentMonth, year: currentYear });
+			// Dispatch date select event
 			dispatch('dateSelect', dayInfo.date);
 			return;
 		}
@@ -258,8 +260,9 @@
 		}
 		
 		const dateTime = date.getTime();
+		const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD format
 		
-		return existingReservations.some(reservation => {
+		const blocked = existingReservations.some(reservation => {
 			// Skip the original reservation being modified
 			if (isModificationMode && originalReservation && 
 				reservation.id === originalReservation.id) {
@@ -273,9 +276,12 @@
 				? reservation.endDate
 				: new Date(reservation.end_date + 'T00:00:00');
 			
-			// Check if date falls within existing reservation period (inclusive)
-			return dateTime >= startDate.getTime() && dateTime <= endDate.getTime();
+			const isBlocked = dateTime >= startDate.getTime() && dateTime <= endDate.getTime();
+			
+			return isBlocked;
 		});
+		
+		return blocked;
 	}
 
 	// Check if a proposed date range would conflict with existing reservations

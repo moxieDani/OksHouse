@@ -151,21 +151,42 @@
 		nextStep();
 	}
 
-	// Load existing reservations for the current month
+	// Load existing reservations for the current month and adjacent months
 	async function loadMonthlyReservations(year, month) {
-		// Convert JavaScript 0-based month to 1-based month for API
-		const apiMonth = month + 1;
-		const cacheKey = `${year}-${apiMonth}`;
-		
 		// Skip if already loading the same month
 		if (isLoadingReservations) return;
 		
 		try {
 			isLoadingReservations = true;
 			
-			const reservations = await userAPI.getMonthlyReservations(year, apiMonth);
-			existingReservations = reservations || [];
+			// Calculate previous and next month
+			const prevMonth = month === 0 ? 11 : month - 1;
+			const prevYear = month === 0 ? year - 1 : year;
+			const nextMonth = month === 11 ? 0 : month + 1;
+			const nextYear = month === 11 ? year + 1 : year;
+			
+			// Load current month and adjacent months in parallel
+			const [currentReservations, prevReservations, nextReservations] = await Promise.all([
+				userAPI.getMonthlyReservations(year, month + 1), // Convert to 1-based
+				userAPI.getMonthlyReservations(prevYear, prevMonth + 1), // Convert to 1-based
+				userAPI.getMonthlyReservations(nextYear, nextMonth + 1) // Convert to 1-based
+			]);
+			
+			// Combine all reservations and remove duplicates by ID
+			const allReservations = [
+				...(currentReservations || []),
+				...(prevReservations || []),
+				...(nextReservations || [])
+			];
+			
+			// Remove duplicates based on reservation ID
+			const uniqueReservations = allReservations.filter((reservation, index, self) => 
+				index === self.findIndex(r => r.id === reservation.id)
+			);
+			
+			existingReservations = uniqueReservations;
 		} catch (error) {
+			console.error('Failed to load monthly reservations:', error);
 			existingReservations = [];
 		} finally {
 			isLoadingReservations = false;
@@ -178,10 +199,22 @@
 		currentMonth = month;
 		currentYear = year;
 		
-		// Force reload reservations for the new month
+		// Always reload reservations for the new month when on step 2
 		if (currentStep === 2) {
 			isLoadingReservations = false; // Reset loading state
 			loadMonthlyReservations(year, month);
+		}
+	}
+
+	// Keep track of last loaded month to avoid duplicate requests
+	let lastLoadedMonth = '';
+	
+	// Watch for month/year changes to load data - prevent duplicate loads
+	$: if (currentStep === 2 && currentMonth !== undefined && currentYear !== undefined) {
+		const monthKey = `${currentYear}-${currentMonth}`;
+		if (monthKey !== lastLoadedMonth && !isLoadingReservations) {
+			lastLoadedMonth = monthKey;
+			loadMonthlyReservations(currentYear, currentMonth);
 		}
 	}
 
@@ -305,8 +338,6 @@
 				start_date: formatDateForAPI(startDate),
 				end_date: formatDateForAPI(endDate),
 				duration: duration,
-				guests: 1, // Default to 1 guest
-				purpose: null,
 				password: password
 			};
 			
@@ -316,10 +347,18 @@
 				'🎉 예약 완료!',
 				`예약이 성공적으로 저장되었습니다.<br><br>예약자: ${name}<br>체크인: ${formatKoreanDate(startDate)}<br>체크아웃: ${formatKoreanDate(endDate)}<br>기간: ${duration}박 ${duration + 1}일<br>예약번호: ${response.id}`,
 				() => {
+					// Store auth data for automatic login to manage page
+					if (browser) {
+						sessionStorage.setItem('returnToManageStep2', JSON.stringify({
+							authName: name.trim(),
+							authPhone: phone.trim(),
+							password: password
+						}));
+					}
 					// Clear existing reservations cache to force reload
 					existingReservations = [];
 					resetReservation();
-					goto('/');
+					goto('/manage#step2');
 				}
 			);
 		} catch (error) {
