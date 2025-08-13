@@ -520,10 +520,6 @@
 									</span>
 								</div>
 							</div>
-							<div class="reservation-details">
-								<span>예약자: {reservation.name}</span>
-								<span>연락처: {reservation.phone}</span>
-							</div>
 						</div>
 					{/each}
 				{/if}
@@ -705,16 +701,6 @@
 		background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
 	}
 
-	.reservation-details {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		font-size: var(--text-sm);
-		color: var(--neutral-600);
-		flex-wrap: wrap;
-		gap: var(--space-2);
-	}
-
 	.step2-buttons {
 		display: flex;
 		gap: var(--space-2);
@@ -796,11 +782,6 @@
 		.reservation-badges {
 			justify-content: flex-start;
 			width: 100%;
-		}
-
-		.reservation-details {
-			flex-direction: column;
-			align-items: flex-start;
 		}
 
 		.step2-buttons {
