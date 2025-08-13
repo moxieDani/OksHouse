@@ -247,7 +247,6 @@ input[type="password"]:focus {
     display: flex;
     gap: var(--space-4);
     justify-content: center;
-    margin-top: var(--space-8);
     flex-wrap: wrap;
 }
 

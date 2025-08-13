@@ -175,3 +175,29 @@ export async function retryAsync(asyncFn, options = {}) {
 	
 	return null;
 }
+
+/**
+ * FeedbackManager용 에러 피드백 표시 함수
+ * @param {Object} feedbackManager - 피드백 매니저 객체
+ * @param {string} title - 에러 제목
+ * @param {string} message - 에러 메시지
+ */
+export function showErrorFeedback(feedbackManager, title, message) {
+	feedbackManager.type = 'error';
+	feedbackManager.title = title;
+	feedbackManager.message = message;
+	feedbackManager.show = true;
+}
+
+/**
+ * FeedbackManager용 성공 피드백 표시 함수
+ * @param {Object} feedbackManager - 피드백 매니저 객체
+ * @param {string} title - 성공 제목
+ * @param {string} message - 성공 메시지
+ */
+export function showSuccessFeedback(feedbackManager, title, message) {
+	feedbackManager.type = 'success';
+	feedbackManager.title = title;
+	feedbackManager.message = message;
+	feedbackManager.show = true;
+}

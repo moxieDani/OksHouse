@@ -8,12 +8,12 @@
 	export let params = {};
 	
 	import Calendar from '$lib/components/Calendar.svelte';
-	import FeedbackManager from '$lib/components/FeedbackManager.svelte';
+	import FeedbackManager from '../../../../shared/components/FeedbackManager.svelte';
 	import { userAPI } from '$lib/services/api.js';
 	import { MANAGE_STEPS, DEFAULT_MESSAGES, PLACEHOLDERS } from '$lib/constants/reservationConstants.js';
-	import { formatKoreanDate } from '$lib/utils/dateUtils.js';
+	import { formatKoreanDate } from '../../../../shared/utils/dateUtils.js';
 	import { formatPhoneNumber, formatPassword, VALIDATION_CONSTANTS } from '$lib/utils/validationUtils.js';
-	import { handleError, safeAsync } from '$lib/utils/errorUtils.js';
+	import { handleError, safeAsync } from '../../../../shared/utils/errorUtils.js';
 
 	// === 페이지 상태 관리 ===
 	/** @type {number} 현재 단계 (1: 인증, 2: 예약 목록) */
@@ -415,7 +415,7 @@
 	<title>예약 확인·변경 - Ok's House</title>
 </svelte:head>
 
-<h1 style="margin-top: 80px; padding-top: 20px;"><span class="emoji-normal">⚙️</span> 예약 확인·변경하기</h1>
+<h1 style="margin-top: 55px;"><span class="emoji-normal">⚙️</span> 예약 확인·변경하기</h1>
 
 <!-- Step 1: 예약자 정보 입력 -->
 {#if currentStep === 1}
