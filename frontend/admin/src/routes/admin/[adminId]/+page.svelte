@@ -146,65 +146,49 @@
 	<title>{currentAdmin?.name} 관리자 - Ok's House 관리 시스템</title>
 </svelte:head>
 
-<div class="admin-dashboard">
-	<!-- 헤더 -->
-	<header class="dashboard-header">
-		<div class="header-content">
-			<a href="/" class="home-button">
-				🏠 홈
-			</a>
-			<div class="admin-info">
-				<span class="admin-emoji">{currentAdmin?.emoji}</span>
-				<h1 class="admin-name">{currentAdmin?.name}</h1>
+<!-- 메인 콘텐츠 -->
+<h1 class="page-title" style="margin-top: 27.5px; font-size: var(--text-3xl);">
+	<span class="emoji-normal s-xe9m8xNPUuGQ">🗓️</span> 예약현황
+</h1>
+
+<div class="step">
+	<div class="calendar-section">
+	<!-- 날짜 범위 및 통계 표시 -->
+	<div class="date-range-display">
+		<div class="stats-summary">
+			<div class="summary-item">
+				<span class="summary-number">{existingReservations.length}</span>
+				<span class="summary-label">총 예약</span>
 			</div>
-			<div class="header-spacer"></div>
+			<div class="summary-divider">|</div>
+			<div class="summary-item">
+				<span class="summary-number confirmed">{existingReservations.filter(r => r.status === 'confirmed').length}</span>
+				<span class="summary-label">확정</span>
+			</div>
+			<div class="summary-divider">|</div>
+			<div class="summary-item">
+				<span class="summary-number pending">{existingReservations.filter(r => r.status === 'pending').length}</span>
+				<span class="summary-label">대기</span>
+			</div>
 		</div>
-	</header>
+	</div>
 
-	<!-- 메인 콘텐츠 -->
-	<main class="dashboard-main">
-		<div class="calendar-section">
-			<div class="section-header">
-				<h4>🗓️ 예약현황</h4>
-			</div>
-
-			<!-- 날짜 범위 및 통계 표시 -->
-			<div class="date-range-display">
-				<div class="stats-summary">
-					<div class="summary-item">
-						<span class="summary-number">{existingReservations.length}</span>
-						<span class="summary-label">총 예약</span>
-					</div>
-					<div class="summary-divider">|</div>
-					<div class="summary-item">
-						<span class="summary-number confirmed">{existingReservations.filter(r => r.status === 'confirmed').length}</span>
-						<span class="summary-label">확정</span>
-					</div>
-					<div class="summary-divider">|</div>
-					<div class="summary-item">
-						<span class="summary-number pending">{existingReservations.filter(r => r.status === 'pending').length}</span>
-						<span class="summary-label">대기</span>
-					</div>
-				</div>
-			</div>
-
-			{#if isLoading}
-				<div class="loading-state">
-					<div class="loading-spinner"></div>
-					<p>예약 정보를 불러오는 중...</p>
-				</div>
-			{:else}
-				<AdminCalendar
-					{currentMonth}
-					{currentYear}
-					{existingReservations}
-					on:monthChange={handleMonthChange}
-					on:reservationDateClick={handleReservationDateClick}
-				/>
-			{/if}
-
+	{#if isLoading}
+		<div class="loading-state">
+			<div class="loading-spinner"></div>
+			<p>예약 정보를 불러오는 중...</p>
 		</div>
-	</main>
+	{:else}
+		<AdminCalendar
+			{currentMonth}
+			{currentYear}
+			{existingReservations}
+			on:monthChange={handleMonthChange}
+			on:reservationDateClick={handleReservationDateClick}
+		/>
+	{/if}
+
+	</div>
 </div>
 
 <!-- 예약 상세 모달 -->
@@ -271,74 +255,32 @@
 />
 
 <style>
-	.admin-dashboard {
-		min-height: 100vh;
-		background: linear-gradient(135deg, var(--neutral-50) 0%, var(--neutral-100) 100%);
+	/* 페이지 제목 스타일 - 사용자 페이지와 동일한 스타일 적용 */
+	h1 {
+		background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%) !important;
+		background-clip: text !important;
+		-webkit-background-clip: text !important;
+		color: transparent !important;
+		-webkit-text-fill-color: transparent !important;
 	}
 
-	.dashboard-header {
-		background: white;
-		box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-		position: sticky;
-		top: 0;
-		z-index: 100;
+	/* 이모지는 정상 색상으로 표시 */
+	.emoji-normal {
+		background: none !important;
+		background-clip: initial !important;
+		-webkit-background-clip: initial !important;
+		color: initial !important;
+		-webkit-text-fill-color: initial !important;
 	}
 
-	.header-content {
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: var(--space-4) var(--space-6);
-		display: flex;
-		align-items: center;
-		gap: var(--space-4);
+	/* 사용자 페이지와 동일한 step 컨테이너 스타일 */
+	.step {
+		animation: fadeIn 0.3s ease-in-out;
 	}
 
-	.home-button {
-		background: white;
-		color: var(--neutral-700);
-		text-decoration: none;
-		padding: var(--space-2) var(--space-4);
-		border-radius: var(--radius-lg);
-		font-weight: 600;
-		transition: var(--transition-all);
-		box-shadow: var(--shadow-md);
-		border: 1px solid var(--neutral-200);
-		font-size: var(--text-sm);
-	}
-
-	.home-button:hover {
-		transform: translateY(-2px);
-		box-shadow: var(--shadow-lg);
-		background: var(--neutral-50);
-	}
-
-	.admin-info {
-		display: flex;
-		align-items: center;
-		gap: var(--space-3);
-		flex: 1;
-		justify-content: center;
-	}
-
-	.admin-emoji {
-		font-size: 2rem;
-	}
-
-	.admin-name {
-		font-size: var(--text-2xl);
-		font-weight: 700;
-		color: var(--neutral-800);
-		margin: 0;
-	}
-
-	.header-spacer {
-		width: 80px; /* home-button과 같은 너비 */
-	}
-
-	.dashboard-main {
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: var(--space-6);
+	@keyframes fadeIn {
+		from { opacity: 0; transform: translateY(20px); }
+		to { opacity: 1; transform: translateY(0); }
 	}
 
 	.calendar-section {
@@ -354,12 +296,6 @@
 		border-bottom: 1px solid var(--neutral-200);
 	}
 
-	.section-header h4 {
-		font-size: var(--text-lg);
-		font-weight: 600;
-		color: var(--neutral-700);
-		margin: 0;
-	}
 
 	.loading-state {
 		padding: var(--space-12);
@@ -383,18 +319,16 @@
 
 	/* 날짜 범위 표시 */
 	.date-range-display {
-		padding: var(--space-4) var(--space-6);
+		padding: var(--space-6) var(--space-6);
 		background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 		border-bottom: 1px solid var(--neutral-200);
-		display: flex;
-		justify-content: space-between;
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr;
 		align-items: center;
 	}
 
 	.stats-summary {
-		display: flex;
-		align-items: center;
-		gap: var(--space-4);
+		display: contents;
 	}
 
 	.summary-item {
@@ -402,13 +336,14 @@
 		flex-direction: column;
 		align-items: center;
 		text-align: center;
+		justify-self: center;
 	}
 
 	.summary-number {
-		font-size: var(--text-2xl);
+		font-size: var(--text-3xl);
 		font-weight: 700;
 		line-height: 1;
-		margin-bottom: var(--space-1);
+		margin-bottom: var(--space-2);
 	}
 
 	.summary-number.confirmed {
@@ -424,17 +359,15 @@
 	}
 
 	.summary-label {
-		font-size: var(--text-xs);
+		font-size: var(--text-base);
 		color: var(--neutral-600);
-		font-weight: 500;
+		font-weight: 600;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
 
 	.summary-divider {
-		color: var(--neutral-300);
-		font-weight: 300;
-		font-size: var(--text-lg);
+		display: none;
 	}
 
 	/* 예약 상세 모달 */
@@ -630,35 +563,16 @@
 	}
 
 	@media (max-width: 768px) {
-		.dashboard-main {
-			padding: var(--space-4);
-		}
-
-		.header-content {
-			padding: var(--space-3) var(--space-4);
-		}
-
-		.admin-name {
-			font-size: var(--text-xl);
-		}
-
-		.section-header {
-			padding: var(--space-3) var(--space-4);
-		}
-
-		.section-header h4 {
-			font-size: var(--text-base);
+		.calendar-section {
+			margin: 0;
+			border-radius: 0;
 		}
 
 		.date-range-display {
-			flex-direction: column;
-			gap: var(--space-3);
-			padding: var(--space-3) var(--space-4);
+			grid-template-columns: 1fr 1fr 1fr;
+			gap: var(--space-2);
+			padding: var(--space-3) var(--space-2);
 			text-align: center;
-		}
-
-		.stats-summary {
-			gap: var(--space-3);
 		}
 
 		.summary-item {
@@ -666,7 +580,11 @@
 		}
 
 		.summary-number {
-			font-size: var(--text-xl);
+			font-size: var(--text-3xl);
+		}
+
+		.summary-label {
+			font-size: var(--text-sm);
 		}
 
 		.modal-content {
