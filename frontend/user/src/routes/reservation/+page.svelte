@@ -338,22 +338,30 @@
 					duration
 				);
 
-				// Show success message for modification
-				showSuccess(
-					'🎉 예약 변경 완료!',
-					`체크인: ${formatKoreanDate(startDate)}<br>체크아웃: ${formatKoreanDate(endDate)}<br>기간: ${duration}박 ${duration + 1}일`,
-					() => {
-						// Store auth data for returning to manage page
-						if (browser) {
-							sessionStorage.setItem('returnToManageStep2', JSON.stringify({
-								authName: modificationData.userInfo.name,
-								authPhone: modificationData.userInfo.phone,
-								password: modificationData.userInfo.password
-							}));
-						}
-						goto('/manage#step2');
-					}
-				);
+				// 예약 변경 완료 페이지로 이동
+				const completionData = {
+					guestName: modificationData.userInfo.name,
+					guestPhone: modificationData.userInfo.phone,
+					guestPassword: modificationData.userInfo.password,
+					startDate: startDate.toISOString(),
+					endDate: endDate.toISOString(),
+					duration: duration
+				};
+				
+				// Store auth data for returning to manage page
+				if (browser) {
+					sessionStorage.setItem('returnToManageStep2', JSON.stringify({
+						authName: modificationData.userInfo.name,
+						authPhone: modificationData.userInfo.phone,
+						password: modificationData.userInfo.password
+					}));
+				}
+				
+				const params = new URLSearchParams({
+					data: encodeURIComponent(JSON.stringify(completionData)),
+					modification: 'true'
+				});
+				goto(`/reservation/complete?${params.toString()}`);
 			} catch (error) {
 				handleError(error, '예약 변경', showAlert);
 			}
@@ -384,24 +392,35 @@
 			
 			const response = await userAPI.createReservation(reservationData);
 			
-			showSuccess(
-				DEFAULT_MESSAGES.RESERVATION_SUCCESS,
-				`예약이 성공적으로 저장되었습니다.<br><br>예약자: ${guestInfo.name}<br>체크인: ${formatKoreanDate(startDate)}<br>체크아웃: ${formatKoreanDate(endDate)}<br>기간: ${duration}박 ${duration + 1}일<br>예약번호: ${response.id}`,
-				() => {
-					// Store auth data for automatic login to manage page
-					if (browser) {
-						sessionStorage.setItem('returnToManageStep2', JSON.stringify({
-							authName: guestInfo.name.trim(),
-							authPhone: guestInfo.phone.trim(),
-							password: guestInfo.password
-						}));
-					}
-					// Clear existing reservations cache to force reload
-					existingReservations = [];
-					resetReservation();
-					goto('/manage#step2');
-				}
-			);
+			// 예약 완료 페이지로 이동
+			const completionData = {
+				guestName: guestInfo.name.trim(),
+				guestPhone: guestInfo.phone.trim(),
+				guestPassword: guestInfo.password,
+				startDate: startDate.toISOString(),
+				endDate: endDate.toISOString(),
+				duration: duration,
+				reservationId: response.id
+			};
+			
+			// Store auth data for automatic login to manage page
+			if (browser) {
+				sessionStorage.setItem('returnToManageStep2', JSON.stringify({
+					authName: guestInfo.name.trim(),
+					authPhone: guestInfo.phone.trim(),
+					password: guestInfo.password
+				}));
+			}
+			
+			// Clear existing reservations cache to force reload
+			existingReservations = [];
+			resetReservation();
+			
+			const params = new URLSearchParams({
+				data: encodeURIComponent(JSON.stringify(completionData)),
+				modification: 'false'
+			});
+			goto(`/reservation/complete?${params.toString()}`);
 		} catch (error) {
 			handleError(error, '예약 생성', showAlert);
 		}
