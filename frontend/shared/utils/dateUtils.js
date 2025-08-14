@@ -6,7 +6,7 @@
 /**
  * 날짜를 한국어 형식으로 포맷팅
  * @param {Date | string | null} date - 포맷팅할 날짜
- * @returns {string} 포맷팅된 날짜 문자열 (YYYY.MM.DD (요일))
+ * @returns {string} 포맷팅된 날짜 문자열 (MM월 DD일(요일))
  */
 export function formatKoreanDate(date) {
 	if (!date) return '';
@@ -18,12 +18,11 @@ export function formatKoreanDate(date) {
 		return '';
 	}
 	
-	const year = dateObj.getFullYear();
 	const month = dateObj.getMonth() + 1;
 	const day = dateObj.getDate();
 	const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
 	const weekday = weekdays[dateObj.getDay()];
-	return `${year}.${month.toString().padStart(2, '0')}.${day.toString().padStart(2, '0')} (${weekday})`;
+	return `${month}월 ${day}일(${weekday})`;
 }
 
 /**

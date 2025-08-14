@@ -81,7 +81,9 @@
 			endDate: new Date(2025, 1, 5),    // 2월 5일
 			duration: 2,
 			status: 'cancelled',
-			created_at: '2025-01-22T11:10:00Z'
+			created_at: '2025-01-22T11:10:00Z',
+			confirmed_by: 'choi-bunok',
+			confirmed_at: '2025-01-19T14:30:00Z'
 		}
 	];
 
@@ -90,12 +92,15 @@
 	let selectedReservations = [];
 	let selectedDate = null;
 
-	// 카드 확장 상태 관리
-	let expandedCards = new Set();
-	
 	// 필터링 상태 관리
 	let selectedFilter = '전체';
-	const filterOptions = ['전체', '확정', '대기', '내 지인'];
+	const filterOptions = ['전체', '확정', '대기', '거절', '내 결정'];
+	
+	// 상세보기 팝업 상태
+	let showDetailModal = false;
+	let selectedDetailReservation = null;
+	
+
 
 	// 피드백 관리자 상태
 	let feedbackManager = {
@@ -211,18 +216,6 @@
 	}
 
 	/**
-	 * 카드 확장/축소 토글
-	 */
-	function toggleCardExpansion(reservationId) {
-		if (expandedCards.has(reservationId)) {
-			expandedCards.delete(reservationId);
-		} else {
-			expandedCards.add(reservationId);
-		}
-		expandedCards = expandedCards; // 반응성 트리거
-	}
-
-	/**
 	 * 필터 변경 처리
 	 */
 	function handleFilterChange(filter) {
@@ -230,24 +223,39 @@
 	}
 
 	/**
+	 * 상세보기 팝업 열기
+	 */
+	function openDetailModal(reservation) {
+		selectedDetailReservation = reservation;
+		showDetailModal = true;
+	}
+
+	/**
+	 * 상세보기 팝업 닫기
+	 */
+	function closeDetailModal() {
+		selectedDetailReservation = null;
+		showDetailModal = false;
+	}
+
+
+
+	/**
+	 * 카테고리별 예약 그룹화
+	 */
+	$: groupedReservations = {
+		'확정': mockReservations.filter(r => r.status === 'confirmed'),
+		'대기': mockReservations.filter(r => r.status === 'pending'), 
+		'거절': mockReservations.filter(r => r.status === 'cancelled'),
+		'내 결정': mockReservations.filter(r => r.confirmed_by === adminId)
+	};
+
+	/**
 	 * 필터링된 예약 목록
 	 */
-	$: filteredReservations = mockReservations.filter(reservation => {
-		switch (selectedFilter) {
-			case '확정':
-				return reservation.status === 'confirmed';
-			case '대기':
-				return reservation.status === 'pending';
-			case '내 지인':
-				// 특정 조건으로 필터링 (예: 특정 이름 패턴, 메모 등)
-				// 여기서는 예시로 특정 이름들을 내 지인으로 가정
-				const 지인명단 = ['김영희', '박철수', '이민정'];
-				return 지인명단.includes(reservation.name);
-			case '전체':
-			default:
-				return true;
-		}
-	});
+	$: filteredReservations = selectedFilter === '전체' 
+		? mockReservations 
+		: groupedReservations[selectedFilter] || [];
 
 	/**
 	 * 관리자 ID로 관리자 이름 가져오기
@@ -278,22 +286,46 @@
 	<!-- 날짜 범위 및 통계 표시 -->
 	<div class="date-range-display">
 		<div class="stats-summary">
-			<div class="summary-item">
+			<button 
+				class="summary-item {selectedFilter === '전체' ? 'active' : ''}"
+				on:click={() => handleFilterChange('전체')}
+				aria-label="전체 예약 보기"
+			>
 				<span class="summary-number">{existingReservations.length}</span>
 				<span class="summary-label">전체</span>
-			</div>
-			<div class="summary-item">
+			</button>
+			<button 
+				class="summary-item {selectedFilter === '확정' ? 'active' : ''}"
+				on:click={() => handleFilterChange('확정')}
+				aria-label="확정된 예약 보기"
+			>
 				<span class="summary-number confirmed">{existingReservations.filter(r => r.status === 'confirmed').length}</span>
 				<span class="summary-label">확정</span>
-			</div>
-			<div class="summary-item">
+			</button>
+			<button 
+				class="summary-item {selectedFilter === '대기' ? 'active' : ''}"
+				on:click={() => handleFilterChange('대기')}
+				aria-label="대기 중인 예약 보기"
+			>
 				<span class="summary-number pending">{existingReservations.filter(r => r.status === 'pending').length}</span>
 				<span class="summary-label">대기</span>
-			</div>
-			<div class="summary-item">
-				<span class="summary-number friend">{existingReservations.filter(r => ['김영희', '박철수', '이민정'].includes(r.name)).length}</span>
-				<span class="summary-label">내 지인</span>
-			</div>
+			</button>
+			<button 
+				class="summary-item {selectedFilter === '거절' ? 'active' : ''}"
+				on:click={() => handleFilterChange('거절')}
+				aria-label="거절된 예약 보기"
+			>
+				<span class="summary-number cancelled">{existingReservations.filter(r => r.status === 'cancelled').length}</span>
+				<span class="summary-label">거절</span>
+			</button>
+			<button 
+				class="summary-item {selectedFilter === '내 결정' ? 'active' : ''} admin-{adminId}"
+				on:click={() => handleFilterChange('내 결정')}
+				aria-label="내 결정 예약 보기"
+			>
+				<span class="summary-number friend admin-{adminId}">{existingReservations.filter(r => r.confirmed_by === adminId).length}</span>
+				<span class="summary-label">내 결정</span>
+			</button>
 		</div>
 	</div>
 
@@ -314,99 +346,58 @@
 
 	</div>
 
+	<!-- 예약 목록 타이틀 -->
+	<div class="reservation-list-title">
+		<h4>📝 예약목록</h4>
+	</div>
+
 	<!-- 예약자 정보 상세 표시 영역 -->
-	<div class="reservations-detail-section">
-		<!-- 필터 버튼들 -->
-		<div class="filter-controls">
-			{#each filterOptions as filter}
-				<button 
-					class="filter-btn {selectedFilter === filter ? 'active' : ''}"
-					data-filter={filter}
-					on:click={() => handleFilterChange(filter)}
+	{#if filteredReservations.length > 0}
+		<div class="reservations-list">
+			{#each filteredReservations as reservation}
+				<div 
+					class="reservation-card clickable {getStatusColor(reservation.status)}"
+					on:click={() => openDetailModal(reservation)}
+					on:keydown={(e) => e.key === 'Enter' && openDetailModal(reservation)}
+					role="button"
+					tabindex="0"
+					aria-label="{reservation.name} 예약 상세보기"
 				>
-					{filter}
-				</button>
+					<div class="card-content">
+						<!-- 첫번째 줄: 이름과 날짜 -->
+						<div class="card-row-1">
+							<span class="guest-name">👤 {reservation.name}</span>
+							<span class="period-dates">{formatKoreanDate(reservation.startDate)} - {formatKoreanDate(reservation.endDate)}</span>
+						</div>
+						
+						<!-- 두번째 줄: 뱃지들 -->
+						<div class="card-row-2">
+							<div class="status-badge {getStatusColor(reservation.status)}">
+								{getReservationStatusText(reservation.status)}
+							</div>
+							<div class="duration-badge">
+								{reservation.duration}박{reservation.duration + 1}일
+							</div>
+							{#if reservation.confirmed_by}
+								<div class="admin-badge admin-theme-{reservation.confirmed_by}">
+									{getAdminEmoji(reservation.confirmed_by)} {getAdminName(reservation.confirmed_by)}
+								</div>
+							{/if}
+						</div>
+					</div>
+				</div>
 			{/each}
 		</div>
-
-		{#if filteredReservations.length > 0}
-			<div class="reservations-grid">
-				{#each filteredReservations as reservation}
-					<div class="reservation-card {getStatusColor(reservation.status)} {expandedCards.has(reservation.id) ? 'expanded' : 'compact'}">
-						<!-- 컴팩트 뷰 (항상 표시) -->
-						<div class="card-compact">
-							<div class="compact-info">
-								<div class="guest-summary">
-									<h3 class="guest-name">👤 {reservation.name}</h3>
-									<p class="reservation-dates">{formatKoreanDate(reservation.startDate)} ~ {formatKoreanDate(reservation.endDate)}</p>
-								</div>
-								<div class="compact-right">
-									<div class="status-badge {getStatusColor(reservation.status)}">
-										{getReservationStatusText(reservation.status)}
-									</div>
-									<button 
-										class="expand-button"
-										on:click={() => toggleCardExpansion(reservation.id)}
-										aria-label="{expandedCards.has(reservation.id) ? '접기' : '자세히 보기'}"
-									>
-										{expandedCards.has(reservation.id) ? '접기 ▲' : '자세히 ▼'}
-									</button>
-								</div>
-							</div>
-						</div>
-
-						<!-- 확장 뷰 (버튼 클릭시에만 표시) -->
-						{#if expandedCards.has(reservation.id)}
-							<div class="card-expanded">
-								<div class="expanded-details">
-									{#if reservation.status === 'confirmed' && reservation.confirmed_by}
-										<div class="detail-row confirmed-row admin-{reservation.confirmed_by}">
-											<span class="detail-label">✅ 예약 확정자:</span>
-											<span class="detail-value confirmed-admin">
-												{getAdminEmoji(reservation.confirmed_by)} {getAdminName(reservation.confirmed_by)}
-											</span>
-										</div>
-										{#if reservation.confirmed_at}
-											<div class="detail-row admin-{reservation.confirmed_by}">
-												<span class="detail-label">📋 확정일:</span>
-												<span class="detail-value">{new Date(reservation.confirmed_at).toLocaleDateString('ko-KR')}</span>
-											</div>
-										{/if}
-									{/if}
-
-									<div class="detail-row">
-										<span class="detail-label">📞 연락처:</span>
-										<span class="detail-value">{reservation.phone}</span>
-									</div>
-									
-									<div class="detail-row">
-										<span class="detail-label">🏠 숙박기간:</span>
-										<span class="detail-value">{reservation.duration}박 {reservation.duration + 1}일</span>
-									</div>
-									
-									{#if reservation.created_at}
-										<div class="detail-row">
-											<span class="detail-label">⏰ 예약 신청일:</span>
-											<span class="detail-value">{new Date(reservation.created_at).toLocaleDateString('ko-KR')}</span>
-										</div>
-									{/if}
-								</div>
-							</div>
-						{/if}
-					</div>
-				{/each}
-			</div>
-		{:else}
-			<div class="no-reservations-message">
-				<div class="empty-icon">📅</div>
-				<h3>{selectedFilter === '전체' ? '이번 달 예약이 없습니다' : `'${selectedFilter}' 조건에 맞는 예약이 없습니다`}</h3>
-				<p>{selectedFilter === '전체' ? '새로운 예약이 들어오면 여기에 표시됩니다.' : '다른 필터를 선택해보세요.'}</p>
-			</div>
-		{/if}
-	</div>
+	{:else}
+		<div class="no-reservations-message">
+			<div class="empty-icon">📅</div>
+			<h3>{selectedFilter === '전체' ? '이번 달 예약이 없습니다' : `'${selectedFilter}' 조건에 맞는 예약이 없습니다`}</h3>
+			<p>{selectedFilter === '전체' ? '새로운 예약이 들어오면 여기에 표시됩니다.' : '다른 필터를 선택해보세요.'}</p>
+		</div>
+	{/if}
 </div>
 
-<!-- 예약 상세 모달 -->
+<!-- 예약 상세 모달 (달력에서 날짜 클릭 시) -->
 {#if showReservationModal}
 	<div class="reservation-modal">
 		<div class="modal-backdrop" on:click={closeReservationModal} role="presentation"></div>
@@ -461,6 +452,96 @@
 	</div>
 {/if}
 
+<!-- 예약 상세보기 팝업 모달 (상세보기 버튼 클릭 시) -->
+{#if showDetailModal && selectedDetailReservation}
+	<div class="detail-modal">
+		<div class="modal-backdrop" on:click={closeDetailModal} role="presentation"></div>
+		<div class="modal-content detail-modal-content">
+			<div class="modal-header">
+				<h3>📋 예약 상세 정보</h3>
+				<button class="modal-close" on:click={closeDetailModal} aria-label="닫기">×</button>
+			</div>
+			
+			<div class="modal-body">
+				<div class="guest-info-header">
+					<h4>👤 {selectedDetailReservation.name}</h4>
+					<div class="status-badge large {getStatusColor(selectedDetailReservation.status)}">
+						{getReservationStatusText(selectedDetailReservation.status)}
+					</div>
+				</div>
+				
+				<div class="detail-sections">
+					{#if selectedDetailReservation.status === 'confirmed' && selectedDetailReservation.confirmed_by}
+						<div class="detail-section highlight admin-{selectedDetailReservation.confirmed_by}">
+							<div class="section-title">✅ 예약 확정 정보</div>
+							<div class="detail-content">
+								<div class="detail-item">
+									<span class="detail-label">확정자:</span>
+									<span class="detail-value confirmed-admin">
+										{getAdminEmoji(selectedDetailReservation.confirmed_by)} {getAdminName(selectedDetailReservation.confirmed_by)}
+									</span>
+								</div>
+								{#if selectedDetailReservation.confirmed_at}
+									<div class="detail-item">
+										<span class="detail-label">확정일:</span>
+										<span class="detail-value">{new Date(selectedDetailReservation.confirmed_at).toLocaleString('ko-KR')}</span>
+									</div>
+								{/if}
+							</div>
+						</div>
+					{/if}
+
+					<div class="detail-section">
+						<div class="section-title">📞 연락처 정보</div>
+						<div class="detail-content">
+							<div class="detail-item">
+								<span class="detail-label">전화번호:</span>
+								<span class="detail-value">{selectedDetailReservation.phone}</span>
+							</div>
+						</div>
+					</div>
+
+					<div class="detail-section">
+						<div class="section-title">📅 예약 기간 정보</div>
+						<div class="detail-content">
+							<div class="detail-item">
+								<span class="detail-label">체크인:</span>
+								<span class="detail-value">{formatKoreanDate(selectedDetailReservation.startDate)}</span>
+							</div>
+							<div class="detail-item">
+								<span class="detail-label">체크아웃:</span>
+								<span class="detail-value">{formatKoreanDate(selectedDetailReservation.endDate)}</span>
+							</div>
+							<div class="detail-item">
+								<span class="detail-label">숙박기간:</span>
+								<span class="detail-value">{selectedDetailReservation.duration}박 {selectedDetailReservation.duration + 1}일</span>
+							</div>
+						</div>
+					</div>
+
+					{#if selectedDetailReservation.created_at}
+						<div class="detail-section">
+							<div class="section-title">⏰ 예약 신청 정보</div>
+							<div class="detail-content">
+								<div class="detail-item">
+									<span class="detail-label">신청일시:</span>
+									<span class="detail-value">{new Date(selectedDetailReservation.created_at).toLocaleString('ko-KR')}</span>
+								</div>
+							</div>
+						</div>
+					{/if}
+				</div>
+			</div>
+			
+			<div class="modal-footer">
+				<button class="modal-button" on:click={closeDetailModal}>
+					확인
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
 <!-- 피드백 매니저 -->
 <FeedbackManager
 	bind:show={feedbackManager.show}
@@ -470,6 +551,39 @@
 />
 
 <style>
+	/* 관리자별 테마 컬러 변수 정의 */
+	:root {
+		/* 최분옥 - 보라 계열 */
+		--admin-choi-bunok-primary: #8b5cf6;
+		--admin-choi-bunok-light: #faf5ff;
+		--admin-choi-bunok-medium: #ede9fe;
+		--admin-choi-bunok-dark: #7c3aed;
+
+		/* 최창환 - 청록 계열 */
+		--admin-choi-changhwan-primary: #06b6d4;
+		--admin-choi-changhwan-light: #ecfeff;
+		--admin-choi-changhwan-medium: #cffafe;
+		--admin-choi-changhwan-dark: #0891b2;
+
+		/* 박서은 - 밝은 노란색 계열 (텍스트는 어둡게) */
+		--admin-park-seoeun-primary: #1249ff;
+		--admin-park-seoeun-light: #12fffb;
+		--admin-park-seoeun-medium: #fef3c7;
+		--admin-park-seoeun-dark: #000282;
+
+		/* 박지영 - 로즈 계열 (확정/대기 색상과 구분) */
+		--admin-park-jiyoung-primary: #e11d48;
+		--admin-park-jiyoung-light: #fff1f2;
+		--admin-park-jiyoung-medium: #fecdd3;
+		--admin-park-jiyoung-dark: #be123c;
+
+		/* 박태현 - 인디고 계열 */
+		--admin-park-taehyun-primary: #6366f1;
+		--admin-park-taehyun-light: #eef2ff;
+		--admin-park-taehyun-medium: #ddd6fe;
+		--admin-park-taehyun-dark: #4f46e5;
+	}
+
 	/* 페이지 제목 스타일 - 사용자 페이지와 동일한 스타일 적용 */
 	h1 {
 		background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%) !important;
@@ -538,7 +652,7 @@
 		background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 		border-bottom: 1px solid var(--neutral-200);
 		display: grid;
-		grid-template-columns: 1fr 1fr 1fr 1fr;
+		grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
 		align-items: center;
 	}
 
@@ -550,8 +664,117 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+		justify-content: center;
 		text-align: center;
-		justify-self: center;
+		background: rgba(255, 255, 255, 0.8);
+		border: 2px solid rgba(255, 255, 255, 0.3);
+		cursor: pointer;
+		padding: var(--space-4);
+		border-radius: var(--radius-xl);
+		transition: var(--transition-all);
+		position: relative;
+		font-family: inherit;
+		width: 100%;
+		min-height: 100px;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	}
+
+	.summary-item:hover {
+		background: rgba(255, 255, 255, 0.95);
+		border-color: rgba(255, 255, 255, 0.8);
+		transform: translateY(-3px);
+		box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+	}
+
+	.summary-item.active {
+		border-width: 3px;
+		transform: translateY(-2px);
+		box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+	}
+
+	/* 활성화된 버튼의 색상별 스타일 */
+	.summary-item.active:nth-child(1) {
+		background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(255, 255, 255, 0.9) 100%);
+		border-color: #6366f1;
+	}
+
+	.summary-item.active:nth-child(2) {
+		background: linear-gradient(135deg, rgba(5, 150, 105, 0.15) 0%, rgba(255, 255, 255, 0.9) 100%);
+		border-color: #059669;
+	}
+
+	.summary-item.active:nth-child(3) {
+		background: linear-gradient(135deg, rgba(217, 119, 6, 0.15) 0%, rgba(255, 255, 255, 0.9) 100%);
+		border-color: #d97706;
+	}
+
+	.summary-item.active:nth-child(4) {
+		background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(255, 255, 255, 0.9) 100%);
+		border-color: #ef4444;
+	}
+
+	/* 내 결정 버튼 - 관리자별 테마 색상 적용 */
+	.summary-item.active:nth-child(5).admin-choi-bunok {
+		background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(255, 255, 255, 0.9) 100%);
+		border-color: var(--admin-choi-bunok-primary);
+	}
+
+	.summary-item.active:nth-child(5).admin-choi-changhwan {
+		background: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(255, 255, 255, 0.9) 100%);
+		border-color: var(--admin-choi-changhwan-primary);
+	}
+
+	.summary-item.active:nth-child(5).admin-park-seoeun {
+		background: linear-gradient(135deg, rgba(255, 246, 18, 0.15) 0%, rgba(255, 255, 255, 0.9) 100%);
+		border-color: var(--admin-park-seoeun-primary);
+	}
+
+	.summary-item.active:nth-child(5).admin-park-jiyoung {
+		background: linear-gradient(135deg, rgba(225, 29, 72, 0.15) 0%, rgba(255, 255, 255, 0.9) 100%);
+		border-color: var(--admin-park-jiyoung-primary);
+	}
+
+	.summary-item.active:nth-child(5).admin-park-taehyun {
+		background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(255, 255, 255, 0.9) 100%);
+		border-color: var(--admin-park-taehyun-primary);
+	}
+
+	/* 호버 시 색상별 스타일 */
+	.summary-item:nth-child(1):hover {
+		border-color: rgba(99, 102, 241, 0.5);
+	}
+
+	.summary-item:nth-child(2):hover {
+		border-color: rgba(5, 150, 105, 0.5);
+	}
+
+	.summary-item:nth-child(3):hover {
+		border-color: rgba(217, 119, 6, 0.5);
+	}
+
+	.summary-item:nth-child(4):hover {
+		border-color: rgba(239, 68, 68, 0.5);
+	}
+
+	/* 내 결정 버튼 호버 - 관리자별 테마 색상 */
+	.summary-item:nth-child(5).admin-choi-bunok:hover {
+		border-color: rgba(139, 92, 246, 0.5);
+	}
+
+	.summary-item:nth-child(5).admin-choi-changhwan:hover {
+		border-color: rgba(6, 182, 212, 0.5);
+	}
+
+	.summary-item:nth-child(5).admin-park-seoeun:hover {
+		border-color: rgba(255, 246, 18, 0.7);
+	}
+
+	.summary-item:nth-child(5).admin-park-jiyoung:hover {
+		border-color: rgba(225, 29, 72, 0.5);
+	}
+
+	.summary-item:nth-child(5).admin-park-taehyun:hover {
+		border-color: rgba(99, 102, 241, 0.5);
 	}
 
 	.summary-number {
@@ -569,11 +792,32 @@
 		color: #d97706;
 	}
 
-	.summary-number.friend {
-		color: #ec4899;
+	.summary-number.cancelled {
+		color: #ef4444;
 	}
 
-	.summary-number:not(.confirmed):not(.pending):not(.friend) {
+	/* 내 결정 숫자 색상 - 관리자별 테마 색상 */
+	.summary-number.friend.admin-choi-bunok {
+		color: var(--admin-choi-bunok-primary);
+	}
+
+	.summary-number.friend.admin-choi-changhwan {
+		color: var(--admin-choi-changhwan-primary);
+	}
+
+	.summary-number.friend.admin-park-seoeun {
+		color: var(--admin-park-seoeun-primary);
+	}
+
+	.summary-number.friend.admin-park-jiyoung {
+		color: var(--admin-park-jiyoung-primary);
+	}
+
+	.summary-number.friend.admin-park-taehyun {
+		color: var(--admin-park-taehyun-primary);
+	}
+
+	.summary-number:not(.confirmed):not(.pending):not(.cancelled):not(.friend) {
 		color: #6366f1;
 	}
 
@@ -591,8 +835,12 @@
 
 	/* 예약자 정보 상세 표시 영역 */
 	.reservations-detail-section {
+		background: white;
+		border-radius: var(--radius-xl);
+		box-shadow: var(--shadow-lg);
+		overflow: hidden;
+		margin-top: var(--space-6);
 		padding: var(--space-6);
-		background: var(--neutral-50);
 	}
 
 	.section-subtitle {
@@ -601,98 +849,22 @@
 		margin: 0;
 	}
 
-	/* 필터 컨트롤 */
-	.filter-controls {
-		display: grid;
-		grid-template-columns: 1fr 1fr 1fr 1fr;
-		gap: var(--space-2);
-		margin-bottom: var(--space-6);
-		max-width: 800px;
-		margin-left: auto;
-		margin-right: auto;
+	/* 예약 목록 타이틀 스타일 - 사용자 페이지 progress-guide와 동일 */
+	.reservation-list-title {
+		text-align: left;
+		margin-top: var(--space-4);
 	}
 
-	.filter-btn {
+	.reservation-list-title h4 {
+		font-size: var(--text-xl);
+		color: var(--primary);
+	}
+
+	/* 예약 목록 스타일 */
+	.reservations-list {
 		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: var(--space-1);
-		padding: var(--space-3) var(--space-2);
-		border: 2px solid var(--neutral-300);
-		background: white;
-		color: var(--neutral-600);
-		border-radius: var(--radius-lg);
-		font-size: var(--text-base);
-		font-weight: 500;
-		cursor: pointer;
-		transition: var(--transition-all);
-		position: relative;
-		width: 100%;
-		min-height: 44px;
-	}
-
-	.filter-btn:hover {
-		border-color: var(--neutral-400);
-		background: var(--neutral-50);
-		transform: translateY(-1px);
-		box-shadow: var(--shadow-sm);
-	}
-
-	.filter-btn.active {
-		color: white;
-		font-weight: 600;
-		box-shadow: var(--shadow-md);
-	}
-
-	/* 필터별 색상 설정 */
-	.filter-btn.active[data-filter="전체"] {
-		border-color: #6366f1;
-		background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-	}
-
-	.filter-btn.active[data-filter="확정"] {
-		border-color: #059669;
-		background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-	}
-
-	.filter-btn.active[data-filter="대기"] {
-		border-color: #d97706;
-		background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
-	}
-
-	.filter-btn.active[data-filter="내 지인"] {
-		border-color: #ec4899;
-		background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
-	}
-
-	.filter-btn.active:hover {
-		transform: translateY(-2px);
-		box-shadow: var(--shadow-lg);
-	}
-
-	.filter-btn.active[data-filter="전체"]:hover {
-		background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-	}
-
-	.filter-btn.active[data-filter="확정"]:hover {
-		background: linear-gradient(135deg, #047857 0%, #059669 100%);
-	}
-
-	.filter-btn.active[data-filter="대기"]:hover {
-		background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
-	}
-
-	.filter-btn.active[data-filter="내 지인"]:hover {
-		background: linear-gradient(135deg, #db2777 0%, #ec4899 100%);
-	}
-
-
-	.reservations-grid {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: var(--space-2);
-		max-width: 800px;
-		margin: 0 auto;
+		flex-direction: column;
+		margin: 5px 0;
 	}
 
 	.reservation-card {
@@ -700,268 +872,399 @@
 		border-radius: var(--radius-lg);
 		box-shadow: var(--shadow-sm);
 		border: 2px solid transparent;
-		overflow: hidden;
 		transition: var(--transition-all);
+		position: relative;
+		overflow: hidden;
+		margin-bottom: -15px; /* 아래쪽 negative margin으로 간격 조정 */
 	}
 
-	.reservation-card:hover {
-		box-shadow: var(--shadow-md);
+	.reservation-card:last-child {
+		margin-bottom: 0; /* 마지막 카드는 bottom margin 제거 */
+	}
+
+	.reservation-card.clickable {
+		cursor: pointer;
+		border: 2px solid var(--neutral-200);
+	}
+
+	.reservation-card.clickable:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+		border-color: #6366f1;
+		background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+	}
+
+	.reservation-card.clickable:active {
+		transform: translateY(-1px);
+		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 	}
 
 	.reservation-card.status-confirmed {
-		border-left: 4px solid #10b981;
+		border-left: 6px solid #10b981;
+	}
+
+	.reservation-card.status-confirmed:hover {
+		border-left: 6px solid #10b981;
+		border-color: #10b981;
+		background: linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%);
 	}
 
 	.reservation-card.status-pending {
-		border-left: 4px solid #f59e0b;
+		border-left: 6px solid #f59e0b;
+	}
+
+	.reservation-card.status-pending:hover {
+		border-left: 6px solid #f59e0b;
+		border-color: #f59e0b;
+		background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
 	}
 
 	.reservation-card.status-cancelled {
-		border-left: 4px solid #ef4444;
+		border-left: 6px solid #ef4444;
 	}
 
-	/* 컴팩트 뷰 스타일 */
-	.card-compact {
-		padding: var(--space-2);
+	.reservation-card.status-cancelled:hover {
+		border-left: 6px solid #ef4444;
+		border-color: #ef4444;
+		background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
 	}
 
-	.compact-info {
+	/* 2줄 레이아웃 */
+	.card-content {
+		padding: var(--space-1) var(--space-3);
 		display: flex;
-		justify-content: space-between;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.card-row-1 {
+		display: flex;
 		align-items: center;
+		justify-content: space-between;
 		gap: var(--space-2);
 	}
 
-	.guest-summary {
-		flex: 1;
-		min-width: 0; /* 텍스트 오버플로우 방지 */
+	.card-row-2 {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		flex-wrap: wrap;
 	}
 
 	.guest-name {
 		font-size: var(--text-base);
-		font-weight: 600;
+		font-weight: 700;
 		color: var(--neutral-800);
-		margin: 0;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	.reservation-dates {
-		font-size: var(--text-xs);
-		color: var(--neutral-500);
-		margin: 0;
-		font-weight: 400;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	.compact-right {
-		display: flex;
-		align-items: center;
-		gap: var(--space-2);
 		flex-shrink: 0;
 	}
 
+	.guest-phone {
+		font-size: var(--text-sm);
+		color: var(--neutral-600);
+		font-weight: 500;
+		min-width: 120px;
+		flex-shrink: 0;
+	}
+
+	.period-dates {
+		font-size: var(--text-sm);
+		color: var(--neutral-700);
+		font-weight: 500;
+		flex: 1;
+	}
+
 	.status-badge {
-		padding: 2px var(--space-2);
-		border-radius: var(--radius-md);
-		font-size: 10px;
+		padding: var(--space-1) var(--space-2);
+		border-radius: var(--radius-full);
+		font-size: var(--text-xs);
 		font-weight: 600;
 		text-align: center;
 		white-space: nowrap;
-		min-width: 35px;
+		flex-shrink: 0;
+	}
+
+	.duration-badge {
+		padding: var(--space-1) var(--space-2);
+		border-radius: var(--radius-full);
+		font-size: var(--text-xs);
+		font-weight: 600;
+		text-align: center;
+		white-space: nowrap;
+		flex-shrink: 0;
+		background: #fef3c7;
+		color: #ff7621;
+		border: 1px solid #f59e0b;
+	}
+
+	.admin-badge {
+		padding: var(--space-1) var(--space-2);
+		border-radius: var(--radius-full);
+		font-size: var(--text-xs);
+		font-weight: 600;
+		text-align: center;
+		white-space: nowrap;
+		flex-shrink: 0;
+	}
+
+	/* 관리자별 테마 컬러 적용 */
+	.admin-theme-choi-bunok {
+		background: var(--admin-choi-bunok-light);
+		color: var(--admin-choi-bunok-dark);
+		border: 1px solid var(--admin-choi-bunok-primary);
+	}
+
+	.admin-theme-choi-changhwan {
+		background: var(--admin-choi-changhwan-light);
+		color: var(--admin-choi-changhwan-dark);
+		border: 1px solid var(--admin-choi-changhwan-primary);
+	}
+
+	.admin-theme-park-seoeun {
+		background: var(--admin-park-seoeun-light);
+		color: var(--admin-park-seoeun-dark);
+		border: 1px solid var(--admin-park-seoeun-primary);
+	}
+
+	.admin-theme-park-jiyoung {
+		background: var(--admin-park-jiyoung-light);
+		color: var(--admin-park-jiyoung-dark);
+		border: 1px solid var(--admin-park-jiyoung-primary);
+	}
+
+	.admin-theme-park-taehyun {
+		background: var(--admin-park-taehyun-light);
+		color: var(--admin-park-taehyun-dark);
+		border: 1px solid var(--admin-park-taehyun-primary);
 	}
 
 	.status-badge.status-confirmed {
-		background: #dcfce7;
-		color: #166534;
+		background: rgb(0, 215, 75);
+		color: #005c20;
+		border: 1px solid #10b981;
 	}
 
 	.status-badge.status-pending {
-		background: #fef3c7;
-		color: #92400e;
+		background: #ff7621;
+		color: #fef3c7;
+		border: 1px solid #f59e0b;
 	}
 
 	.status-badge.status-cancelled {
-		background: #fee2e2;
-		color: #991b1b;
+		background: #ef4444;
+		color: #fee2e2;
+		border: 1px solid #991b1b;
 	}
 
-	.expand-button {
-		background: var(--neutral-200);
-		color: var(--neutral-700);
-		border: none;
-		padding: 2px var(--space-2);
-		border-radius: var(--radius-sm);
-		font-size: 10px;
-		font-weight: 500;
-		cursor: pointer;
-		transition: var(--transition-colors);
-		white-space: nowrap;
-		min-width: 40px;
+	.click-arrow {
+		font-size: var(--text-sm);
+		color: #4f46e5;
+		font-weight: 700;
+		animation: pulse 2s infinite;
 	}
 
-	.expand-button:hover {
-		background: var(--neutral-300);
-		color: var(--neutral-800);
-	}
-
-	/* 확장 뷰 스타일 */
-	.card-expanded {
-		border-top: 1px solid var(--neutral-200);
-		background: var(--neutral-50);
-		padding: var(--space-2);
-		animation: slideDown 0.15s ease-out;
-	}
-
-	@keyframes slideDown {
-		from {
-			opacity: 0;
-			max-height: 0;
-			padding-top: 0;
-			padding-bottom: 0;
-		}
-		to {
+	@keyframes pulse {
+		0%, 100% {
+			transform: scale(1);
 			opacity: 1;
-			max-height: 150px;
-			padding-top: var(--space-2);
-			padding-bottom: var(--space-2);
+		}
+		50% {
+			transform: scale(1.1);
+			opacity: 0.8;
 		}
 	}
 
-	.expanded-details {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-1);
+	.reservation-card.clickable:hover .click-arrow {
+		color: white;
+		animation: bounce 0.6s ease-in-out;
 	}
 
-	.detail-row {
+	@keyframes bounce {
+		0%, 20%, 50%, 80%, 100% {
+			transform: translateX(0);
+		}
+		40% {
+			transform: translateX(3px);
+		}
+		60% {
+			transform: translateX(1px);
+		}
+	}
+
+	/* 상세보기 팝업 모달 스타일 */
+	.detail-modal {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 1001;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: var(--space-4);
+	}
+
+	.detail-modal-content {
+		max-width: 700px;
+		width: 100%;
+		max-height: 90vh;
+		overflow-y: auto;
+	}
+
+	.guest-info-header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: var(--space-1);
+		margin-bottom: var(--space-6);
+		padding: var(--space-4);
+		background: var(--neutral-50);
+		border-radius: var(--radius-lg);
+	}
+
+	.guest-info-header h4 {
+		font-size: var(--text-xl);
+		font-weight: 700;
+		color: var(--neutral-800);
+		margin: 0;
+	}
+
+	.status-badge.large {
+		padding: var(--space-2) var(--space-4);
+		font-size: var(--text-base);
+		font-weight: 700;
+	}
+
+	.detail-sections {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-4);
+	}
+
+	.detail-section {
 		background: white;
-		border-radius: var(--radius-sm);
-		font-size: var(--text-xs);
+		border: 1px solid var(--neutral-200);
+		border-radius: var(--radius-lg);
+		overflow: hidden;
+	}
+
+	.detail-section.highlight {
+		border-width: 2px;
+	}
+
+	.section-title {
+		background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+		padding: var(--space-3) var(--space-4);
+		font-size: var(--text-base);
+		font-weight: 600;
+		color: var(--neutral-700);
+		border-bottom: 1px solid var(--neutral-200);
+	}
+
+	.detail-content {
+		padding: var(--space-4);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-3);
+	}
+
+	.detail-item {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: var(--space-2);
+		background: var(--neutral-50);
+		border-radius: var(--radius-md);
 	}
 
 	.detail-label {
 		color: var(--neutral-600);
 		font-weight: 500;
-		font-size: 11px;
+		font-size: var(--text-sm);
+		flex-shrink: 0;
+		margin-right: var(--space-4);
 	}
 
 	.detail-value {
 		color: var(--neutral-800);
 		font-weight: 600;
-		font-size: 11px;
-	}
-
-	/* 확정자 정보 특별 스타일 - 관리자별 색상 구분 */
-	.confirmed-row {
-		border: 1px solid;
-		font-weight: 600;
+		font-size: var(--text-sm);
+		text-align: right;
 	}
 
 	.confirmed-admin {
 		font-weight: 700;
+		font-size: var(--text-base);
 	}
 
-	/* 최분옥 관리자 - 보라색 계열 */
-	.admin-choi-bunok.confirmed-row {
-		background: linear-gradient(135deg, #ede9fe 0%, #f3f4f6 100%);
-		border-color: #8b5cf6;
+	/* 관리자별 색상 구분 - 상세 모달용 */
+	.admin-choi-bunok.highlight {
+		border-color: var(--admin-choi-bunok-primary);
+		background: linear-gradient(135deg, var(--admin-choi-bunok-light) 0%, #ffffff 100%);
+	}
+
+	.admin-choi-bunok .section-title {
+		background: linear-gradient(135deg, var(--admin-choi-bunok-medium) 0%, #f3f4f6 100%);
+		color: var(--admin-choi-bunok-dark);
 	}
 
 	.admin-choi-bunok .confirmed-admin {
-		color: #7c3aed;
+		color: var(--admin-choi-bunok-dark);
 	}
 
-	.admin-choi-bunok:not(.confirmed-row) {
-		background: linear-gradient(135deg, #faf5ff 0%, #f9fafb 100%);
-		border-color: #a855f7;
+	.admin-choi-changhwan.highlight {
+		border-color: var(--admin-choi-changhwan-primary);
+		background: linear-gradient(135deg, var(--admin-choi-changhwan-light) 0%, #ffffff 100%);
 	}
 
-	.admin-choi-bunok:not(.confirmed-row) .detail-value {
-		color: #7c3aed;
-	}
-
-	/* 최창환 관리자 - 청록색 계열 */
-	.admin-choi-changhwan.confirmed-row {
-		background: linear-gradient(135deg, #cffafe 0%, #f3f4f6 100%);
-		border-color: #06b6d4;
+	.admin-choi-changhwan .section-title {
+		background: linear-gradient(135deg, var(--admin-choi-changhwan-medium) 0%, #f3f4f6 100%);
+		color: var(--admin-choi-changhwan-dark);
 	}
 
 	.admin-choi-changhwan .confirmed-admin {
-		color: #0891b2;
+		color: var(--admin-choi-changhwan-dark);
 	}
 
-	.admin-choi-changhwan:not(.confirmed-row) {
-		background: linear-gradient(135deg, #ecfeff 0%, #f9fafb 100%);
-		border-color: #22d3ee;
+	.admin-park-seoeun.highlight {
+		border-color: var(--admin-park-seoeun-primary);
+		background: linear-gradient(135deg, var(--admin-park-seoeun-light) 0%, #ffffff 100%);
 	}
 
-	.admin-choi-changhwan:not(.confirmed-row) .detail-value {
-		color: #0891b2;
-	}
-
-	/* 박서은 관리자 - 핑크색 계열 */
-	.admin-park-seoeun.confirmed-row {
-		background: linear-gradient(135deg, #fce7f3 0%, #f3f4f6 100%);
-		border-color: #ec4899;
+	.admin-park-seoeun .section-title {
+		background: linear-gradient(135deg, var(--admin-park-seoeun-medium) 0%, #f3f4f6 100%);
+		color: var(--admin-park-seoeun-dark);
 	}
 
 	.admin-park-seoeun .confirmed-admin {
-		color: #db2777;
+		color: var(--admin-park-seoeun-dark);
 	}
 
-	.admin-park-seoeun:not(.confirmed-row) {
-		background: linear-gradient(135deg, #fdf2f8 0%, #f9fafb 100%);
-		border-color: #f472b6;
+	.admin-park-jiyoung.highlight {
+		border-color: var(--admin-park-jiyoung-primary);
+		background: linear-gradient(135deg, var(--admin-park-jiyoung-light) 0%, #ffffff 100%);
 	}
 
-	.admin-park-seoeun:not(.confirmed-row) .detail-value {
-		color: #db2777;
-	}
-
-	/* 박지영 관리자 - 주황색 계열 */
-	.admin-park-jiyoung.confirmed-row {
-		background: linear-gradient(135deg, #fed7aa 0%, #f3f4f6 100%);
-		border-color: #f97316;
+	.admin-park-jiyoung .section-title {
+		background: linear-gradient(135deg, var(--admin-park-jiyoung-medium) 0%, #f3f4f6 100%);
+		color: var(--admin-park-jiyoung-dark);
 	}
 
 	.admin-park-jiyoung .confirmed-admin {
-		color: #ea580c;
+		color: var(--admin-park-jiyoung-dark);
 	}
 
-	.admin-park-jiyoung:not(.confirmed-row) {
-		background: linear-gradient(135deg, #fff7ed 0%, #f9fafb 100%);
-		border-color: #fb923c;
+	.admin-park-taehyun.highlight {
+		border-color: var(--admin-park-taehyun-primary);
+		background: linear-gradient(135deg, var(--admin-park-taehyun-light) 0%, #ffffff 100%);
 	}
 
-	.admin-park-jiyoung:not(.confirmed-row) .detail-value {
-		color: #ea580c;
-	}
-
-	/* 박태현 관리자 - 남색 계열 */
-	.admin-park-taehyun.confirmed-row {
-		background: linear-gradient(135deg, #ddd6fe 0%, #f3f4f6 100%);
-		border-color: #6366f1;
+	.admin-park-taehyun .section-title {
+		background: linear-gradient(135deg, var(--admin-park-taehyun-medium) 0%, #f3f4f6 100%);
+		color: var(--admin-park-taehyun-dark);
 	}
 
 	.admin-park-taehyun .confirmed-admin {
-		color: #4f46e5;
-	}
-
-	.admin-park-taehyun:not(.confirmed-row) {
-		background: linear-gradient(135deg, #eef2ff 0%, #f9fafb 100%);
-		border-color: #818cf8;
-	}
-
-	.admin-park-taehyun:not(.confirmed-row) .detail-value {
-		color: #4f46e5;
+		color: var(--admin-park-taehyun-dark);
 	}
 
 	/* 예약이 없을 때 메시지 */
@@ -1116,7 +1419,7 @@
 
 	.status-pending {
 		background: #fef3c7;
-		color: #92400e;
+		color: #ff7621;
 	}
 
 	.status-confirmed {
@@ -1180,24 +1483,37 @@
 	}
 
 	@media (max-width: 768px) {
+		h1.page-title {
+			margin: var(--space-2) 0 var(--space-2) 0 !important;
+			font-size: var(--text-2xl) !important;
+		}
+
+		.step {
+			display: flex;
+			flex-direction: column;
+		}
+
 		.calendar-section {
 			margin: 0;
 			border-radius: 0;
+			flex-shrink: 0;
 		}
 
 		.date-range-display {
-			grid-template-columns: 1fr 1fr 1fr 1fr;
+			grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
 			gap: var(--space-1);
-			padding: var(--space-3) var(--space-2);
+			padding: var(--space-2) var(--space-2);
 			text-align: center;
 		}
 
 		.summary-item {
-			min-width: 50px;
+			min-height: 70px;
+			padding: var(--space-1);
 		}
 
 		.summary-number {
-			font-size: var(--text-2xl);
+			font-size: var(--text-xl);
+			margin-bottom: var(--space-1);
 		}
 
 		.summary-label {
@@ -1206,27 +1522,15 @@
 
 		/* 예약자 정보 모바일 스타일 */
 		.reservations-detail-section {
-			padding: var(--space-3);
+			margin-top: var(--space-4);
+			padding: var(--space-4);
+			border-radius: var(--radius-lg);
 		}
 
 		.section-subtitle {
 			font-size: var(--text-base);
 		}
 
-		/* 필터 컨트롤 모바일 스타일 */
-		.filter-controls {
-			grid-template-columns: 1fr 1fr 1fr 1fr;
-			gap: var(--space-1);
-			margin-bottom: var(--space-4);
-			max-width: none;
-		}
-
-		.filter-btn {
-			padding: var(--space-2) var(--space-1);
-			font-size: var(--text-sm);
-			min-height: 36px;
-			gap: 2px;
-		}
 
 
 		.compact-info {
@@ -1247,23 +1551,32 @@
 			min-width: 30px;
 		}
 
-		.expand-button {
-			font-size: 9px;
-			padding: 1px 6px;
-			min-width: 30px;
+		/* 모바일 2줄 카드 스타일 */
+		.card-content {
+			padding: var(--space-1) var(--space-2);
+			gap: 2px;
 		}
 
-		.card-expanded {
-			padding: var(--space-1);
+		.card-row-1, .card-row-2 {
+			gap: var(--space-1);
 		}
 
-		.detail-row {
+		.guest-name {
+			font-size: var(--text-sm);
+			font-weight: 700;
+		}
+
+		.period-dates {
+			font-size: var(--text-xs);
+		}
+
+		.status-badge, .duration-badge, .admin-badge {
+			font-size: 10px;
 			padding: 2px var(--space-1);
 		}
 
-		.detail-label,
-		.detail-value {
-			font-size: 10px;
+		.click-arrow {
+			font-size: 11px;
 		}
 
 		.no-reservations-message {
@@ -1283,6 +1596,35 @@
 			flex-direction: column;
 			align-items: flex-start;
 			gap: var(--space-2);
+		}
+
+		.detail-modal-content {
+			margin: var(--space-2);
+			max-height: 95vh;
+		}
+
+		.guest-info-header {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: var(--space-2);
+		}
+
+		.detail-content {
+			padding: var(--space-3);
+		}
+
+		.detail-item {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: var(--space-1);
+		}
+
+		.detail-label {
+			margin-right: 0;
+		}
+
+		.detail-value {
+			text-align: left;
 		}
 	}
 </style>
