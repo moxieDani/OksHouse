@@ -194,10 +194,10 @@
 	 */
 	function getReservationStatusText(status) {
 		const statusMap = {
-			'pending': '예약 대기',
-			'confirmed': '예약 확정',
-			'cancelled': '예약 취소',
-			'completed': '이용 완료'
+			'pending': '예약대기',
+			'confirmed': '예약확정',
+			'cancelled': '예약거절',
+			'completed': '이용완료'
 		};
 		return statusMap[status] || status;
 	}

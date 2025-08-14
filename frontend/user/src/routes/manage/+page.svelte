@@ -55,7 +55,7 @@
 			phone: '010-1234-5678',
 			startDate: new Date(2025, 7, 10), // 8월 10일
 			duration: 2,
-			status: 'confirmed' // pending(예약신청), confirmed(예약확정), denied(예약거부) 중 하나
+			status: 'confirmed' // pending(예약대기), confirmed(예약확정), denied(예약거부) 중 하나
 		},
 		{
 			id: 2,
@@ -63,7 +63,7 @@
 			phone: '010-1234-5678',
 			startDate: new Date(2025, 8, 15), // 9월 15일
 			duration: 3,
-			status: 'pending' // 예약신청 상태
+			status: 'pending' // 예약대기 상태
 		},
 		{
 			id: 3,
@@ -79,7 +79,7 @@
 			phone: '010-1234-5678',
 			startDate: new Date(2025, 10, 5), // 11월 5일
 			duration: 2,
-			status: 'pending' // 예약신청 상태
+			status: 'pending' // 예약대기 상태
 		}
 	];
 
@@ -190,16 +190,16 @@
 
 
 	function getReservationStatusType(reservation) {
-		// pending: 예약신청, confirmed: 예약확정, denied: 예약거부
+		// pending: 예약대기, confirmed: 예약확정, denied: 예약거부
 		return reservation.status || 'pending'; // 기본값은 pending
 	}
 
 	function getReservationStatusText(reservation) {
 		// 3가지 상태만 처리
-		if (reservation.status === 'pending') return '예약신청';
+		if (reservation.status === 'pending') return '예약대기';
 		if (reservation.status === 'denied') return '예약거부';
 		if (reservation.status === 'confirmed') return '예약확정';
-		return '예약신청'; // default
+		return '예약대기'; // default
 	}
 
 	async function loadUserReservations() {

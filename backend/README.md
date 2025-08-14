@@ -39,7 +39,7 @@ backend/
 ## 기능
 
 - **예약 관리**: 예약 생성, 조회, 상태 업데이트, 삭제
-- **예약 상태**: pending(예약신청), confirmed(예약확정), denied(예약거부)
+- **예약 상태**: pending(예약대기), confirmed(예약확정), denied(예약거부)
 - **예약 충돌 확인**: 날짜 중복 예약 방지
 - **RESTful API**: REST 표준을 따르는 API 설계
 - **자동 문서화**: FastAPI 기본 제공 Swagger UI

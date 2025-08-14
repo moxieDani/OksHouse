@@ -622,7 +622,7 @@
 		transform: none;
 	}
 
-	/* Pending reservation styling (예약신청) - orange */
+	/* Pending reservation styling (예약대기) - orange */
 	.calendar-day.original-reservation-pending {
 		background: rgba(245, 158, 11, 0.15);
 		border-color: #f59e0b;
