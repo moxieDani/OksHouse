@@ -252,3 +252,6 @@ Desktop.ini
 tmp/
 temp/
 *.tmp
+
+# Claude
+.claude
