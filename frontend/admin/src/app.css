@@ -90,9 +90,11 @@ body {
 
 /* Container */
 .container {
-	max-width: 500px;
+	max-width: 1200px;
 	margin: 0 auto;
 	padding: var(--space-6);
+	background: transparent;
+	min-height: 100vh;
 }
 
 /* Typography */

@@ -106,6 +106,9 @@
 	let showInvalidStateModal = false;
 	let invalidStateMessage = '';
 	
+	// 동적 높이 관리 상태
+	let dynamicHeightEnabled = false;
+	
 
 
 	// 피드백 관리자 상태
@@ -117,6 +120,37 @@
 	};
 
 	/**
+	 * step 영역의 하단을 reservations-list 하단과 일치시키기
+	 */
+	function adjustHeightToLastCard() {
+		if (typeof window === 'undefined') return;
+		
+		setTimeout(() => {
+			const reservationsList = document.querySelector('.reservations-list');
+			const stepElement = document.querySelector('.step');
+			
+			if (reservationsList && stepElement) {
+				// reservations-list의 하단 위치 (뷰포트 기준)
+				const reservationsListRect = reservationsList.getBoundingClientRect();
+				const reservationsListBottom = reservationsListRect.bottom;
+				
+				// step의 상단 위치 (뷰포트 기준)  
+				const stepTop = stepElement.getBoundingClientRect().top;
+				
+				// step의 필요한 높이 = reservations-list 하단 - step 상단
+				const requiredStepHeight = reservationsListBottom - stepTop;
+				
+				// step 높이 설정
+				if (stepElement instanceof HTMLElement) {
+					stepElement.style.minHeight = `${requiredStepHeight}px`;
+				}
+				
+				dynamicHeightEnabled = true;
+			}
+		}, 150);
+	}
+
+	/**
 	 * 컴포넌트 마운트 시 초기 데이터 로드
 	 */
 	onMount(() => {
@@ -125,6 +159,17 @@
 		
 		// 실제 운영시에는 아래 코드 사용
 		// loadMonthlyReservations();
+		
+		// 초기 높이 조정
+		adjustHeightToLastCard();
+		
+		// 윈도우 리사이즈 시 높이 재조정
+		window.addEventListener('resize', adjustHeightToLastCard);
+		
+		// 정리
+		return () => {
+			window.removeEventListener('resize', adjustHeightToLastCard);
+		};
 	});
 
 	/**
@@ -219,6 +264,14 @@
 	 */
 	function handleFilterChange(filter) {
 		selectedFilter = filter;
+		// 필터 변경 후 마지막 카드 하단에 맞춰 높이 재조정
+		setTimeout(() => {
+			adjustHeightToLastCard();
+		}, 100);
+		// DOM 완전히 업데이트 후 한 번 더 실행
+		setTimeout(() => {
+			adjustHeightToLastCard();
+		}, 300);
 	}
 
 	/**
@@ -255,6 +308,20 @@
 	$: filteredReservations = selectedFilter === '전체' 
 		? mockReservations 
 		: groupedReservations[selectedFilter] || [];
+
+	/**
+	 * 필터링된 예약 목록이 변경될 때마다 높이 재조정
+	 */
+	$: if (filteredReservations && typeof window !== 'undefined') {
+		// 데이터 변경 시 즉시 높이 조정
+		setTimeout(() => {
+			adjustHeightToLastCard();
+		}, 100);
+		// 렌더링 완료 후 한 번 더 정확히 조정
+		setTimeout(() => {
+			adjustHeightToLastCard();
+		}, 250);
+	}
 
 	/**
 	 * 관리자 ID로 관리자 이름 가져오기
@@ -446,7 +513,6 @@
 			on:reservationDateClick={handleReservationDateClick}
 		/>
 	{/if}
-
 	</div>
 
 	<!-- 예약 목록 타이틀 -->
@@ -734,6 +800,8 @@
 		border-radius: var(--radius-xl);
 		box-shadow: var(--shadow-lg);
 		overflow: hidden;
+		max-width: 700px;
+		margin: 0 auto;
 	}
 
 	.section-header {
@@ -765,13 +833,15 @@
 
 	/* 날짜 범위 표시 */
 	.date-range-display {
-		padding: var(--space-1);
+		padding: var(--space-2);
 		background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
 		border-bottom: 1px solid var(--neutral-200);
 		display: grid;
 		grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-		gap: 0;
+		gap: var(--space-2);
 		align-items: stretch;
+		border-radius: var(--radius-lg);
+		margin-bottom: var(--space-4);
 	}
 
 	.stats-summary {
@@ -787,13 +857,13 @@
 		background: rgba(255, 255, 255, 0.8);
 		border: 2px solid rgba(255, 255, 255, 0.3);
 		cursor: pointer;
-		padding: var(--space-2);
-		border-radius: var(--radius-md);
+		padding: var(--space-2) var(--space-1);
+		border-radius: var(--radius-lg);
 		transition: var(--transition-all);
 		position: relative;
 		font-family: inherit;
 		width: 100%;
-		aspect-ratio: 1;
+		min-height: 80px;
 		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 		margin: 0;
 		overflow: hidden;
@@ -986,8 +1056,9 @@
 	.reservations-list {
 		display: flex;
 		flex-direction: column;
+		gap: var(--space-4);
 		margin: 5px 0;
-		padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+		padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
 	}
 
 	.reservation-card {
@@ -998,11 +1069,10 @@
 		transition: var(--transition-all);
 		position: relative;
 		overflow: hidden;
-		margin-bottom: -15px; /* 아래쪽 negative margin으로 간격 조정 */
 	}
 
 	.reservation-card:last-child {
-		margin-bottom: calc(var(--space-6) + env(safe-area-inset-bottom, 0px)); /* 마지막 카드에 적당한 하단 마진 */
+		margin-bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
 	}
 
 	.reservation-card.clickable {
@@ -1512,7 +1582,7 @@
 	.reservations-list {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-4);
+		gap: var(--space--4);
 	}
 
 	.reservation-item {
@@ -1991,26 +2061,28 @@
 		.step {
 			display: flex;
 			flex-direction: column;
-			padding-bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
+			min-height: 100vh;
+			transition: min-height 0.4s ease-out, height 0.4s ease-out;
 		}
 
 		.calendar-section {
 			margin: 0;
 			border-radius: 0;
-			flex-shrink: 0;
 		}
 
 		.date-range-display {
 			grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-			gap: 0;
-			padding: 2px;
+			gap: var(--space-1);
+			padding: var(--space-1);
 			text-align: center;
+			border-radius: var(--radius-md);
+			margin-bottom: var(--space-3);
 		}
 
 		.summary-item {
 			padding: var(--space-1);
 			border-radius: var(--radius-sm);
-			aspect-ratio: 1;
+			min-height: 70px;
 		}
 
 		.summary-number {
@@ -2082,16 +2154,22 @@
 		}
 
 		.reservations-list {
-			padding-bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
+			transition: height 0.4s ease-out;
+			overflow: visible;
 		}
 
 		.reservation-card:last-child {
-			margin-bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
+			margin-bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
 		}
 
 		.no-reservations-message {
-			padding: var(--space-6);
-			padding-bottom: calc(var(--space-12) + env(safe-area-inset-bottom, 0px));
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			padding: var(--space-4);
+			padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
 		}
 
 		.empty-icon {

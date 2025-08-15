@@ -285,11 +285,15 @@
 	}
 
 	.calendar-weekday {
-		padding: var(--space-2);
+		padding: var(--space-3) var(--space-2);
 		text-align: center;
 		font-weight: 600;
 		color: var(--neutral-600);
-		font-size: var(--text-sm);
+		font-size: clamp(0.75rem, 2vw, 1.125rem);
+		min-height: clamp(32px, 5vw, 50px);
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.calendar-grid {
@@ -302,7 +306,7 @@
 		border: none;
 		background: white;
 		color: var(--neutral-700);
-		font-size: var(--text-base);
+		font-size: clamp(0.875rem, 2.5vw, 1.375rem);
 		font-weight: 500;
 		cursor: pointer;
 		transition: var(--transition-colors);
@@ -311,7 +315,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		min-height: 45px;
+		min-height: clamp(42px, 6vw, 60px);
 		position: relative;
 	}
 
@@ -404,9 +408,9 @@
 
 	.reservation-indicator {
 		position: absolute;
-		top: 4px;
-		right: 4px;
-		font-size: 8px;
+		top: clamp(2px, 0.8vw, 6px);
+		right: clamp(2px, 0.8vw, 6px);
+		font-size: clamp(6px, 1.2vw, 14px);
 		color: #6366f1;
 		line-height: 1;
 	}
@@ -415,16 +419,41 @@
 		color: #4f46e5;
 	}
 
-	@media (max-width: 640px) {
+	/* 극소형 모바일에서는 최소값 보장 */
+	@media (max-width: 480px) {
+		.calendar-weekday {
+			font-size: 0.75rem;
+			min-height: 30px;
+		}
+		
 		.calendar-day {
+			font-size: 0.875rem;
 			min-height: 40px;
-			font-size: var(--text-sm);
 		}
 
 		.reservation-indicator {
 			font-size: 6px;
 			top: 2px;
 			right: 2px;
+		}
+	}
+
+	/* 대형 화면에서는 최대값 보장 */
+	@media (min-width: 1400px) {
+		.calendar-weekday {
+			font-size: 1.125rem;
+			min-height: 50px;
+		}
+		
+		.calendar-day {
+			font-size: 1.375rem;
+			min-height: 60px;
+		}
+
+		.reservation-indicator {
+			font-size: 14px;
+			top: 6px;
+			right: 6px;
 		}
 	}
 </style>
