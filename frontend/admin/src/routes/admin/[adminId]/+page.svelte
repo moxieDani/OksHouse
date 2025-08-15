@@ -87,10 +87,6 @@
 		}
 	];
 
-	// 예약 상세 모달 상태
-	let showReservationModal = false;
-	let selectedReservations = [];
-	let selectedDate = null;
 
 	// 필터링 상태 관리
 	let selectedFilter = '전체';
@@ -99,6 +95,16 @@
 	// 상세보기 팝업 상태
 	let showDetailModal = false;
 	let selectedDetailReservation = null;
+
+	// 상태 변경 확인 모달 상태
+	let showConfirmModal = false;
+	let confirmAction = null;
+	let confirmActionText = '';
+	let confirmActionType = '';
+
+	// 유효하지 않은 상태 모달 상태
+	let showInvalidStateModal = false;
+	let invalidStateMessage = '';
 	
 
 
@@ -166,19 +172,12 @@
 	 */
 	function handleReservationDateClick(event) {
 		const { date, reservations } = event.detail;
-		selectedDate = date;
-		selectedReservations = reservations;
-		showReservationModal = true;
+		// 해당 날짜에 예약이 하나만 있으면 바로 상세보기, 여러 개면 첫 번째 예약 상세보기
+		if (reservations && reservations.length > 0) {
+			openDetailModal(reservations[0]);
+		}
 	}
 
-	/**
-	 * 예약 상세 모달 닫기
-	 */
-	function closeReservationModal() {
-		showReservationModal = false;
-		selectedReservations = [];
-		selectedDate = null;
-	}
 
 	/**
 	 * 예약 기간 포맷팅
@@ -269,6 +268,110 @@
 	 */
 	function getAdminEmoji(adminId) {
 		return administrators[adminId]?.emoji || '👤';
+	}
+
+	/**
+	 * 예약 기간에 해당하는 달력 생성
+	 */
+	function generateReservationCalendar(reservation) {
+		const start = new Date(reservation.startDate);
+		const end = new Date(reservation.endDate);
+		const calendar = [];
+		
+		// 시작 날짜의 월 첫째 날부터 계산
+		const firstDay = new Date(start.getFullYear(), start.getMonth(), 1);
+		const lastDay = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+		
+		// 첫 주의 빈 공간 채우기
+		const startDayOfWeek = firstDay.getDay();
+		for (let i = 0; i < startDayOfWeek; i++) {
+			calendar.push({ date: null, isReserved: false, isToday: false });
+		}
+		
+		// 달력 날짜 채우기
+		for (let date = 1; date <= lastDay.getDate(); date++) {
+			const currentDate = new Date(start.getFullYear(), start.getMonth(), date);
+			const isReserved = currentDate >= start && currentDate <= end;
+			const isToday = currentDate.toDateString() === new Date().toDateString();
+			
+			calendar.push({
+				date: date,
+				isReserved: isReserved,
+				isToday: isToday
+			});
+		}
+		
+		return calendar;
+	}
+
+	/**
+	 * 예약 상태 변경 시도
+	 */
+	function attemptStatusChange(newStatus) {
+		const currentStatus = selectedDetailReservation.status;
+		
+		// 현재 상태와 동일한 상태로 변경하려는 경우
+		if (currentStatus === newStatus) {
+			const statusNames = {
+				'confirmed': '승인',
+				'pending': '대기',
+				'cancelled': '거절'
+			};
+			invalidStateMessage = `이미 ${statusNames[newStatus]} 상태입니다.`;
+			showInvalidStateModal = true;
+			return;
+		}
+		
+		// 확인 모달 표시
+		const actionNames = {
+			'confirmed': '승인',
+			'pending': '대기',
+			'cancelled': '거절'
+		};
+		confirmActionText = actionNames[newStatus];
+		confirmActionType = newStatus;
+		confirmAction = () => changeReservationStatus(newStatus);
+		showConfirmModal = true;
+	}
+
+	/**
+	 * 예약 상태 변경 실행
+	 */
+	function changeReservationStatus(newStatus) {
+		if (selectedDetailReservation) {
+			selectedDetailReservation.status = newStatus;
+			if (newStatus === 'confirmed') {
+				selectedDetailReservation.confirmed_by = adminId;
+				selectedDetailReservation.confirmed_at = new Date().toISOString();
+			}
+			
+			// 목록 업데이트
+			const index = existingReservations.findIndex(r => r.id === selectedDetailReservation.id);
+			if (index !== -1) {
+				existingReservations[index] = { ...selectedDetailReservation };
+			}
+			
+			showSuccessFeedback(feedbackManager, '상태 변경 완료', `예약이 ${confirmActionText} 상태로 변경되었습니다.`);
+		}
+		closeConfirmModal();
+	}
+
+	/**
+	 * 확인 모달 닫기
+	 */
+	function closeConfirmModal() {
+		showConfirmModal = false;
+		confirmAction = null;
+		confirmActionText = '';
+		confirmActionType = '';
+	}
+
+	/**
+	 * 유효하지 않은 상태 모달 닫기
+	 */
+	function closeInvalidStateModal() {
+		showInvalidStateModal = false;
+		invalidStateMessage = '';
 	}
 </script>
 
@@ -397,63 +500,10 @@
 	{/if}
 </div>
 
-<!-- 예약 상세 모달 (달력에서 날짜 클릭 시) -->
-{#if showReservationModal}
-	<div class="reservation-modal">
-		<div class="modal-backdrop" on:click={closeReservationModal} role="presentation"></div>
-		<div class="modal-content">
-			<div class="modal-header">
-				<h3>예약 상세 정보</h3>
-				<button class="modal-close" on:click={closeReservationModal} aria-label="닫기">×</button>
-			</div>
-			
-			<div class="modal-body">
-				<div class="selected-date">
-					📅 {formatKoreanDate(selectedDate)}
-				</div>
-				
-				<div class="reservations-list">
-					{#each selectedReservations as reservation}
-						<div class="reservation-item">
-							<div class="reservation-header">
-								<span class="guest-name">👤 {reservation.name}</span>
-								<span class="status-badge {getStatusColor(reservation.status)}">
-									{getReservationStatusText(reservation.status)}
-								</span>
-							</div>
-							
-							<div class="reservation-details">
-								<div class="detail-row">
-									<span class="detail-label">📞 연락처:</span>
-									<span class="detail-value">{reservation.phone}</span>
-								</div>
-								<div class="detail-row">
-									<span class="detail-label">📅 예약 기간:</span>
-									<span class="detail-value">{formatReservationPeriod(reservation)}</span>
-								</div>
-								{#if reservation.created_at}
-									<div class="detail-row">
-										<span class="detail-label">⏰ 예약 신청:</span>
-										<span class="detail-value">{new Date(reservation.created_at).toLocaleString('ko-KR')}</span>
-									</div>
-								{/if}
-							</div>
-						</div>
-					{/each}
-				</div>
-			</div>
-			
-			<div class="modal-footer">
-				<button class="modal-button" on:click={closeReservationModal}>
-					확인
-				</button>
-			</div>
-		</div>
-	</div>
-{/if}
 
 <!-- 예약 상세보기 팝업 모달 (상세보기 버튼 클릭 시) -->
 {#if showDetailModal && selectedDetailReservation}
+	{@const calendarDays = generateReservationCalendar(selectedDetailReservation)}
 	<div class="detail-modal">
 		<div class="modal-backdrop" on:click={closeDetailModal} role="presentation"></div>
 		<div class="modal-content detail-modal-content">
@@ -462,79 +512,146 @@
 				<button class="modal-close" on:click={closeDetailModal} aria-label="닫기">×</button>
 			</div>
 			
-			<div class="modal-body">
-				<div class="guest-info-header">
-					<h4>👤 {selectedDetailReservation.name}</h4>
+			<div class="modal-body compact">
+				<!-- 게스트 정보와 상태 -->
+				<div class="guest-status-row">
+					<div class="guest-info">
+						<h4>👤 {selectedDetailReservation.name}</h4>
+						<div class="phone-row">
+							<span class="phone-text">📞 {selectedDetailReservation.phone}</span>
+						</div>
+					</div>
 					<div class="status-badge large {getStatusColor(selectedDetailReservation.status)}">
 						{getReservationStatusText(selectedDetailReservation.status)}
 					</div>
 				</div>
-				
-				<div class="detail-sections">
-					{#if selectedDetailReservation.status === 'confirmed' && selectedDetailReservation.confirmed_by}
-						<div class="detail-section highlight admin-{selectedDetailReservation.confirmed_by}">
-							<div class="section-title">✅ 예약 확정 정보</div>
-							<div class="detail-content">
-								<div class="detail-item">
-									<span class="detail-label">확정자:</span>
-									<span class="detail-value confirmed-admin">
-										{getAdminEmoji(selectedDetailReservation.confirmed_by)} {getAdminName(selectedDetailReservation.confirmed_by)}
-									</span>
-								</div>
-								{#if selectedDetailReservation.confirmed_at}
-									<div class="detail-item">
-										<span class="detail-label">확정일:</span>
-										<span class="detail-value">{new Date(selectedDetailReservation.confirmed_at).toLocaleString('ko-KR')}</span>
+
+				<!-- 달력과 기본 정보를 나란히 배치 -->
+				<div class="calendar-info-row">
+					<!-- 달력 섹션 -->
+					<div class="calendar-section-small">
+						<div class="calendar-header">
+							<h5>📅 {selectedDetailReservation.startDate.getFullYear()}년 {selectedDetailReservation.startDate.getMonth() + 1}월</h5>
+						</div>
+						<div class="mini-calendar">
+							<div class="calendar-weekdays">
+								<div class="weekday">일</div>
+								<div class="weekday">월</div>
+								<div class="weekday">화</div>
+								<div class="weekday">수</div>
+								<div class="weekday">목</div>
+								<div class="weekday">금</div>
+								<div class="weekday">토</div>
+							</div>
+							<div class="calendar-days">
+								{#each calendarDays as day}
+									<div class="calendar-day {day.isReserved ? 'reserved' : ''} {day.isToday ? 'today' : ''}">
+										{day.date || ''}
 									</div>
-								{/if}
-							</div>
-						</div>
-					{/if}
-
-					<div class="detail-section">
-						<div class="section-title">📞 연락처 정보</div>
-						<div class="detail-content">
-							<div class="detail-item">
-								<span class="detail-label">전화번호:</span>
-								<span class="detail-value">{selectedDetailReservation.phone}</span>
+								{/each}
 							</div>
 						</div>
 					</div>
 
-					<div class="detail-section">
-						<div class="section-title">📅 예약 기간 정보</div>
-						<div class="detail-content">
-							<div class="detail-item">
-								<span class="detail-label">체크인:</span>
-								<span class="detail-value">{formatKoreanDate(selectedDetailReservation.startDate)}</span>
-							</div>
-							<div class="detail-item">
-								<span class="detail-label">체크아웃:</span>
-								<span class="detail-value">{formatKoreanDate(selectedDetailReservation.endDate)}</span>
-							</div>
-							<div class="detail-item">
-								<span class="detail-label">숙박기간:</span>
-								<span class="detail-value">{selectedDetailReservation.duration}박 {selectedDetailReservation.duration + 1}일</span>
-							</div>
+					<!-- 기본 정보 섹션 -->
+					<div class="basic-info-section">
+						<div class="info-item">
+							<span class="info-label">체크인</span>
+							<span class="info-value">{formatKoreanDate(selectedDetailReservation.startDate)}</span>
+						</div>
+						<div class="info-item">
+							<span class="info-label">체크아웃</span>
+							<span class="info-value">{formatKoreanDate(selectedDetailReservation.endDate)}</span>
+						</div>
+						<div class="info-item">
+							<span class="info-label">숙박기간</span>
+							<span class="info-value">{selectedDetailReservation.duration}박 {selectedDetailReservation.duration + 1}일</span>
+						</div>
+						<div class="info-item">
+							<span class="info-label">신청일시</span>
+							<span class="info-value">{new Date(selectedDetailReservation.created_at).toLocaleDateString('ko-KR')}</span>
 						</div>
 					</div>
+				</div>
 
-					{#if selectedDetailReservation.created_at}
-						<div class="detail-section">
-							<div class="section-title">⏰ 예약 신청 정보</div>
-							<div class="detail-content">
-								<div class="detail-item">
-									<span class="detail-label">신청일시:</span>
-									<span class="detail-value">{new Date(selectedDetailReservation.created_at).toLocaleString('ko-KR')}</span>
-								</div>
-							</div>
-						</div>
-					{/if}
+				<!-- 확정 정보 (있는 경우만) -->
+				{#if selectedDetailReservation.status === 'confirmed' && selectedDetailReservation.confirmed_by}
+					<div class="confirmed-info admin-{selectedDetailReservation.confirmed_by}">
+						<span class="confirmed-label">✅ 확정자:</span>
+						<span class="confirmed-admin">
+							{getAdminEmoji(selectedDetailReservation.confirmed_by)} {getAdminName(selectedDetailReservation.confirmed_by)}
+						</span>
+						{#if selectedDetailReservation.confirmed_at}
+							<span class="confirmed-date">
+								({new Date(selectedDetailReservation.confirmed_at).toLocaleDateString('ko-KR')})
+							</span>
+						{/if}
+					</div>
+				{/if}
+			</div>
+			
+			<div class="modal-footer action-footer">
+				<button class="action-button approve-btn" on:click={() => attemptStatusChange('confirmed')}>
+					✅ 승인하기
+				</button>
+				<button class="action-button pending-btn" on:click={() => attemptStatusChange('pending')}>
+					⏳ 대기하기
+				</button>
+				<button class="action-button reject-btn" on:click={() => attemptStatusChange('cancelled')}>
+					❌ 거절하기
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- 상태 변경 확인 모달 -->
+{#if showConfirmModal}
+	<div class="confirm-modal">
+		<div class="modal-backdrop" on:click={closeConfirmModal} role="presentation"></div>
+		<div class="modal-content confirm-modal-content">
+			<div class="modal-header confirm-header confirm-header-{confirmActionType}">
+				<h3>⚠️ 예약 상태 변경</h3>
+				<button class="modal-close" on:click={closeConfirmModal} aria-label="닫기">×</button>
+			</div>
+			
+			<div class="modal-body confirm-body">
+				<div class="confirm-message">
+					<p><strong>{selectedDetailReservation?.name}</strong>님의 예약을</p>
+					<p class="action-text"><strong>'{confirmActionText}'</strong> 상태로 변경하시겠습니까?</p>
 				</div>
 			</div>
 			
-			<div class="modal-footer">
-				<button class="modal-button" on:click={closeDetailModal}>
+			<div class="modal-footer confirm-footer">
+				<button class="modal-button cancel-btn" on:click={closeConfirmModal}>
+					취소
+				</button>
+				<button class="modal-button confirm-btn" on:click={confirmAction}>
+					확인
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- 유효하지 않은 상태 모달 -->
+{#if showInvalidStateModal}
+	<div class="invalid-modal">
+		<div class="modal-backdrop" on:click={closeInvalidStateModal} role="presentation"></div>
+		<div class="modal-content invalid-modal-content">
+			<div class="modal-header invalid-header">
+				<h3>ℹ️ 알림</h3>
+				<button class="modal-close" on:click={closeInvalidStateModal} aria-label="닫기">×</button>
+			</div>
+			
+			<div class="modal-body invalid-body">
+				<div class="invalid-message">
+					<p>{invalidStateMessage}</p>
+				</div>
+			</div>
+			
+			<div class="modal-footer invalid-footer">
+				<button class="modal-button" on:click={closeInvalidStateModal}>
 					확인
 				</button>
 			</div>
@@ -648,12 +765,13 @@
 
 	/* 날짜 범위 표시 */
 	.date-range-display {
-		padding: var(--space-6) var(--space-6);
-		background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+		padding: var(--space-1);
+		background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
 		border-bottom: 1px solid var(--neutral-200);
 		display: grid;
 		grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-		align-items: center;
+		gap: 0;
+		align-items: stretch;
 	}
 
 	.stats-summary {
@@ -669,14 +787,16 @@
 		background: rgba(255, 255, 255, 0.8);
 		border: 2px solid rgba(255, 255, 255, 0.3);
 		cursor: pointer;
-		padding: var(--space-4);
-		border-radius: var(--radius-xl);
+		padding: var(--space-2);
+		border-radius: var(--radius-md);
 		transition: var(--transition-all);
 		position: relative;
 		font-family: inherit;
 		width: 100%;
-		min-height: 100px;
+		aspect-ratio: 1;
 		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+		margin: 0;
+		overflow: hidden;
 	}
 
 	.summary-item:hover {
@@ -822,11 +942,13 @@
 	}
 
 	.summary-label {
-		font-size: var(--text-base);
+		font-size: var(--text-sm);
 		color: var(--neutral-600);
 		font-weight: 600;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
+		white-space: nowrap;
+		line-height: 1.2;
 	}
 
 	.summary-divider {
@@ -1340,7 +1462,7 @@
 	}
 
 	.modal-header {
-		padding: var(--space-6);
+		padding: var(--space-4);
 		background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%);
 		color: white;
 		display: flex;
@@ -1349,8 +1471,9 @@
 	}
 
 	.modal-header h3 {
-		font-size: var(--text-xl);
+		font-size: var(--text-lg);
 		font-weight: 700;
+		color: white;
 		margin: 0;
 	}
 
@@ -1484,6 +1607,381 @@
 		box-shadow: var(--shadow-lg);
 	}
 
+	/* 개선된 상세 모달창 스타일 */
+	.detail-modal-content {
+		max-height: 85vh;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.modal-body.compact {
+		padding: var(--space-2);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2);
+		flex: 1;
+		overflow: hidden;
+	}
+
+	.guest-status-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: var(--space-2);
+		background: var(--neutral-50);
+		border-radius: var(--radius-md);
+		border: 1px solid var(--neutral-200);
+		flex-shrink: 0;
+	}
+
+	.guest-info h4 {
+		font-size: var(--text-base);
+		font-weight: 700;
+		color: var(--neutral-800);
+		margin: 0 0 var(--space-1) 0;
+	}
+
+	.phone-row {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		margin-top: var(--space-1);
+	}
+
+	.phone-text {
+		font-size: var(--text-s);
+		color: var(--neutral-600);
+		flex: 1;
+	}
+
+	.call-button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 24px;
+		height: 24px;
+		background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+		color: white;
+		text-decoration: none;
+		border-radius: var(--radius-full);
+		font-size: 12px;
+		transition: var(--transition-all);
+		cursor: pointer;
+		user-select: none;
+		border: 1px solid #059669;
+		box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
+		flex-shrink: 0;
+	}
+
+	.call-button:hover {
+		background: linear-gradient(135deg, #059669 0%, #047857 100%);
+		transform: translateY(-1px) scale(1.05);
+		box-shadow: 0 4px 8px rgba(5, 150, 105, 0.3);
+		border-color: #047857;
+	}
+
+	.call-button:active {
+		background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+		transform: translateY(0) scale(0.95);
+		box-shadow: 0 1px 3px rgba(5, 150, 105, 0.4);
+	}
+
+	.calendar-info-row {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--space-2);
+		align-items: start;
+		flex-shrink: 0;
+	}
+
+	.calendar-section-small {
+		background: white;
+		border: 1px solid var(--neutral-200);
+		border-radius: var(--radius-md);
+		padding: var(--space-1);
+	}
+
+	.calendar-header h5 {
+		font-size: var(--text-xs);
+		font-weight: 600;
+		color: var(--neutral-700);
+		margin: 0 0 2px 0;
+		text-align: center;
+	}
+
+	.mini-calendar {
+		width: 100%;
+	}
+
+	.calendar-weekdays {
+		display: grid;
+		grid-template-columns: repeat(7, 1fr);
+		gap: 1px;
+		margin-bottom: 2px;
+	}
+
+	.weekday {
+		font-size: 10px;
+		font-weight: 600;
+		color: var(--neutral-500);
+		text-align: center;
+		padding: 2px;
+	}
+
+	.calendar-days {
+		display: grid;
+		grid-template-columns: repeat(7, 1fr);
+		gap: 1px;
+	}
+
+	.calendar-day {
+		aspect-ratio: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 10px;
+		color: var(--neutral-600);
+		border-radius: var(--radius-sm);
+		transition: var(--transition-colors);
+	}
+
+	.calendar-day.reserved {
+		background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+		color: white;
+		font-weight: 600;
+		box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+	}
+
+	.calendar-day.today {
+		border: 2px solid #6366f1;
+		font-weight: 700;
+	}
+
+	.calendar-day.today.reserved {
+		border: 2px solid #ffffff;
+	}
+
+	.basic-info-section {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+	}
+
+	.info-item {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 4px var(--space-1);
+		background: var(--neutral-50);
+		border-radius: var(--radius-sm);
+		border: 1px solid var(--neutral-200);
+	}
+
+	.info-label {
+		font-size: var(--text-xs);
+		font-weight: 500;
+		color: var(--neutral-600);
+	}
+
+	.info-value {
+		font-size: var(--text-xs);
+		font-weight: 600;
+		color: var(--neutral-800);
+	}
+
+	.confirmed-info {
+		display: flex;
+		align-items: center;
+		gap: var(--space-1);
+		padding: var(--space-1);
+		background: var(--neutral-50);
+		border: 2px solid var(--success);
+		border-radius: var(--radius-md);
+		flex-wrap: wrap;
+		flex-shrink: 0;
+	}
+
+	.confirmed-label {
+		font-size: var(--text-xs);
+		font-weight: 600;
+		color: var(--success);
+	}
+
+	.confirmed-admin {
+		font-size: var(--text-xs);
+		font-weight: 700;
+		color: var(--neutral-800);
+	}
+
+	.confirmed-date {
+		font-size: 10px;
+		color: var(--neutral-500);
+	}
+
+	/* 액션 버튼 스타일 */
+	.action-footer {
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr;
+		gap: var(--space-1);
+		padding: var(--space-2);
+		background: var(--neutral-50);
+		border-top: 1px solid var(--neutral-200);
+		flex-shrink: 0;
+	}
+
+	.action-button {
+		padding: var(--space-1);
+		border: none;
+		border-radius: var(--radius-md);
+		font-size: 10px;
+		font-weight: 600;
+		cursor: pointer;
+		transition: var(--transition-all);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
+		min-height: 36px;
+	}
+
+	.approve-btn {
+		background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+		color: white;
+	}
+
+	.approve-btn:hover {
+		background: linear-gradient(135deg, #059669 0%, #047857 100%);
+		transform: translateY(-1px);
+		box-shadow: var(--shadow-lg);
+	}
+
+	.pending-btn {
+		background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+		color: white;
+	}
+
+	.pending-btn:hover {
+		background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+		transform: translateY(-1px);
+		box-shadow: var(--shadow-lg);
+	}
+
+	.reject-btn {
+		background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+		color: white;
+	}
+
+	.reject-btn:hover {
+		background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+		transform: translateY(-1px);
+		box-shadow: var(--shadow-lg);
+	}
+
+	/* 확인 모달 스타일 */
+	.confirm-modal, .invalid-modal {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 1002;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: var(--space-4);
+	}
+
+	.confirm-modal-content, .invalid-modal-content {
+		background: white;
+		border-radius: var(--radius-xl);
+		max-width: 400px;
+		width: 100%;
+		box-shadow: var(--shadow-2xl);
+		animation: slideUp 0.3s ease;
+	}
+
+	.confirm-header, .invalid-header {
+		padding: var(--space-4);
+		background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+		color: white;
+	}
+
+	/* 액션별 헤더 색상 */
+	.confirm-header-confirmed {
+		background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+	}
+
+	.confirm-header-pending {
+		background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+	}
+
+	.confirm-header-cancelled {
+		background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+	}
+
+	.invalid-header {
+		background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%);
+	}
+
+	.confirm-body, .invalid-body {
+		padding: var(--space-6);
+		text-align: center;
+	}
+
+	.confirm-message {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2);
+	}
+
+	.confirm-message p {
+		margin: 0;
+		color: var(--neutral-700);
+	}
+
+	.action-text {
+		color: var(--primary) !important;
+		font-size: var(--text-lg);
+	}
+
+	.confirm-footer, .invalid-footer {
+		display: flex;
+		gap: var(--space-3);
+		padding: var(--space-4);
+		background: var(--neutral-50);
+	}
+
+	.confirm-footer {
+		justify-content: stretch;
+	}
+	
+	.confirm-footer .modal-button {
+		flex: 1;
+	}
+
+	.invalid-footer {
+		justify-content: center;
+	}
+
+	.cancel-btn {
+		background: var(--neutral-200);
+		color: var(--neutral-700);
+	}
+
+	.cancel-btn:hover {
+		background: var(--neutral-300);
+		color: var(--neutral-800);
+	}
+
+	.confirm-btn {
+		background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%);
+		color: white;
+	}
+
+	.confirm-btn:hover {
+		background: linear-gradient(135deg, #5153c7 0%, #2a5eb3 100%);
+	}
+
 	@media (max-width: 768px) {
 		h1.page-title {
 			margin: var(--space-2) 0 var(--space-2) 0 !important;
@@ -1504,14 +2002,15 @@
 
 		.date-range-display {
 			grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-			gap: var(--space-1);
-			padding: var(--space-2) var(--space-2);
+			gap: 0;
+			padding: 2px;
 			text-align: center;
 		}
 
 		.summary-item {
-			min-height: 70px;
 			padding: var(--space-1);
+			border-radius: var(--radius-sm);
+			aspect-ratio: 1;
 		}
 
 		.summary-number {
@@ -1613,6 +2112,35 @@
 		.detail-modal-content {
 			margin: var(--space-2);
 			max-height: 95vh;
+		}
+
+		/* 모바일 상세 모달 스타일 */
+		.calendar-info-row {
+			grid-template-columns: 1fr;
+			gap: var(--space-3);
+		}
+
+		.calendar-section-small {
+			order: 2;
+		}
+
+		.basic-info-section {
+			order: 1;
+		}
+
+		.action-footer {
+			grid-template-columns: 1fr;
+			gap: var(--space-3);
+		}
+
+		.action-button {
+			min-height: 52px;
+			font-size: var(--text-base);
+		}
+
+		.confirm-modal-content, .invalid-modal-content {
+			margin: var(--space-3);
+			max-width: calc(100vw - var(--space-6));
 		}
 
 		.guest-info-header {
