@@ -865,6 +865,7 @@
 		display: flex;
 		flex-direction: column;
 		margin: 5px 0;
+		padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
 	}
 
 	.reservation-card {
@@ -879,7 +880,7 @@
 	}
 
 	.reservation-card:last-child {
-		margin-bottom: 0; /* 마지막 카드는 bottom margin 제거 */
+		margin-bottom: calc(var(--space-6) + env(safe-area-inset-bottom, 0px)); /* 마지막 카드에 적당한 하단 마진 */
 	}
 
 	.reservation-card.clickable {
@@ -1271,6 +1272,7 @@
 	.no-reservations-message {
 		text-align: center;
 		padding: var(--space-12);
+		padding-bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
 		color: var(--neutral-500);
 	}
 
@@ -1469,7 +1471,7 @@
 		background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%);
 		color: white;
 		border: none;
-		padding: var(--space-3) var(--space-8);
+		padding: var(--space-3) var(--space-4);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-base);
 		font-weight: 600;
@@ -1491,6 +1493,7 @@
 		.step {
 			display: flex;
 			flex-direction: column;
+			padding-bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
 		}
 
 		.calendar-section {
@@ -1579,8 +1582,17 @@
 			font-size: 11px;
 		}
 
+		.reservations-list {
+			padding-bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
+		}
+
+		.reservation-card:last-child {
+			margin-bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
+		}
+
 		.no-reservations-message {
 			padding: var(--space-6);
+			padding-bottom: calc(var(--space-12) + env(safe-area-inset-bottom, 0px));
 		}
 
 		.empty-icon {
@@ -1627,4 +1639,5 @@
 			text-align: left;
 		}
 	}
+
 </style>
