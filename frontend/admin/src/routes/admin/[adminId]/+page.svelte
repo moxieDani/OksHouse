@@ -1304,7 +1304,7 @@
 	.detail-modal-content {
 		max-width: 700px;
 		width: 100%;
-		max-height: 98vh;
+		max-height: 90vh;
 		overflow-y: auto;
 	}
 
@@ -1503,13 +1503,14 @@
 	}
 
 	.modal-backdrop {
-		position: absolute;
+		position: fixed;
 		top: 0;
 		left: 0;
 		right: 0;
 		bottom: 0;
 		background: rgba(0, 0, 0, 0.7);
 		backdrop-filter: blur(4px);
+		z-index: 1000;
 	}
 
 	.modal-content {
@@ -1522,6 +1523,7 @@
 		overflow: hidden;
 		box-shadow: var(--shadow-2xl);
 		animation: slideUp 0.3s ease;
+		z-index: 1001;
 	}
 
 	@keyframes slideUp {
@@ -1684,9 +1686,12 @@
 	/* 개선된 상세 모달창 스타일 */
 	.detail-modal-content {
 		max-height: 98vh;
-		height: 98vh;
+		height: auto;
+		max-height: 90vh;
 		display: flex;
 		flex-direction: column;
+		position: relative;
+		overflow: hidden;
 	}
 
 	.modal-body.compact {
@@ -1694,9 +1699,10 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-2);
-		flex: 1;
-		overflow-y: auto;
-		padding-bottom: var(--space-3);
+		flex: 1 1 auto;
+		overflow: visible;
+		padding-bottom: 0;
+		min-height: 0;
 	}
 
 	.guest-status-row {
@@ -1764,8 +1770,8 @@
 
 	.calendar-info-row {
 		display: grid;
-		grid-template-columns: 1.4fr 1fr;
-		gap: var(--space-3);
+		grid-template-columns: 1.4fr 0.8fr;
+		gap: var(--space-2);
 		align-items: start;
 		flex-shrink: 0;
 	}
@@ -1904,11 +1910,11 @@
 		display: grid;
 		grid-template-columns: 1fr 1fr 1fr;
 		gap: var(--space-1);
-		padding: var(--space-1) var(--space-2);
+		padding: var(--space-2) var(--space-2) var(--space-2) var(--space-2);
 		background: var(--neutral-50);
 		border-top: 1px solid var(--neutral-200);
 		flex-shrink: 0;
-		margin-top: auto;
+		margin-top: 0;
 	}
 
 	.action-button {
@@ -2064,7 +2070,39 @@
 		background: linear-gradient(135deg, #5153c7 0%, #2a5eb3 100%);
 	}
 
-	@media (max-width: 768px) {
+	/* 태블릿 및 중간 화면 (651px ~ 1024px) */
+	@media (max-width: 1024px) and (min-width: 651px) {
+		.detail-modal-content {
+			height: auto;
+			max-height: 85vh;
+			overflow: hidden;
+		}
+
+		.calendar-info-row {
+			grid-template-columns: 1.2fr 1.3fr;
+			gap: var(--space-2);
+			margin-bottom: 0;
+		}
+
+		.calendar-section-small {
+			padding: var(--space-2);
+			max-width: 280px;
+			margin-bottom: 0;
+		}
+
+		.calendar-day {
+			min-height: 30px;
+			font-size: 12px;
+		}
+
+		.calendar-weekday {
+			font-size: 11px;
+			min-height: 22px;
+		}
+	}
+
+	/* 모바일 (650px 이하) */
+	@media (max-width: 650px) {
 		h1.page-title {
 			margin: var(--space-2) 0 var(--space-2) 0 !important;
 			font-size: var(--text-2xl) !important;
@@ -2208,24 +2246,32 @@
 		}
 
 		.detail-modal-content {
-			margin: var(--space-1) var(--space-2);
-			max-height: 95vh;
-			height: 95vh;
-			width: calc(100vw - 16px);
-			max-width: none;
+			height: calc(100vh - var(--space-8));
+			width: calc(100vw - var(--space-8));
+			max-width: calc(100vw - var(--space-8));
+			display: flex;
+			flex-direction: column;
+			border-radius: var(--radius-lg);
+			margin: 0;
+			overflow: hidden;
 		}
 
 		.detail-modal {
-			padding: var(--space-1) var(--space-2);
-			align-items: flex-start;
-			padding-top: var(--space-6);
-			padding-bottom: var(--space-6);
+			padding: var(--space-4);
+			align-items: center;
+			justify-content: center;
 		}
 
 		/* 모바일 상세 모달 스타일 */
+		.guest-status-row {
+			margin-bottom: var(--space-1);
+			padding: var(--space-2);
+		}
+
 		.calendar-info-row {
 			grid-template-columns: 1fr;
-			gap: var(--space-3);
+			gap: var(--space-2);
+			margin: 0;
 		}
 
 		.calendar-section-small {
@@ -2233,15 +2279,52 @@
 			max-width: 100%;
 			width: 100%;
 			margin: 0 auto;
+			padding: var(--space-1);
+			margin-bottom: var(--space-1);
+		}
+
+		.calendar-day {
+			min-height: 20px;
+			font-size: 9px;
+		}
+
+		.calendar-weekday {
+			font-size: 9px;
+			padding: 1px;
+			min-height: 16px;
 		}
 
 		.basic-info-section {
 			order: 1;
 		}
 
+		.modal-header {
+			flex-shrink: 0;
+			padding: var(--space-3) var(--space-4);
+			padding-top: calc(var(--space-3) + env(safe-area-inset-top, 0px));
+		}
+
+		.modal-body.compact {
+			flex: 1;
+			overflow: visible;
+			padding: var(--space-2) var(--space-3) 0 var(--space-3);
+			display: flex;
+			flex-direction: column;
+			gap: var(--space-2);
+			min-height: 0;
+			margin-bottom: 0;
+		}
+
 		.action-footer {
+			flex-shrink: 0;
 			grid-template-columns: 1fr;
-			gap: var(--space-3);
+			gap: var(--space-2);
+			padding: var(--space-2) var(--space-3);
+			padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 15px));
+			background: var(--neutral-50);
+			border-top: 1px solid var(--neutral-200);
+			position: relative;
+			margin-top: auto;
 		}
 
 		.action-button {
