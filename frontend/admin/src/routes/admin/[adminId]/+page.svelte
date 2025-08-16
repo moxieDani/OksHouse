@@ -611,7 +611,7 @@
 							</div>
 							<div class="calendar-days">
 								{#each calendarDays as day}
-									<div class="calendar-day {day.isReserved ? 'reserved' : ''} {day.isToday ? 'today' : ''}">
+									<div class="calendar-day {day.isReserved ? `reserved-${selectedDetailReservation.status}` : ''} {day.isToday ? 'today' : ''}">
 										{day.date || ''}
 									</div>
 								{/each}
@@ -1838,6 +1838,7 @@
 		border: 1px solid var(--neutral-100);
 	}
 
+	/* 기본 reserved 스타일 (호환성을 위해 유지) */
 	.calendar-day.reserved {
 		background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 		color: white;
@@ -1845,12 +1846,37 @@
 		box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
 	}
 
+	/* 상태별 달력 예약 스타일 */
+	.calendar-day.reserved-confirmed {
+		background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+		color: white;
+		font-weight: 600;
+		box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+	}
+
+	.calendar-day.reserved-pending {
+		background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+		color: white;
+		font-weight: 600;
+		box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+	}
+
+	.calendar-day.reserved-cancelled {
+		background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+		color: white;
+		font-weight: 600;
+		box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+	}
+
 	.calendar-day.today {
 		border: 2px solid #6366f1;
 		font-weight: 700;
 	}
 
-	.calendar-day.today.reserved {
+	.calendar-day.today.reserved,
+	.calendar-day.today.reserved-confirmed,
+	.calendar-day.today.reserved-pending,
+	.calendar-day.today.reserved-cancelled {
 		border: 2px solid #ffffff;
 	}
 
