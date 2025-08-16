@@ -637,23 +637,23 @@
 							<span class="info-label">신청일시</span>
 							<span class="info-value">{new Date(selectedDetailReservation.created_at).toLocaleDateString('ko-KR')}</span>
 						</div>
+						<!-- 확정 정보 (있는 경우만) -->
+						{#if selectedDetailReservation.status === 'confirmed' && selectedDetailReservation.confirmed_by}
+							<div class="confirmed-info admin-{selectedDetailReservation.confirmed_by}">
+								<span class="confirmed-label">✅ 확정자:</span>
+								<span class="confirmed-admin">
+									{getAdminEmoji(selectedDetailReservation.confirmed_by)} {getAdminName(selectedDetailReservation.confirmed_by)}
+								</span>
+								{#if selectedDetailReservation.confirmed_at}
+									<span class="confirmed-date">
+										({new Date(selectedDetailReservation.confirmed_at).toLocaleDateString('ko-KR')})
+									</span>
+								{/if}
+							</div>
+						{/if}
 					</div>
 				</div>
 
-				<!-- 확정 정보 (있는 경우만) -->
-				{#if selectedDetailReservation.status === 'confirmed' && selectedDetailReservation.confirmed_by}
-					<div class="confirmed-info admin-{selectedDetailReservation.confirmed_by}">
-						<span class="confirmed-label">✅ 확정자:</span>
-						<span class="confirmed-admin">
-							{getAdminEmoji(selectedDetailReservation.confirmed_by)} {getAdminName(selectedDetailReservation.confirmed_by)}
-						</span>
-						{#if selectedDetailReservation.confirmed_at}
-							<span class="confirmed-date">
-								({new Date(selectedDetailReservation.confirmed_at).toLocaleDateString('ko-KR')})
-							</span>
-						{/if}
-					</div>
-				{/if}
 			</div>
 			
 			<div class="modal-footer action-footer">
@@ -1298,13 +1298,13 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: var(--space-4);
+		padding: var(--space-2);
 	}
 
 	.detail-modal-content {
 		max-width: 700px;
 		width: 100%;
-		max-height: 90vh;
+		max-height: 98vh;
 		overflow-y: auto;
 	}
 
@@ -1536,7 +1536,7 @@
 	}
 
 	.modal-header {
-		padding: var(--space-4);
+		padding: var(--space-2) var(--space-4);
 		background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%);
 		color: white;
 		display: flex;
@@ -1659,7 +1659,7 @@
 	}
 
 	.modal-footer {
-		padding: var(--space-6);
+		padding: var(--space-3);
 		text-align: center;
 		background: var(--neutral-50);
 	}
@@ -1683,7 +1683,8 @@
 
 	/* 개선된 상세 모달창 스타일 */
 	.detail-modal-content {
-		max-height: 85vh;
+		max-height: 98vh;
+		height: 98vh;
 		display: flex;
 		flex-direction: column;
 	}
@@ -1694,7 +1695,8 @@
 		flex-direction: column;
 		gap: var(--space-2);
 		flex: 1;
-		overflow: hidden;
+		overflow-y: auto;
+		padding-bottom: var(--space-3);
 	}
 
 	.guest-status-row {
@@ -1762,8 +1764,8 @@
 
 	.calendar-info-row {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: var(--space-2);
+		grid-template-columns: 1.4fr 1fr;
+		gap: var(--space-3);
 		align-items: start;
 		flex-shrink: 0;
 	}
@@ -1772,14 +1774,16 @@
 		background: white;
 		border: 1px solid var(--neutral-200);
 		border-radius: var(--radius-md);
-		padding: var(--space-1);
+		padding: var(--space-2);
+		width: 100%;
+		max-width: 320px;
 	}
 
 	.calendar-header h5 {
-		font-size: var(--text-xs);
+		font-size: var(--text-sm);
 		font-weight: 600;
 		color: var(--neutral-700);
-		margin: 0 0 2px 0;
+		margin: 0 0 4px 0;
 		text-align: center;
 	}
 
@@ -1790,22 +1794,22 @@
 	.calendar-weekdays {
 		display: grid;
 		grid-template-columns: repeat(7, 1fr);
-		gap: 1px;
-		margin-bottom: 2px;
+		gap: 2px;
+		margin-bottom: 4px;
 	}
 
 	.weekday {
-		font-size: 10px;
+		font-size: 12px;
 		font-weight: 600;
 		color: var(--neutral-500);
 		text-align: center;
-		padding: 2px;
+		padding: 3px;
 	}
 
 	.calendar-days {
 		display: grid;
 		grid-template-columns: repeat(7, 1fr);
-		gap: 1px;
+		gap: 2px;
 	}
 
 	.calendar-day {
@@ -1813,10 +1817,13 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-size: 10px;
+		font-size: 13px;
 		color: var(--neutral-600);
 		border-radius: var(--radius-sm);
 		transition: var(--transition-colors);
+		min-height: 32px;
+		background: white;
+		border: 1px solid var(--neutral-100);
 	}
 
 	.calendar-day.reserved {
@@ -1897,10 +1904,11 @@
 		display: grid;
 		grid-template-columns: 1fr 1fr 1fr;
 		gap: var(--space-1);
-		padding: var(--space-2);
+		padding: var(--space-1) var(--space-2);
 		background: var(--neutral-50);
 		border-top: 1px solid var(--neutral-200);
 		flex-shrink: 0;
+		margin-top: auto;
 	}
 
 	.action-button {
@@ -2200,8 +2208,18 @@
 		}
 
 		.detail-modal-content {
-			margin: var(--space-2);
+			margin: var(--space-1) var(--space-2);
 			max-height: 95vh;
+			height: 95vh;
+			width: calc(100vw - 16px);
+			max-width: none;
+		}
+
+		.detail-modal {
+			padding: var(--space-1) var(--space-2);
+			align-items: flex-start;
+			padding-top: var(--space-6);
+			padding-bottom: var(--space-6);
 		}
 
 		/* 모바일 상세 모달 스타일 */
@@ -2212,6 +2230,9 @@
 
 		.calendar-section-small {
 			order: 2;
+			max-width: 100%;
+			width: 100%;
+			margin: 0 auto;
 		}
 
 		.basic-info-section {
