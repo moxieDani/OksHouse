@@ -637,10 +637,16 @@
 							<span class="info-label">신청일시</span>
 							<span class="info-value">{new Date(selectedDetailReservation.created_at).toLocaleDateString('ko-KR')}</span>
 						</div>
-						<!-- 확정 정보 (있는 경우만) -->
-						{#if selectedDetailReservation.status === 'confirmed' && selectedDetailReservation.confirmed_by}
-							<div class="confirmed-info admin-{selectedDetailReservation.confirmed_by}">
-								<span class="confirmed-label">✅ 확정자:</span>
+						<!-- 확정/거절 정보 (있는 경우만) -->
+						{#if (selectedDetailReservation.status === 'confirmed' || selectedDetailReservation.status === 'cancelled') && selectedDetailReservation.confirmed_by}
+							<div class="confirmed-info admin-{selectedDetailReservation.confirmed_by} {selectedDetailReservation.status === 'cancelled' ? 'rejected-theme' : ''}">
+								<span class="confirmed-label">
+									{#if selectedDetailReservation.status === 'confirmed'}
+										✅ 확정자:
+									{:else if selectedDetailReservation.status === 'cancelled'}
+										❌ 거절자:
+									{/if}
+								</span>
 								<span class="confirmed-admin">
 									{getAdminEmoji(selectedDetailReservation.confirmed_by)} {getAdminName(selectedDetailReservation.confirmed_by)}
 								</span>
@@ -1886,6 +1892,11 @@
 		border-radius: var(--radius-md);
 		flex-wrap: wrap;
 		flex-shrink: 0;
+	}
+
+	.confirmed-info.rejected-theme {
+		border: 2px solid #ef4444;
+		background: rgba(239, 68, 68, 0.05);
 	}
 
 	.confirmed-label {
