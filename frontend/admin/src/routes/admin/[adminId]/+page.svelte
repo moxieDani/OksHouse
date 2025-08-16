@@ -2284,18 +2284,49 @@
 		}
 
 		.calendar-day {
-			min-height: 20px;
-			font-size: 9px;
+			min-height: 24px;
+			font-size: 11px;
 		}
 
 		.calendar-weekday {
-			font-size: 9px;
-			padding: 1px;
-			min-height: 16px;
+			font-size: 11px;
+			padding: 2px;
+			min-height: 20px;
 		}
 
 		.basic-info-section {
 			order: 1;
+		}
+
+		/* Basic info section 텍스트 크기 증가 */
+		.guest-info h4 {
+			font-size: var(--text-lg) !important;
+		}
+
+		.phone-text {
+			font-size: var(--text-base) !important;
+		}
+
+		.detail-item {
+			padding: var(--space-3);
+		}
+
+		.detail-label {
+			font-size: var(--text-base) !important;
+		}
+
+		.detail-value {
+			font-size: var(--text-base) !important;
+		}
+
+		/* Calendar section 텍스트 크기 증가 */
+		.calendar-header h5 {
+			font-size: var(--text-base) !important;
+		}
+
+		.weekday {
+			font-size: 13px !important;
+			padding: 4px;
 		}
 
 		.modal-header {
