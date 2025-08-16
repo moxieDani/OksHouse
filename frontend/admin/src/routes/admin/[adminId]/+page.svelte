@@ -1045,6 +1045,9 @@
 	.reservation-list-title {
 		text-align: left;
 		margin-top: var(--space-4);
+		max-width: 700px;
+		margin-left: auto;
+		margin-right: auto;
 	}
 
 	.reservation-list-title h4 {
@@ -1057,8 +1060,9 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-4);
-		margin: 5px 0;
+		margin: 5px auto;
 		padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
+		max-width: 700px;
 	}
 
 	.reservation-card {
@@ -2056,6 +2060,14 @@
 		h1.page-title {
 			margin: var(--space-2) 0 var(--space-2) 0 !important;
 			font-size: var(--text-2xl) !important;
+		}
+		
+		/* 모바일에서는 전체 너비 사용 */
+		.reservation-list-title,
+		.reservations-list {
+			max-width: none;
+			margin-left: var(--space-2);
+			margin-right: var(--space-2);
 		}
 
 		.step {
