@@ -14,16 +14,17 @@
 	
 	let today = new Date().setHours(0, 0, 0, 0);
 	
-	// Reactive calendar days generation
-	$: calendarDays = generateCalendarDays(currentYear, currentMonth);
+	// Reactive calendar days generation - existingReservations 변경시에도 업데이트
+	$: calendarDays = generateCalendarDays(currentYear, currentMonth, existingReservations);
 	
 	/**
 	 * 달력 날짜 생성
 	 * @param {number} year - 년도
 	 * @param {number} month - 월 (0-11)
+	 * @param {Array} reservations - 예약 데이터 (리액티브 의존성을 위해)
 	 * @returns {Array} 달력 날짜 배열
 	 */
-	function generateCalendarDays(year, month) {
+	function generateCalendarDays(year, month, reservations = []) {
 		const firstDay = new Date(year, month, 1);
 		const lastDay = new Date(year, month + 1, 0);
 		const firstDayOfWeek = firstDay.getDay();
@@ -37,21 +38,25 @@
 		const daysFromPrevMonth = firstDayOfWeek;
 		for (let i = daysFromPrevMonth; i > 0; i--) {
 			const day = prevMonthLastDay - i + 1;
+			const dayDate = new Date(year, month - 1, day);
 			days.push({
 				day,
-				date: new Date(year, month - 1, day),
+				date: dayDate,
 				isCurrentMonth: false,
-				isOtherMonth: true
+				isOtherMonth: true,
+				...getReservationInfo(dayDate)
 			});
 		}
 		
 		// Current month days
 		for (let day = 1; day <= daysInMonth; day++) {
+			const dayDate = new Date(year, month, day);
 			days.push({
 				day,
-				date: new Date(year, month, day),
+				date: dayDate,
 				isCurrentMonth: true,
-				isOtherMonth: false
+				isOtherMonth: false,
+				...getReservationInfo(dayDate)
 			});
 		}
 		
@@ -59,15 +64,66 @@
 		const totalCells = 42; // 6 weeks × 7 days
 		const remainingCells = totalCells - days.length;
 		for (let day = 1; day <= remainingCells; day++) {
+			const dayDate = new Date(year, month + 1, day);
 			days.push({
 				day,
-				date: new Date(year, month + 1, day),
+				date: dayDate,
 				isCurrentMonth: false,
-				isOtherMonth: true
+				isOtherMonth: true,
+				...getReservationInfo(dayDate)
 			});
 		}
 		
 		return days;
+	}
+
+	/**
+	 * 특정 날짜의 예약 정보 및 범위 위치 반환
+	 * @param {Date} date - 확인할 날짜
+	 * @returns {Object} 예약 정보 객체
+	 */
+	function getReservationInfo(date) {
+		if (!existingReservations || existingReservations.length === 0) {
+			return { hasReservation: false, reservationStatus: null, reservationPosition: null };
+		}
+		
+		// 날짜 비교를 위해 시간을 00:00:00으로 설정
+		const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+		const targetTime = targetDate.getTime();
+		
+		for (const reservation of existingReservations) {
+			const startDate = new Date(reservation.startDate.getFullYear(), reservation.startDate.getMonth(), reservation.startDate.getDate());
+			const endDate = new Date(reservation.endDate.getFullYear(), reservation.endDate.getMonth(), reservation.endDate.getDate());
+			
+			const startTime = startDate.getTime();
+			const endTime = endDate.getTime();
+			
+			if (targetTime >= startTime && targetTime <= endTime) {
+				// 예약 범위 내에서의 위치 결정
+				let position = null;
+				const isStart = targetTime === startTime;
+				const isEnd = targetTime === endTime;
+				const isSingle = startTime === endTime;
+				
+				if (isSingle) {
+					position = 'single';
+				} else if (isStart) {
+					position = 'start';
+				} else if (isEnd) {
+					position = 'end';
+				} else {
+					position = 'middle';
+				}
+				
+				return {
+					hasReservation: true,
+					reservationStatus: reservation.status,
+					reservationPosition: position
+				};
+			}
+		}
+		
+		return { hasReservation: false, reservationStatus: null, reservationPosition: null };
 	}
 	
 	/**
@@ -133,17 +189,15 @@
 	function hasReservations(date) {
 		if (!existingReservations || existingReservations.length === 0) return false;
 		
-		const dateTime = date.getTime();
+		// 날짜 비교를 위해 시간을 00:00:00으로 설정
+		const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+		const targetTime = targetDate.getTime();
 		
 		return existingReservations.some(reservation => {
-			const startDate = reservation.startDate instanceof Date 
-				? reservation.startDate 
-				: new Date(reservation.start_date + 'T00:00:00');
-			const endDate = reservation.endDate instanceof Date
-				? reservation.endDate
-				: new Date(reservation.end_date + 'T00:00:00');
+			const startDate = new Date(reservation.startDate.getFullYear(), reservation.startDate.getMonth(), reservation.startDate.getDate());
+			const endDate = new Date(reservation.endDate.getFullYear(), reservation.endDate.getMonth(), reservation.endDate.getDate());
 			
-			return dateTime >= startDate.getTime() && dateTime <= endDate.getTime();
+			return targetTime >= startDate.getTime() && targetTime <= endDate.getTime();
 		});
 	}
 	
@@ -185,13 +239,25 @@
 	 */
 	function getDayClass(dayInfo) {
 		const classes = ['calendar-day'];
-		const { date, isCurrentMonth, isOtherMonth } = dayInfo;
+		const { date, isCurrentMonth, isOtherMonth, hasReservation, reservationStatus, reservationPosition } = dayInfo;
 		const dayOfWeek = date.getDay();
 		
 		if (isOtherMonth) classes.push('other-month');
 		if (isToday(date)) classes.push('today');
 		if (isDisabled(date)) classes.push('disabled');
-		if (hasReservations(date)) classes.push('has-reservation');
+		
+		// 예약 상태별 스타일 추가
+		if (hasReservation && reservationStatus) {
+			classes.push('has-reservation');
+			classes.push(`reserved-${reservationStatus}`);
+			if (reservationPosition) {
+				classes.push(`position-${reservationPosition}`);
+			}
+		} else if (hasReservations(date)) {
+			// 기존 hasReservations 함수와의 호환성
+			classes.push('has-reservation');
+		}
+		
 		if (dayOfWeek === 0) classes.push('sunday');
 		if (dayOfWeek === 6) classes.push('saturday');
 		
@@ -235,7 +301,9 @@
 				aria-label="{currentYear}년 {currentMonth + 1}월 {dayInfo.day}일"
 			>
 				{dayInfo.day}
-				{#if hasReservations(dayInfo.date)}
+				{#if dayInfo.hasReservation}
+					<span class="reservation-indicator" style="color: {dayInfo.reservationStatus === 'confirmed' ? '#10b981' : dayInfo.reservationStatus === 'pending' ? '#f59e0b' : '#ef4444'}">●</span>
+				{:else if hasReservations(dayInfo.date)}
 					<span class="reservation-indicator">●</span>
 				{/if}
 			</button>
@@ -303,7 +371,6 @@
 
 	.calendar-day {
 		aspect-ratio: 1;
-		border: none;
 		background: white;
 		color: var(--neutral-700);
 		font-size: clamp(0.875rem, 2.5vw, 1.375rem);
@@ -317,6 +384,7 @@
 		justify-content: center;
 		min-height: clamp(42px, 6vw, 60px);
 		position: relative;
+		border-radius: var(--radius-sm);
 	}
 
 	.calendar-day.other-month {
@@ -376,7 +444,7 @@
 		box-shadow: none;
 	}
 
-	/* 예약이 있는 날짜 스타일 */
+	/* 기본 예약 스타일 (호환성을 위해 유지) */
 	.calendar-day.has-reservation {
 		background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%);
 		border-color: #6366f1;
@@ -385,11 +453,79 @@
 		cursor: pointer;
 	}
 
+	/* 상태별 예약 스타일 */
+	.calendar-day.reserved-confirmed {
+		background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+		color: white;
+		font-weight: 600;
+		box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+		border: 3px solid #047857; /* 테두리 두께 증가 */
+	}
+
+	.calendar-day.reserved-pending {
+		background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+		color: white;
+		font-weight: 600;
+		box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+		border: 3px solid #b45309; /* 테두리 두께 증가 */
+	}
+
+	.calendar-day.reserved-cancelled {
+		background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+		color: white;
+		font-weight: 600;
+		box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+		border: 3px solid #b91c1c; /* 테두리 두께 증가 */
+	}
+
+	/* 예약 범위 연속 사각형 스타일 */
+	.calendar-day.position-start {
+		border-top-right-radius: 0;
+		border-bottom-right-radius: 0;
+		position: relative;
+		border-right: none !important; /* 중간 세로 테두리 제거 */
+	}
+
+	.calendar-day.position-middle {
+		border-radius: 0;
+		position: relative;
+		border-left: none !important; /* 중간 세로 테두리 제거 */
+		border-right: none !important; /* 중간 세로 테두리 제거 */
+	}
+
+	.calendar-day.position-end {
+		border-top-left-radius: 0;
+		border-bottom-left-radius: 0;
+		position: relative;
+		border-left: none !important; /* 중간 세로 테두리 제거 */
+	}
+
+	.calendar-day.position-single {
+		/* 단일 날짜는 기본 border-radius 유지 */
+		border-radius: var(--radius-sm);
+	}
+
+	.calendar-day:hover {
+		background: var(--neutral-50);
+		border-color: var(--neutral-300);
+		transform: translateY(-1px);
+		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+	}
+
 	.calendar-day.has-reservation:hover {
 		background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(59, 130, 246, 0.25) 100%);
 		color: #4338ca;
 		transform: translateY(-1px);
 		box-shadow: 0 4px 8px rgba(99, 102, 241, 0.2);
+	}
+
+	/* 예약된 날짜 hover 효과 */
+	.calendar-day.reserved-confirmed:hover,
+	.calendar-day.reserved-pending:hover,
+	.calendar-day.reserved-cancelled:hover {
+		transform: translateY(-1px);
+		filter: brightness(1.1);
+		box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 	}
 
 	/* 오늘 + 예약이 있는 날짜 */
@@ -404,6 +540,14 @@
 		color: #4338ca;
 		transform: translateY(-1px);
 		box-shadow: 0 4px 8px rgba(99, 102, 241, 0.2);
+	}
+
+	/* 오늘 + 예약 상태별 스타일 */
+	.calendar-day.today.reserved-confirmed,
+	.calendar-day.today.reserved-pending,
+	.calendar-day.today.reserved-cancelled {
+		border: 2px solid #ffffff;
+		box-shadow: 0 0 0 2px currentColor;
 	}
 
 	.reservation-indicator {

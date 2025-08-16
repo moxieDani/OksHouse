@@ -21,69 +21,152 @@
 	$: adminId = $page.params.adminId;
 	$: currentAdmin = administrators[adminId];
 
-	// 달력 상태
-	let currentMonth = new Date().getMonth();
-	let currentYear = new Date().getFullYear();
+	// 달력 상태 - 8월부터 시작
+	let currentMonth = 7; // 8월 (0-based index)
+	let currentYear = 2025;
 	let existingReservations = [];
-	let isLoading = false;
+	let isLoading = true; // 초기 로딩 상태
 
-	// 목업 데이터 (테스트용)
+	// 목업 데이터 (2025년 8-10월 테스트용)
 	const mockReservations = [
+		// 8월 예약
 		{
 			id: 1,
 			name: '김영희',
 			phone: '010-1234-5678',
-			startDate: new Date(2025, 0, 15), // 1월 15일
-			endDate: new Date(2025, 0, 17),   // 1월 17일
-			duration: 2,
+			startDate: new Date(2025, 7, 5),  // 8월 5일
+			endDate: new Date(2025, 7, 8),    // 8월 8일
+			duration: 3,
 			status: 'confirmed',
-			created_at: '2025-01-08T10:30:00Z',
+			created_at: '2025-07-28T10:30:00Z',
 			confirmed_by: 'choi-bunok',
-			confirmed_at: '2025-01-09T09:15:00Z'
+			confirmed_at: '2025-07-29T09:15:00Z'
 		},
 		{
 			id: 2,
 			name: '박철수',
 			phone: '010-9876-5432',
-			startDate: new Date(2025, 0, 20), // 1월 20일
-			endDate: new Date(2025, 0, 23),   // 1월 23일
-			duration: 3,
+			startDate: new Date(2025, 7, 15), // 8월 15일
+			endDate: new Date(2025, 7, 17),   // 8월 17일
+			duration: 2,
 			status: 'pending',
-			created_at: '2025-01-12T14:15:00Z'
+			created_at: '2025-08-10T14:15:00Z'
 		},
 		{
 			id: 3,
 			name: '이정민',
 			phone: '010-5555-1234',
-			startDate: new Date(2025, 0, 25), // 1월 25일
-			endDate: new Date(2025, 0, 26),   // 1월 26일
-			duration: 1,
+			startDate: new Date(2025, 7, 22), // 8월 22일
+			endDate: new Date(2025, 7, 25),   // 8월 25일
+			duration: 3,
 			status: 'confirmed',
-			created_at: '2025-01-18T09:45:00Z',
+			created_at: '2025-08-15T09:45:00Z',
 			confirmed_by: 'park-seoeun',
-			confirmed_at: '2025-01-19T14:30:00Z'
+			confirmed_at: '2025-08-16T14:30:00Z'
 		},
 		{
 			id: 4,
 			name: '최미영',
 			phone: '010-7777-8888',
-			startDate: new Date(2025, 0, 28), // 1월 28일
-			endDate: new Date(2025, 0, 31),   // 1월 31일
+			startDate: new Date(2025, 7, 28), // 8월 28일
+			endDate: new Date(2025, 7, 31),   // 8월 31일
 			duration: 3,
-			status: 'pending',
-			created_at: '2025-01-20T16:20:00Z'
+			status: 'cancelled',
+			created_at: '2025-08-20T16:20:00Z',
+			confirmed_by: 'choi-bunok',
+			confirmed_at: '2025-08-21T10:00:00Z'
 		},
+		// 9월 예약
 		{
 			id: 5,
 			name: '정호석',
 			phone: '010-3333-9999',
-			startDate: new Date(2025, 1, 3),  // 2월 3일
-			endDate: new Date(2025, 1, 5),    // 2월 5일
+			startDate: new Date(2025, 8, 3),  // 9월 3일
+			endDate: new Date(2025, 8, 6),    // 9월 6일
+			duration: 3,
+			status: 'confirmed',
+			created_at: '2025-08-25T11:10:00Z',
+			confirmed_by: 'park-jiyoung',
+			confirmed_at: '2025-08-26T15:20:00Z'
+		},
+		{
+			id: 6,
+			name: '강지윤',
+			phone: '010-4444-5555',
+			startDate: new Date(2025, 8, 12), // 9월 12일
+			endDate: new Date(2025, 8, 14),   // 9월 14일
+			duration: 2,
+			status: 'pending',
+			created_at: '2025-09-08T13:30:00Z'
+		},
+		{
+			id: 7,
+			name: '조민준',
+			phone: '010-6666-7777',
+			startDate: new Date(2025, 8, 20), // 9월 20일
+			endDate: new Date(2025, 8, 22),   // 9월 22일
+			duration: 2,
+			status: 'confirmed',
+			created_at: '2025-09-15T16:45:00Z',
+			confirmed_by: 'park-taehyun',
+			confirmed_at: '2025-09-16T11:30:00Z'
+		},
+		{
+			id: 8,
+			name: '윤서아',
+			phone: '010-8888-9999',
+			startDate: new Date(2025, 8, 27), // 9월 27일
+			endDate: new Date(2025, 8, 29),   // 9월 29일
 			duration: 2,
 			status: 'cancelled',
-			created_at: '2025-01-22T11:10:00Z',
+			created_at: '2025-09-20T12:15:00Z',
 			confirmed_by: 'choi-bunok',
-			confirmed_at: '2025-01-19T14:30:00Z'
+			confirmed_at: '2025-09-21T09:45:00Z'
+		},
+		// 10월 예약
+		{
+			id: 9,
+			name: '한동훈',
+			phone: '010-1111-2222',
+			startDate: new Date(2025, 9, 5),  // 10월 5일
+			endDate: new Date(2025, 9, 8),    // 10월 8일
+			duration: 3,
+			status: 'confirmed',
+			created_at: '2025-09-28T14:20:00Z',
+			confirmed_by: 'park-seoeun',
+			confirmed_at: '2025-09-29T10:15:00Z'
+		},
+		{
+			id: 10,
+			name: '오예진',
+			phone: '010-2222-3333',
+			startDate: new Date(2025, 9, 15), // 10월 15일
+			endDate: new Date(2025, 9, 17),   // 10월 17일
+			duration: 2,
+			status: 'pending',
+			created_at: '2025-10-10T11:00:00Z'
+		},
+		{
+			id: 11,
+			name: '임연수',
+			phone: '010-3333-4444',
+			startDate: new Date(2025, 9, 22), // 10월 22일
+			endDate: new Date(2025, 9, 25),   // 10월 25일
+			duration: 3,
+			status: 'confirmed',
+			created_at: '2025-10-18T15:30:00Z',
+			confirmed_by: 'park-jiyoung',
+			confirmed_at: '2025-10-19T13:45:00Z'
+		},
+		{
+			id: 12,
+			name: '송지훈',
+			phone: '010-4444-5555',
+			startDate: new Date(2025, 9, 28), // 10월 28일
+			endDate: new Date(2025, 9, 31),   // 10월 31일
+			duration: 3,
+			status: 'pending',
+			created_at: '2025-10-25T17:00:00Z'
 		}
 	];
 
@@ -155,7 +238,8 @@
 	 */
 	onMount(() => {
 		// 실제 API 호출 대신 목업 데이터 사용 (테스트용)
-		existingReservations = mockReservations;
+		existingReservations = [...mockReservations]; // 새 배열로 복사하여 리액티비티 보장
+		isLoading = false; // 로딩 완료
 		
 		// 실제 운영시에는 아래 코드 사용
 		// loadMonthlyReservations();
@@ -352,7 +436,12 @@
 		// 첫 주의 빈 공간 채우기
 		const startDayOfWeek = firstDay.getDay();
 		for (let i = 0; i < startDayOfWeek; i++) {
-			calendar.push({ date: null, isReserved: false, isToday: false });
+			calendar.push({ 
+				date: null, 
+				isReserved: false, 
+				isToday: false, 
+				reservationPosition: null 
+			});
 		}
 		
 		// 달력 날짜 채우기
@@ -361,10 +450,29 @@
 			const isReserved = currentDate >= start && currentDate <= end;
 			const isToday = currentDate.toDateString() === new Date().toDateString();
 			
+			// 예약 범위 내에서의 위치 결정
+			let reservationPosition = null;
+			if (isReserved) {
+				const isStart = currentDate.getTime() === start.getTime();
+				const isEnd = currentDate.getTime() === end.getTime();
+				const isSingle = start.getTime() === end.getTime();
+				
+				if (isSingle) {
+					reservationPosition = 'single';
+				} else if (isStart) {
+					reservationPosition = 'start';
+				} else if (isEnd) {
+					reservationPosition = 'end';
+				} else {
+					reservationPosition = 'middle';
+				}
+			}
+			
 			calendar.push({
 				date: date,
 				isReserved: isReserved,
-				isToday: isToday
+				isToday: isToday,
+				reservationPosition: reservationPosition
 			});
 		}
 		
@@ -505,13 +613,15 @@
 			<p>예약 정보를 불러오는 중...</p>
 		</div>
 	{:else}
-		<AdminCalendar
-			{currentMonth}
-			{currentYear}
-			{existingReservations}
-			on:monthChange={handleMonthChange}
-			on:reservationDateClick={handleReservationDateClick}
-		/>
+		{#key existingReservations.length}
+			<AdminCalendar
+				{currentMonth}
+				{currentYear}
+				{existingReservations}
+				on:monthChange={handleMonthChange}
+				on:reservationDateClick={handleReservationDateClick}
+			/>
+		{/key}
 	{/if}
 	</div>
 
@@ -611,7 +721,7 @@
 							</div>
 							<div class="calendar-days">
 								{#each calendarDays as day}
-									<div class="calendar-day {day.isReserved ? `reserved-${selectedDetailReservation.status}` : ''} {day.isToday ? 'today' : ''}">
+									<div class="calendar-day {day.isReserved ? `reserved-${selectedDetailReservation.status}` : ''} {day.isToday ? 'today' : ''} {day.reservationPosition ? `position-${day.reservationPosition}` : ''}">
 										{day.date || ''}
 									</div>
 								{/each}
@@ -1852,6 +1962,7 @@
 		color: white;
 		font-weight: 600;
 		box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+		border: 3px solid #047857; /* 테두리 두께 증가 */
 	}
 
 	.calendar-day.reserved-pending {
@@ -1859,6 +1970,7 @@
 		color: white;
 		font-weight: 600;
 		box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+		border: 3px solid #b45309; /* 테두리 두께 증가 */
 	}
 
 	.calendar-day.reserved-cancelled {
@@ -1866,6 +1978,52 @@
 		color: white;
 		font-weight: 600;
 		box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+		border: 3px solid #b91c1c; /* 테두리 두께 증가 */
+	}
+
+	/* 예약 범위 연속 사각형 스타일 - confirmed */
+	.calendar-day.reserved-confirmed.position-start {
+		border-top-right-radius: 0;
+		border-bottom-right-radius: 0;
+		position: relative;
+	}
+
+	.calendar-day.reserved-confirmed.position-middle {
+		border-radius: 0;
+		position: relative;
+	}
+
+	.calendar-day.reserved-confirmed.position-end {
+		border-top-left-radius: 0;
+		border-bottom-left-radius: 0;
+		position: relative;
+	}
+
+	/* 예약 범위 연속 사각형 스타일 - 모든 상태 공통 */
+	.calendar-day.position-start {
+		border-top-right-radius: 0;
+		border-bottom-right-radius: 0;
+		position: relative;
+		border-right: none !important; /* 중간 세로 테두리 제거 */
+	}
+
+	.calendar-day.position-middle {
+		border-radius: 0;
+		position: relative;
+		border-left: none !important; /* 중간 세로 테두리 제거 */
+		border-right: none !important; /* 중간 세로 테두리 제거 */
+	}
+
+	.calendar-day.position-end {
+		border-top-left-radius: 0;
+		border-bottom-left-radius: 0;
+		position: relative;
+		border-left: none !important; /* 중간 세로 테두리 제거 */
+	}
+
+	/* 단일 날짜 예약은 기본 border-radius 유지 */
+	.calendar-day.position-single {
+		border-radius: var(--radius-sm);
 	}
 
 	.calendar-day.today {
