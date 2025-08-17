@@ -131,15 +131,30 @@
 	 * @param {Object} dayInfo - 클릭된 날짜 정보
 	 */
 	function handleDateClick(dayInfo) {
-		// 다른 달의 날짜를 클릭한 경우 해당 달로 이동
+		// 다른 달의 날짜를 클릭한 경우
 		if (!dayInfo.isCurrentMonth) {
-			currentMonth = dayInfo.date.getMonth();
-			currentYear = dayInfo.date.getFullYear();
-			dispatch('monthChange', { month: currentMonth, year: currentYear });
+			// 예약이 있는 다른 달 날짜인 경우 달 변경 후 상세 모달 표시
+			if (dayInfo.hasReservation || hasReservations(dayInfo.date)) {
+				currentMonth = dayInfo.date.getMonth();
+				currentYear = dayInfo.date.getFullYear();
+				dispatch('monthChange', { month: currentMonth, year: currentYear });
+				
+				// 달 변경 후 예약 상세 모달 표시
+				const reservationsOnDate = getReservationsOnDate(dayInfo.date);
+				dispatch('reservationDateClick', { 
+					date: dayInfo.date, 
+					reservations: reservationsOnDate 
+				});
+			} else {
+				// 예약이 없는 다른 달 날짜인 경우 달만 변경
+				currentMonth = dayInfo.date.getMonth();
+				currentYear = dayInfo.date.getFullYear();
+				dispatch('monthChange', { month: currentMonth, year: currentYear });
+			}
 			return;
 		}
 
-		// 예약이 있는 날짜만 클릭 가능 (과거 날짜 포함)
+		// 현재 달의 예약이 있는 날짜만 클릭 가능 (과거 날짜 포함)
 		if (dayInfo.hasReservation || hasReservations(dayInfo.date)) {
 			const reservationsOnDate = getReservationsOnDate(dayInfo.date);
 			dispatch('reservationDateClick', { 
