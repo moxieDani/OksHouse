@@ -380,17 +380,17 @@
 	 * 카테고리별 예약 그룹화
 	 */
 	$: groupedReservations = {
-		'확정': mockReservations.filter(r => r.status === 'confirmed'),
-		'대기': mockReservations.filter(r => r.status === 'pending'), 
-		'거절': mockReservations.filter(r => r.status === 'cancelled'),
-		'내 결정': mockReservations.filter(r => r.confirmed_by === adminId)
+		'확정': existingReservations.filter(r => r.status === 'confirmed'),
+		'대기': existingReservations.filter(r => r.status === 'pending'), 
+		'거절': existingReservations.filter(r => r.status === 'cancelled'),
+		'내 결정': existingReservations.filter(r => r.confirmed_by === adminId)
 	};
 
 	/**
 	 * 필터링된 예약 목록
 	 */
 	$: filteredReservations = selectedFilter === '전체' 
-		? mockReservations 
+		? existingReservations 
 		: groupedReservations[selectedFilter] || [];
 
 	/**
@@ -514,17 +514,29 @@
 	 */
 	function changeReservationStatus(newStatus) {
 		if (selectedDetailReservation) {
+			// 선택된 예약의 상태 업데이트
 			selectedDetailReservation.status = newStatus;
-			if (newStatus === 'confirmed') {
+			
+			if (newStatus === 'confirmed' || newStatus === 'cancelled') {
+				// 승인 또는 거절 시 확정자(처리자) 정보 설정
 				selectedDetailReservation.confirmed_by = adminId;
 				selectedDetailReservation.confirmed_at = new Date().toISOString();
+			} else if (newStatus === 'pending') {
+				// 대기 상태로 변경 시 확정자 정보 제거
+				selectedDetailReservation.confirmed_by = null;
+				selectedDetailReservation.confirmed_at = null;
 			}
 			
-			// 목록 업데이트
+			// 목록에서 해당 예약을 찾아 업데이트 (Svelte 반응성을 위해 배열 재할당)
 			const index = existingReservations.findIndex(r => r.id === selectedDetailReservation.id);
 			if (index !== -1) {
-				existingReservations[index] = { ...selectedDetailReservation };
+				existingReservations = existingReservations.map((reservation, i) => 
+					i === index ? { ...selectedDetailReservation } : reservation
+				);
 			}
+			
+			// 모달도 업데이트된 정보로 다시 렌더링되도록 재할당
+			selectedDetailReservation = { ...selectedDetailReservation };
 			
 			showSuccessFeedback(feedbackManager, '상태 변경 완료', `예약이 ${confirmActionText} 상태로 변경되었습니다.`);
 		}
