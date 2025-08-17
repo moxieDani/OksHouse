@@ -4,6 +4,9 @@
 	import AdminCalendar from '$lib/components/AdminCalendar.svelte';
 	import FeedbackManager from '../../../../../shared/components/FeedbackManager.svelte';
 	
+	// SvelteKit이 자동으로 전달하는 params prop을 받아서 경고 제거
+	export let params;
+	
 	// API 및 서비스 imports
 	import { adminAPI } from '$lib/services/api.js';
 	import { formatKoreanDate } from '../../../../../shared/utils/dateUtils.js';
@@ -30,7 +33,7 @@
 
 	// 현재 관리자 정보
 	$: adminId = $page.params.adminId;
-	$: currentAdmin = administrators[adminId];
+	$: currentAdmin = adminId && administrators ? administrators[/** @type {keyof typeof administrators} */ (adminId)] : null;
 
 	// 달력 상태 - 8월부터 시작
 	let currentMonth = 7; // 8월 (0-based index)
