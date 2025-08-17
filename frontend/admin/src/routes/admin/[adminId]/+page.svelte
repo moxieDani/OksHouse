@@ -1962,7 +1962,8 @@
 		color: white;
 		font-weight: 600;
 		box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
-		border: 3px solid #047857; /* 테두리 두께 증가 */
+		border: 3px solid #047857 !important; /* 테두리 두께 증가 + 우선순위 */
+		border-color: #047857 !important; /* 기본 테두리 색상 덮어쓰기 */
 	}
 
 	.calendar-day.reserved-pending {
@@ -1970,7 +1971,8 @@
 		color: white;
 		font-weight: 600;
 		box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
-		border: 3px solid #b45309; /* 테두리 두께 증가 */
+		border: 3px solid #b45309 !important; /* 테두리 두께 증가 + 우선순위 */
+		border-color: #b45309 !important; /* 기본 테두리 색상 덮어쓰기 */
 	}
 
 	.calendar-day.reserved-cancelled {
@@ -1978,7 +1980,8 @@
 		color: white;
 		font-weight: 600;
 		box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
-		border: 3px solid #b91c1c; /* 테두리 두께 증가 */
+		border: 3px solid #b91c1c !important; /* 테두리 두께 증가 + 우선순위 */
+		border-color: #b91c1c !important; /* 기본 테두리 색상 덮어쓰기 */
 	}
 
 	/* 예약 범위 연속 사각형 스타일 - confirmed */
@@ -2012,6 +2015,25 @@
 		position: relative;
 		border-left: none !important; /* 중간 세로 테두리 제거 */
 		border-right: none !important; /* 중간 세로 테두리 제거 */
+	}
+
+	/* position-middle에서 상하 테두리 색상을 예약 상태에 맞게 설정 */
+	.calendar-day.position-middle.reserved-confirmed {
+		border-top: 3px solid #047857 !important;
+		border-bottom: 3px solid #047857 !important;
+		border-color: #047857 !important; /* 모든 테두리 색상 통일 */
+	}
+
+	.calendar-day.position-middle.reserved-pending {
+		border-top: 3px solid #b45309 !important;
+		border-bottom: 3px solid #b45309 !important;
+		border-color: #b45309 !important; /* 모든 테두리 색상 통일 */
+	}
+
+	.calendar-day.position-middle.reserved-cancelled {
+		border-top: 3px solid #b91c1c !important;
+		border-bottom: 3px solid #b91c1c !important;
+		border-color: #b91c1c !important; /* 모든 테두리 색상 통일 */
 	}
 
 	.calendar-day.position-end {

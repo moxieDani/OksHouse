@@ -139,8 +139,8 @@
 			return;
 		}
 
-		// 예약이 있는 날짜만 클릭 가능
-		if (hasReservations(dayInfo.date)) {
+		// 예약이 있는 날짜만 클릭 가능 (과거 날짜 포함)
+		if (dayInfo.hasReservation || hasReservations(dayInfo.date)) {
 			const reservationsOnDate = getReservationsOnDate(dayInfo.date);
 			dispatch('reservationDateClick', { 
 				date: dayInfo.date, 
@@ -296,7 +296,7 @@
 		{#each calendarDays as dayInfo}
 			<button 
 				class="{getDayClass(dayInfo)}"
-				disabled={isDisabled(dayInfo.date) && dayInfo.isCurrentMonth}
+				disabled={isDisabled(dayInfo.date) && dayInfo.isCurrentMonth && !dayInfo.hasReservation && !hasReservations(dayInfo.date)}
 				on:click={() => handleDateClick(dayInfo)}
 				aria-label="{currentYear}년 {currentMonth + 1}월 {dayInfo.day}일"
 			>
@@ -400,7 +400,7 @@
 		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 	}
 
-	.calendar-day.today {
+	.calendar-day.today:not(.has-reservation):not(.reserved-confirmed):not(.reserved-pending):not(.reserved-cancelled) {
 		background: var(--accent);
 		color: white !important;
 		font-weight: 700;
@@ -414,11 +414,21 @@
 		opacity: 0.6;
 	}
 
-	.calendar-day.disabled:hover {
+	/* 예약이 없는 과거 날짜 hover 효과 */
+	.calendar-day.disabled:not(.has-reservation):not(.reserved-confirmed):not(.reserved-pending):not(.reserved-cancelled):hover {
 		background: var(--neutral-100);
 		color: var(--neutral-400);
 		transform: none;
 		box-shadow: none;
+	}
+
+	/* 예약이 있는 과거 날짜는 클릭 가능하므로 다른 스타일 적용 */
+	.calendar-day.disabled.has-reservation,
+	.calendar-day.disabled.reserved-confirmed,
+	.calendar-day.disabled.reserved-pending,
+	.calendar-day.disabled.reserved-cancelled {
+		cursor: pointer;
+		opacity: 1;
 	}
 
 	.calendar-day.sunday {
@@ -459,7 +469,8 @@
 		color: white;
 		font-weight: 600;
 		box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
-		border: 3px solid #047857; /* 테두리 두께 증가 */
+		border: 3px solid #047857 !important; /* 테두리 두께 증가 + 우선순위 */
+		border-color: #047857 !important; /* has-reservation 덮어쓰기 */
 	}
 
 	.calendar-day.reserved-pending {
@@ -467,7 +478,8 @@
 		color: white;
 		font-weight: 600;
 		box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
-		border: 3px solid #b45309; /* 테두리 두께 증가 */
+		border: 3px solid #b45309 !important; /* 테두리 두께 증가 + 우선순위 */
+		border-color: #b45309 !important; /* has-reservation 덮어쓰기 */
 	}
 
 	.calendar-day.reserved-cancelled {
@@ -475,7 +487,8 @@
 		color: white;
 		font-weight: 600;
 		box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
-		border: 3px solid #b91c1c; /* 테두리 두께 증가 */
+		border: 3px solid #b91c1c !important; /* 테두리 두께 증가 + 우선순위 */
+		border-color: #b91c1c !important; /* has-reservation 덮어쓰기 */
 	}
 
 	/* 예약 범위 연속 사각형 스타일 */
@@ -493,6 +506,25 @@
 		border-right: none !important; /* 중간 세로 테두리 제거 */
 	}
 
+	/* position-middle에서 상하 테두리 색상을 예약 상태에 맞게 설정 */
+	.calendar-day.has-reservation.position-middle.reserved-confirmed {
+		border-top: 3px solid #047857 !important;
+		border-bottom: 3px solid #047857 !important;
+		border-color: #047857 !important; /* 모든 테두리 색상 통일 */
+	}
+
+	.calendar-day.has-reservation.position-middle.reserved-pending {
+		border-top: 3px solid #b45309 !important;
+		border-bottom: 3px solid #b45309 !important;
+		border-color: #b45309 !important; /* 모든 테두리 색상 통일 */
+	}
+
+	.calendar-day.has-reservation.position-middle.reserved-cancelled {
+		border-top: 3px solid #b91c1c !important;
+		border-bottom: 3px solid #b91c1c !important;
+		border-color: #b91c1c !important; /* 모든 테두리 색상 통일 */
+	}
+
 	.calendar-day.position-end {
 		border-top-left-radius: 0;
 		border-bottom-left-radius: 0;
@@ -504,6 +536,7 @@
 		/* 단일 날짜는 기본 border-radius 유지 */
 		border-radius: var(--radius-sm);
 	}
+
 
 	.calendar-day:hover {
 		background: var(--neutral-50);
@@ -519,13 +552,23 @@
 		box-shadow: 0 4px 8px rgba(99, 102, 241, 0.2);
 	}
 
-	/* 예약된 날짜 hover 효과 */
-	.calendar-day.reserved-confirmed:hover,
-	.calendar-day.reserved-pending:hover,
-	.calendar-day.reserved-cancelled:hover {
+	/* 예약된 날짜 hover 효과 - 과거 날짜는 배경색 변경 안 함 */
+	.calendar-day.reserved-confirmed:hover:not(.disabled),
+	.calendar-day.reserved-pending:hover:not(.disabled),
+	.calendar-day.reserved-cancelled:hover:not(.disabled) {
 		transform: translateY(-1px);
 		filter: brightness(1.1);
 		box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+	}
+
+	/* 과거 날짜(disabled)인 예약된 날짜 hover 효과 - 배경색 유지 */
+	.calendar-day.reserved-confirmed.disabled:hover,
+	.calendar-day.reserved-pending.disabled:hover,
+	.calendar-day.reserved-cancelled.disabled:hover {
+		transform: none;
+		filter: none;
+		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+		cursor: pointer; /* 클릭 가능하므로 포인터 커서 유지 */
 	}
 
 	/* 오늘 + 예약이 있는 날짜 */
@@ -546,8 +589,9 @@
 	.calendar-day.today.reserved-confirmed,
 	.calendar-day.today.reserved-pending,
 	.calendar-day.today.reserved-cancelled {
-		border: 2px solid #ffffff;
-		box-shadow: 0 0 0 2px currentColor;
+		/* 예약 상태별 배경과 테두리는 기본 reserved-* 클래스에서 가져옴 */
+		font-weight: 700 !important; /* today 강조 */
+		box-shadow: inset 0 0 0 2px #ffffff; /* 내부 흰색 테두리로 today 표시 */
 	}
 
 	.reservation-indicator {
