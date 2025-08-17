@@ -20,7 +20,7 @@
 <div class="admin-container">
 	<div class="content-wrapper">
 		<header class="page-header">
-			<h1><span class="emoji-normal">🔐</span> Ok's House 관리자</h1>
+			<h1><span class="emoji-normal">🔐</span> Ok's House<br>관리자</h1>
 			<h2>관리자를 선택하여 예약 현황을 확인하세요</h2>
 		</header>
 
