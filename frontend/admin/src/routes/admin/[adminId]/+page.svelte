@@ -3,19 +3,30 @@
 	import { onMount } from 'svelte';
 	import AdminCalendar from '$lib/components/AdminCalendar.svelte';
 	import FeedbackManager from '../../../../../shared/components/FeedbackManager.svelte';
+	
+	// API 및 서비스 imports
 	import { adminAPI } from '$lib/services/api.js';
-	import { formatDateForAPI } from '../../../../../shared/services/apiBase.js';
 	import { formatKoreanDate } from '../../../../../shared/utils/dateUtils.js';
-	import { showErrorFeedback, showSuccessFeedback } from '../../../../../shared/utils/errorUtils.js';
+	import { showErrorFeedback } from '../../../../../shared/utils/errorUtils.js';
+	
+	// 상수 imports
+	import { administrators, getAdminName, getAdminEmoji } from '$lib/constants/admins.js';
+	import { filterOptions, defaultFilter, statusActionNames, statusChangeMessages, statusChangeTitles } from '$lib/constants/reservations.js';
+	
+	// 유틸리티 함수 imports
+	import { 
+		getReservationStatusText, 
+		getStatusColor, 
+		formatReservationPeriod,
+		groupReservationsByCategory,
+		filterReservations,
+		validateStatusChange
+	} from '$lib/utils/reservationUtils.js';
+	import { generateReservationCalendar } from '$lib/utils/calendarUtils.js';
+	
+	// 목업 데이터 import
+	import { mockReservations } from '$lib/data/mockReservations.js';
 
-	// 관리자 정보 설정
-	const administrators = {
-		'choi-bunok': { name: '최분옥', emoji: '👩‍💼' },
-		'choi-changhwan': { name: '최창환', emoji: '👨‍💻' },
-		'park-seoeun': { name: '박서은', emoji: '👩‍💻' },
-		'park-jiyoung': { name: '박지영', emoji: '👩‍🏫' },
-		'park-taehyun': { name: '박태현', emoji: '👨‍💼' }
-	};
 
 	// 현재 관리자 정보
 	$: adminId = $page.params.adminId;
@@ -27,153 +38,9 @@
 	let existingReservations = [];
 	let isLoading = true; // 초기 로딩 상태
 
-	// 목업 데이터 (2025년 8-10월 테스트용)
-	const mockReservations = [
-		// 8월 예약
-		{
-			id: 1,
-			name: '김영희',
-			phone: '010-1234-5678',
-			startDate: new Date(2025, 7, 5),  // 8월 5일
-			endDate: new Date(2025, 7, 8),    // 8월 8일
-			duration: 3,
-			status: 'confirmed',
-			created_at: '2025-07-28T10:30:00Z',
-			confirmed_by: 'choi-bunok',
-			confirmed_at: '2025-07-29T09:15:00Z'
-		},
-		{
-			id: 2,
-			name: '박철수',
-			phone: '010-9876-5432',
-			startDate: new Date(2025, 7, 15), // 8월 15일
-			endDate: new Date(2025, 7, 17),   // 8월 17일
-			duration: 2,
-			status: 'pending',
-			created_at: '2025-08-10T14:15:00Z'
-		},
-		{
-			id: 3,
-			name: '이정민',
-			phone: '010-5555-1234',
-			startDate: new Date(2025, 7, 22), // 8월 22일
-			endDate: new Date(2025, 7, 25),   // 8월 25일
-			duration: 3,
-			status: 'confirmed',
-			created_at: '2025-08-15T09:45:00Z',
-			confirmed_by: 'park-seoeun',
-			confirmed_at: '2025-08-16T14:30:00Z'
-		},
-		{
-			id: 4,
-			name: '최미영',
-			phone: '010-7777-8888',
-			startDate: new Date(2025, 7, 28), // 8월 28일
-			endDate: new Date(2025, 7, 31),   // 8월 31일
-			duration: 3,
-			status: 'cancelled',
-			created_at: '2025-08-20T16:20:00Z',
-			confirmed_by: 'choi-bunok',
-			confirmed_at: '2025-08-21T10:00:00Z'
-		},
-		// 9월 예약
-		{
-			id: 5,
-			name: '정호석',
-			phone: '010-3333-9999',
-			startDate: new Date(2025, 8, 3),  // 9월 3일
-			endDate: new Date(2025, 8, 6),    // 9월 6일
-			duration: 3,
-			status: 'confirmed',
-			created_at: '2025-08-25T11:10:00Z',
-			confirmed_by: 'park-jiyoung',
-			confirmed_at: '2025-08-26T15:20:00Z'
-		},
-		{
-			id: 6,
-			name: '강지윤',
-			phone: '010-4444-5555',
-			startDate: new Date(2025, 8, 12), // 9월 12일
-			endDate: new Date(2025, 8, 14),   // 9월 14일
-			duration: 2,
-			status: 'pending',
-			created_at: '2025-09-08T13:30:00Z'
-		},
-		{
-			id: 7,
-			name: '조민준',
-			phone: '010-6666-7777',
-			startDate: new Date(2025, 8, 20), // 9월 20일
-			endDate: new Date(2025, 8, 22),   // 9월 22일
-			duration: 2,
-			status: 'confirmed',
-			created_at: '2025-09-15T16:45:00Z',
-			confirmed_by: 'park-taehyun',
-			confirmed_at: '2025-09-16T11:30:00Z'
-		},
-		{
-			id: 8,
-			name: '윤서아',
-			phone: '010-8888-9999',
-			startDate: new Date(2025, 8, 27), // 9월 27일
-			endDate: new Date(2025, 8, 29),   // 9월 29일
-			duration: 2,
-			status: 'cancelled',
-			created_at: '2025-09-20T12:15:00Z',
-			confirmed_by: 'choi-bunok',
-			confirmed_at: '2025-09-21T09:45:00Z'
-		},
-		// 10월 예약
-		{
-			id: 9,
-			name: '한동훈',
-			phone: '010-1111-2222',
-			startDate: new Date(2025, 9, 5),  // 10월 5일
-			endDate: new Date(2025, 9, 8),    // 10월 8일
-			duration: 3,
-			status: 'confirmed',
-			created_at: '2025-09-28T14:20:00Z',
-			confirmed_by: 'park-seoeun',
-			confirmed_at: '2025-09-29T10:15:00Z'
-		},
-		{
-			id: 10,
-			name: '오예진',
-			phone: '010-2222-3333',
-			startDate: new Date(2025, 9, 15), // 10월 15일
-			endDate: new Date(2025, 9, 17),   // 10월 17일
-			duration: 2,
-			status: 'pending',
-			created_at: '2025-10-10T11:00:00Z'
-		},
-		{
-			id: 11,
-			name: '임연수',
-			phone: '010-3333-4444',
-			startDate: new Date(2025, 9, 22), // 10월 22일
-			endDate: new Date(2025, 9, 25),   // 10월 25일
-			duration: 3,
-			status: 'confirmed',
-			created_at: '2025-10-18T15:30:00Z',
-			confirmed_by: 'park-jiyoung',
-			confirmed_at: '2025-10-19T13:45:00Z'
-		},
-		{
-			id: 12,
-			name: '송지훈',
-			phone: '010-4444-5555',
-			startDate: new Date(2025, 9, 28), // 10월 28일
-			endDate: new Date(2025, 9, 31),   // 10월 31일
-			duration: 3,
-			status: 'pending',
-			created_at: '2025-10-25T17:00:00Z'
-		}
-	];
-
 
 	// 필터링 상태 관리
-	let selectedFilter = '전체';
-	const filterOptions = ['전체', '확정', '대기', '거절', '내 결정'];
+	let selectedFilter = defaultFilter;
 	
 	// 상세보기 팝업 상태
 	let showDetailModal = false;
@@ -194,8 +61,6 @@
 	let completionMessage = '';
 	let completionTitle = '';
 	
-	// 동적 높이 관리 상태
-	let dynamicHeightEnabled = false;
 	
 
 
@@ -232,8 +97,6 @@
 				if (stepElement instanceof HTMLElement) {
 					stepElement.style.minHeight = `${requiredStepHeight}px`;
 				}
-				
-				dynamicHeightEnabled = true;
 			}
 		}, 150);
 	}
@@ -305,7 +168,7 @@
 	 * 예약이 있는 날짜 클릭 이벤트 처리
 	 */
 	function handleReservationDateClick(event) {
-		const { date, reservations } = event.detail;
+		const { reservations } = event.detail;
 		// 해당 날짜에 예약이 하나만 있으면 바로 상세보기, 여러 개면 첫 번째 예약 상세보기
 		if (reservations && reservations.length > 0) {
 			openDetailModal(reservations[0]);
@@ -313,40 +176,8 @@
 	}
 
 
-	/**
-	 * 예약 기간 포맷팅
-	 */
-	function formatReservationPeriod(reservation) {
-		const startStr = formatKoreanDate(reservation.startDate);
-		const endStr = formatKoreanDate(reservation.endDate);
-		return `${startStr} ~ ${endStr} (${reservation.duration}박)`;
-	}
 
-	/**
-	 * 예약 상태 한글 변환
-	 */
-	function getReservationStatusText(status) {
-		const statusMap = {
-			'pending': '예약대기',
-			'confirmed': '예약확정',
-			'cancelled': '예약거절',
-			'completed': '이용완료'
-		};
-		return statusMap[status] || status;
-	}
 
-	/**
-	 * 예약 상태별 색상 클래스
-	 */
-	function getStatusColor(status) {
-		const colorMap = {
-			'pending': 'status-pending',
-			'confirmed': 'status-confirmed',
-			'cancelled': 'status-cancelled',
-			'completed': 'status-completed'
-		};
-		return colorMap[status] || 'status-default';
-	}
 
 	/**
 	 * 필터 변경 처리
@@ -384,19 +215,12 @@
 	/**
 	 * 카테고리별 예약 그룹화
 	 */
-	$: groupedReservations = {
-		'확정': existingReservations.filter(r => r.status === 'confirmed'),
-		'대기': existingReservations.filter(r => r.status === 'pending'), 
-		'거절': existingReservations.filter(r => r.status === 'cancelled'),
-		'내 결정': existingReservations.filter(r => r.confirmed_by === adminId)
-	};
+	$: groupedReservations = groupReservationsByCategory(existingReservations, adminId);
 
 	/**
 	 * 필터링된 예약 목록
 	 */
-	$: filteredReservations = selectedFilter === '전체' 
-		? existingReservations 
-		: groupedReservations[selectedFilter] || [];
+	$: filteredReservations = filterReservations(existingReservations, selectedFilter, groupedReservations);
 
 	/**
 	 * 필터링된 예약 목록이 변경될 때마다 높이 재조정
@@ -412,77 +236,7 @@
 		}, 250);
 	}
 
-	/**
-	 * 관리자 ID로 관리자 이름 가져오기
-	 */
-	function getAdminName(adminId) {
-		return administrators[adminId]?.name || '알 수 없음';
-	}
 
-	/**
-	 * 관리자 ID로 관리자 이모지 가져오기
-	 */
-	function getAdminEmoji(adminId) {
-		return administrators[adminId]?.emoji || '👤';
-	}
-
-	/**
-	 * 예약 기간에 해당하는 달력 생성
-	 */
-	function generateReservationCalendar(reservation) {
-		const start = new Date(reservation.startDate);
-		const end = new Date(reservation.endDate);
-		const calendar = [];
-		
-		// 시작 날짜의 월 첫째 날부터 계산
-		const firstDay = new Date(start.getFullYear(), start.getMonth(), 1);
-		const lastDay = new Date(start.getFullYear(), start.getMonth() + 1, 0);
-		
-		// 첫 주의 빈 공간 채우기
-		const startDayOfWeek = firstDay.getDay();
-		for (let i = 0; i < startDayOfWeek; i++) {
-			calendar.push({ 
-				date: null, 
-				isReserved: false, 
-				isToday: false, 
-				reservationPosition: null 
-			});
-		}
-		
-		// 달력 날짜 채우기
-		for (let date = 1; date <= lastDay.getDate(); date++) {
-			const currentDate = new Date(start.getFullYear(), start.getMonth(), date);
-			const isReserved = currentDate >= start && currentDate <= end;
-			const isToday = currentDate.toDateString() === new Date().toDateString();
-			
-			// 예약 범위 내에서의 위치 결정
-			let reservationPosition = null;
-			if (isReserved) {
-				const isStart = currentDate.getTime() === start.getTime();
-				const isEnd = currentDate.getTime() === end.getTime();
-				const isSingle = start.getTime() === end.getTime();
-				
-				if (isSingle) {
-					reservationPosition = 'single';
-				} else if (isStart) {
-					reservationPosition = 'start';
-				} else if (isEnd) {
-					reservationPosition = 'end';
-				} else {
-					reservationPosition = 'middle';
-				}
-			}
-			
-			calendar.push({
-				date: date,
-				isReserved: isReserved,
-				isToday: isToday,
-				reservationPosition: reservationPosition
-			});
-		}
-		
-		return calendar;
-	}
 
 	/**
 	 * 예약 상태 변경 시도
@@ -490,25 +244,16 @@
 	function attemptStatusChange(newStatus) {
 		const currentStatus = selectedDetailReservation.status;
 		
-		// 현재 상태와 동일한 상태로 변경하려는 경우
-		if (currentStatus === newStatus) {
-			const statusNames = {
-				'confirmed': '승인',
-				'pending': '대기',
-				'cancelled': '거절'
-			};
-			invalidStateMessage = `이미 ${statusNames[newStatus]} 상태입니다.`;
+		// 상태 변경 유효성 검증
+		const validation = validateStatusChange(currentStatus, newStatus);
+		if (!validation.isValid) {
+			invalidStateMessage = validation.message;
 			showInvalidStateModal = true;
 			return;
 		}
 		
 		// 확인 모달 표시
-		const actionNames = {
-			'confirmed': '승인',
-			'pending': '대기',
-			'cancelled': '거절'
-		};
-		confirmActionText = actionNames[newStatus];
+		confirmActionText = statusActionNames[newStatus];
 		confirmActionType = newStatus;
 		confirmAction = () => changeReservationStatus(newStatus);
 		showConfirmModal = true;
@@ -544,13 +289,8 @@
 			selectedDetailReservation = { ...selectedDetailReservation };
 			
 			// 완료 모달 표시
-			const statusText = {
-				'confirmed': '승인',
-				'pending': '대기',
-				'cancelled': '거절'
-			};
-			completionTitle = '✅ 상태 변경 완료';
-			completionMessage = `${selectedDetailReservation.name}님의 예약이 '${statusText[newStatus]}' 상태로 변경되었습니다.`;
+			completionTitle = statusChangeTitles[newStatus];
+			completionMessage = statusChangeMessages[newStatus];
 			showCompletionModal = true;
 		}
 		closeConfirmModal();
@@ -1493,12 +1233,6 @@
 		border-radius: var(--radius-lg);
 	}
 
-	.guest-info-header h4 {
-		font-size: var(--text-xl);
-		font-weight: 700;
-		color: var(--neutral-800);
-		margin: 0;
-	}
 
 	.status-badge.large {
 		padding: var(--space-2) var(--space-4);
