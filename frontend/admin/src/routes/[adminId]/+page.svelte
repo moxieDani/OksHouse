@@ -2,15 +2,15 @@
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import AdminCalendar from '$lib/components/AdminCalendar.svelte';
-	import FeedbackManager from '../../../../../shared/components/FeedbackManager.svelte';
+	import FeedbackManager from '../../../../shared/components/FeedbackManager.svelte';
 	
 	// SvelteKit이 자동으로 전달하는 params prop을 받아서 경고 제거
-	export let params;
+	export let params = {};
 	
 	// API 및 서비스 imports
 	import { adminAPI } from '$lib/services/api.js';
-	import { formatKoreanDate } from '../../../../../shared/utils/dateUtils.js';
-	import { showErrorFeedback } from '../../../../../shared/utils/errorUtils.js';
+	import { formatKoreanDate } from '../../../../shared/utils/dateUtils.js';
+	import { showErrorFeedback } from '../../../../shared/utils/errorUtils.js';
 	
 	// 상수 imports
 	import { administrators, getAdminName, getAdminEmoji } from '$lib/constants/admins.js';

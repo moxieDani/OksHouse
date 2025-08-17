@@ -1,21 +1,15 @@
 <script>
+	import { administrators } from '$lib/constants/admins.js';
 	import { goto } from '$app/navigation';
 	
-	// 관리자 목록 정의
-	const administrators = [
-		{ id: 'choi-bunok', name: '최분옥', emoji: '👩‍💼' },
-		{ id: 'choi-changhwan', name: '최창환', emoji: '👨‍💻' },
-		{ id: 'park-seoeun', name: '박서은', emoji: '👩‍💻' },
-		{ id: 'park-jiyoung', name: '박지영', emoji: '👩‍🏫' },
-		{ id: 'park-taehyun', name: '박태현', emoji: '👨‍💼' }
-	];
+	// SvelteKit이 자동으로 전달하는 params prop을 받아서 경고 제거
+	export let params = {};
 	
 	/**
-	 * 관리자 선택 시 해당 관리자의 달력 화면으로 이동
-	 * @param {Object} admin - 선택된 관리자 정보
+	 * 관리자 선택 시 해당 관리자 페이지로 이동
 	 */
-	function selectAdministrator(admin) {
-		goto(`/admin/${admin.id}`);
+	function selectAdmin(adminId) {
+		goto(`/${adminId}`);
 	}
 </script>
 
@@ -30,21 +24,19 @@
 			<h2>관리자를 선택하여 예약 현황을 확인하세요</h2>
 		</header>
 
-		<nav class="admin-menu">
-			{#each administrators as admin (admin.id)}
+		<div class="admin-grid">
+			{#each Object.entries(administrators) as [adminId, admin]}
 				<button 
-					class="admin-btn" 
-					on:click={() => selectAdministrator(admin)}
+					class="admin-card"
+					on:click={() => selectAdmin(adminId)}
+					aria-label="{admin.name} 관리자 페이지로 이동"
 				>
-					<span class="emoji">{admin.emoji}</span>
-					<div class="text">
-						<div class="main-text">{admin.name}</div>
-						<div class="sub-text">관리자</div>
-					</div>
-					<span class="arrow">→</span>
+					<div class="admin-emoji">{admin.emoji}</div>
+					<div class="admin-name">{admin.name}</div>
+					<div class="admin-subtitle">관리자</div>
 				</button>
 			{/each}
-		</nav>
+		</div>
 	</div>
 	
 	<footer class="footer">
@@ -93,69 +85,61 @@
 		margin-top: var(--space-4);
 	}
 
-	.admin-menu {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-4);
+	.admin-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		gap: var(--space-6);
+		max-width: 800px;
 		width: 100%;
-		max-width: 400px;
 	}
 
-	.admin-btn {
-		display: flex;
-		align-items: center;
-		padding: var(--space-6);
+	.admin-card {
 		background: white;
-		border: none;
+		border: 2px solid var(--neutral-200);
 		border-radius: var(--radius-xl);
-		color: var(--neutral-800);
-		transition: var(--transition-colors), var(--transition-shadow), var(--transition-transform);
+		padding: var(--space-8) var(--space-6);
+		text-align: center;
 		cursor: pointer;
+		transition: var(--transition-all);
+		box-shadow: var(--shadow-sm);
 		font-family: inherit;
-		font-size: var(--text-base);
-		box-shadow: var(--shadow-md);
-		min-height: 80px;
-		text-align: left;
-		width: 100%;
-	}
-
-	.admin-btn:hover {
-		border-color: #6366f1;
-		box-shadow: var(--shadow-lg);
-		transform: translateY(-2px);
-		background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
-	}
-
-	.emoji {
-		font-size: 2.5rem;
-		margin-right: var(--space-4);
-		flex-shrink: 0;
-	}
-
-	.text {
-		flex: 1;
+		min-height: 200px;
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-1);
+		align-items: center;
+		justify-content: center;
+		gap: var(--space-3);
 	}
 
-	.main-text {
-		font-size: var(--text-lg);
-		font-weight: 600;
+	.admin-card:hover {
+		transform: translateY(-4px);
+		box-shadow: var(--shadow-xl);
+		border-color: #6366f1;
+		background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+	}
+
+	.admin-card:active {
+		transform: translateY(-2px);
+		box-shadow: var(--shadow-lg);
+	}
+
+	.admin-emoji {
+		font-size: 4rem;
+		line-height: 1;
+	}
+
+	.admin-name {
+		font-size: var(--text-xl);
+		font-weight: 700;
 		color: var(--neutral-800);
 	}
 
-	.sub-text {
+	.admin-subtitle {
 		font-size: var(--text-sm);
 		color: var(--neutral-500);
-		font-weight: 400;
-	}
-
-	.arrow {
-		font-size: var(--text-xl);
-		color: var(--neutral-400);
-		margin-left: var(--space-4);
-		flex-shrink: 0;
+		font-weight: 500;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 	}
 
 	.footer {
@@ -191,21 +175,29 @@
 			padding: var(--space-4);
 		}
 
-		.admin-menu {
-			max-width: 100%;
+		.admin-grid {
+			grid-template-columns: 1fr 1fr;
+			gap: var(--space-4);
 		}
 
-		.admin-btn {
-			padding: var(--space-4);
-			min-height: 70px;
+		.admin-card {
+			padding: var(--space-6) var(--space-4);
+			min-height: 160px;
 		}
 
-		.emoji {
-			font-size: 2rem;
-			margin-right: var(--space-3);
+		.admin-emoji {
+			font-size: 3rem;
 		}
 
-		.main-text {
+		.admin-name {
+			font-size: var(--text-lg);
+		}
+
+		.page-header h1 {
+			font-size: var(--text-3xl);
+		}
+
+		.page-header h2 {
 			font-size: var(--text-base);
 		}
 
