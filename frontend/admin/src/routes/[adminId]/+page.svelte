@@ -336,7 +336,7 @@
 	<span class="emoji-normal s-xe9m8xNPUuGQ">🗓️</span> 예약현황
 </h1>
 
-<div class="step">
+<div class="step {filteredReservations.length === 0 ? 'no-reservations' : ''}">
 	<div class="calendar-section">
 	<!-- 날짜 범위 및 통계 표시 -->
 	<div class="date-range-display">
@@ -2131,8 +2131,8 @@
 	/* 모바일 (650px 이하) */
 	@media (max-width: 650px) {
 		h1.page-title {
-			margin: var(--space-2) 0 var(--space-2) 0 !important;
-			font-size: var(--text-2xl) !important;
+			margin: var(--space-1) 0 var(--space-1) 0 !important;
+			font-size: var(--text-xl) !important;
 		}
 		
 		/* 모바일에서는 전체 너비 사용 */
@@ -2150,9 +2150,16 @@
 			transition: min-height 0.4s ease-out, height 0.4s ease-out;
 		}
 
+		/* 예약이 없을 때만 높이 제한 */
+		.step.no-reservations {
+			height: calc(100vh - 80px); /* 페이지 제목과 여백 공간 제외 */
+			overflow: hidden;
+		}
+
 		.calendar-section {
 			margin: 0;
 			border-radius: 0;
+			flex-shrink: 0; /* 달력 섹션 크기 고정 */
 		}
 
 		.date-range-display {
@@ -2248,17 +2255,32 @@
 		}
 
 		.no-reservations-message {
-			flex: 1;
 			display: flex;
 			flex-direction: column;
 			justify-content: center;
 			align-items: center;
-			padding: var(--space-4);
-			padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+			padding: var(--space-6) var(--space-4);
+			height: auto; /* 콘텐츠 크기에 맞춤 */
+			margin-top: var(--space-4);
 		}
 
 		.empty-icon {
-			font-size: 3rem;
+			font-size: 2.5rem;
+			margin-bottom: var(--space-2);
+		}
+
+		.no-reservations-message h3 {
+			font-size: var(--text-base) !important;
+			margin-bottom: var(--space-2) !important;
+			color: var(--neutral-700) !important;
+		}
+
+		.no-reservations-message p {
+			font-size: var(--text-sm) !important;
+			color: var(--neutral-600) !important;
+			text-align: center;
+			line-height: 1.4;
+			margin: 0;
 		}
 
 		.modal-content {
