@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.db.database import get_async_db
 from app.services.admin_service import AdminService
-from app.schemas.admin import AdminCreate, AdminResponse, AdminCheck
+from app.schemas.admin import AdminCreate, AdminResponse, AdminCheck, AdminUpdate
 
 router = APIRouter()
 
@@ -51,3 +51,30 @@ async def get_admin(
             detail="관리자를 찾을 수 없습니다."
         )
     return admin
+
+
+@router.put("/{admin_name}", response_model=AdminResponse)
+async def update_admin(
+    admin_name: str,
+    admin_update: AdminUpdate,
+    db: Session = Depends(get_async_db)
+):
+    """관리자 정보 업데이트 - 관리자 전용"""
+    try:
+        updated_admin = await AdminService.update_admin(db, admin_name, admin_update)
+        if updated_admin is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="관리자를 찾을 수 없습니다."
+            )
+        return updated_admin
+    except Exception as e:
+        if "UNIQUE constraint failed" in str(e):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="이미 존재하는 관리자명입니다."
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="관리자 정보 업데이트 중 오류가 발생했습니다."
+        )

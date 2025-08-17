@@ -1,7 +1,7 @@
 import asyncio
 from sqlalchemy.orm import Session
 from app.models.admin import Admin
-from app.schemas.admin import AdminCreate
+from app.schemas.admin import AdminCreate, AdminUpdate
 from typing import Optional
 
 
@@ -37,6 +37,27 @@ class AdminService:
         """관리자 존재 여부 확인"""
         admin = await AdminService.get_admin_by_name(db, admin_name)
         return admin is not None
+    
+    @staticmethod
+    async def update_admin(db: Session, admin_name: str, admin_update: AdminUpdate) -> Optional[Admin]:
+        """관리자 정보 업데이트"""
+        loop = asyncio.get_event_loop()
+        
+        def sync_update():
+            admin = db.query(Admin).filter(Admin.name == admin_name).first()
+            if not admin:
+                return None
+            
+            # 업데이트할 필드만 변경
+            update_data = admin_update.model_dump(exclude_unset=True)
+            for field, value in update_data.items():
+                setattr(admin, field, value)
+            
+            db.commit()
+            db.refresh(admin)
+            return admin
+        
+        return await loop.run_in_executor(None, sync_update)
     
     @staticmethod
     async def get_or_create_admin(db: Session, admin_name: str) -> Admin:
