@@ -188,6 +188,11 @@
 	// 유효하지 않은 상태 모달 상태
 	let showInvalidStateModal = false;
 	let invalidStateMessage = '';
+
+	// 상태 변경 완료 모달 상태
+	let showCompletionModal = false;
+	let completionMessage = '';
+	let completionTitle = '';
 	
 	// 동적 높이 관리 상태
 	let dynamicHeightEnabled = false;
@@ -538,7 +543,15 @@
 			// 모달도 업데이트된 정보로 다시 렌더링되도록 재할당
 			selectedDetailReservation = { ...selectedDetailReservation };
 			
-			showSuccessFeedback(feedbackManager, '상태 변경 완료', `예약이 ${confirmActionText} 상태로 변경되었습니다.`);
+			// 완료 모달 표시
+			const statusText = {
+				'confirmed': '승인',
+				'pending': '대기',
+				'cancelled': '거절'
+			};
+			completionTitle = '✅ 상태 변경 완료';
+			completionMessage = `${selectedDetailReservation.name}님의 예약이 '${statusText[newStatus]}' 상태로 변경되었습니다.`;
+			showCompletionModal = true;
 		}
 		closeConfirmModal();
 	}
@@ -559,6 +572,15 @@
 	function closeInvalidStateModal() {
 		showInvalidStateModal = false;
 		invalidStateMessage = '';
+	}
+
+	/**
+	 * 완료 모달 닫기
+	 */
+	function closeCompletionModal() {
+		showCompletionModal = false;
+		completionMessage = '';
+		completionTitle = '';
 	}
 </script>
 
@@ -846,6 +868,31 @@
 			
 			<div class="modal-footer invalid-footer">
 				<button class="modal-button" on:click={closeInvalidStateModal}>
+					확인
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- 상태 변경 완료 모달 -->
+{#if showCompletionModal}
+	<div class="completion-modal">
+		<div class="modal-backdrop" on:click={closeCompletionModal} role="presentation"></div>
+		<div class="modal-content completion-modal-content">
+			<div class="modal-header completion-header">
+				<h3>{completionTitle}</h3>
+				<button class="modal-close" on:click={closeCompletionModal} aria-label="닫기">×</button>
+			</div>
+			
+			<div class="modal-body completion-body">
+				<div class="completion-message">
+					<p>{completionMessage}</p>
+				</div>
+			</div>
+			
+			<div class="modal-footer completion-footer">
+				<button class="modal-button" on:click={closeCompletionModal}>
 					확인
 				</button>
 			</div>
@@ -2195,12 +2242,13 @@
 	}
 
 	/* 확인 모달 스타일 */
-	.confirm-modal, .invalid-modal {
+	.confirm-modal, .invalid-modal, .completion-modal {
 		position: fixed;
 		top: 0;
 		left: 0;
 		right: 0;
 		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
 		z-index: 1002;
 		display: flex;
 		align-items: center;
@@ -2208,7 +2256,7 @@
 		padding: var(--space-4);
 	}
 
-	.confirm-modal-content, .invalid-modal-content {
+	.confirm-modal-content, .invalid-modal-content, .completion-modal-content {
 		background: white;
 		border-radius: var(--radius-xl);
 		max-width: 400px;
@@ -2261,7 +2309,7 @@
 		font-size: var(--text-lg);
 	}
 
-	.confirm-footer, .invalid-footer {
+	.confirm-footer, .invalid-footer, .completion-footer {
 		display: flex;
 		gap: var(--space-3);
 		padding: var(--space-4);
@@ -2276,8 +2324,21 @@
 		flex: 1;
 	}
 
-	.invalid-footer {
+	.invalid-footer, .completion-footer {
 		justify-content: center;
+	}
+
+	/* 완료 모달 특별 스타일 */
+	.completion-header {
+		background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%);
+		color: white;
+	}
+
+	.completion-message {
+		text-align: center;
+		font-size: var(--text-base);
+		line-height: 1.6;
+		color: var(--neutral-700);
 	}
 
 	.cancel-btn {
@@ -2594,7 +2655,7 @@
 			font-size: var(--text-base);
 		}
 
-		.confirm-modal-content, .invalid-modal-content {
+		.confirm-modal-content, .invalid-modal-content, .completion-modal-content {
 			margin: var(--space-3);
 			max-width: calc(100vw - var(--space-6));
 		}
