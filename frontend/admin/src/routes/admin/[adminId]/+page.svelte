@@ -1801,13 +1801,13 @@
 
 	/* 개선된 상세 모달창 스타일 */
 	.detail-modal-content {
-		max-height: 98vh;
+		max-height: 95vh;
 		height: auto;
-		max-height: 90vh;
+		min-height: fit-content;
 		display: flex;
 		flex-direction: column;
 		position: relative;
-		overflow: hidden;
+		overflow: visible;
 	}
 
 	.modal-body.compact {
@@ -1818,7 +1818,7 @@
 		flex: 1 1 auto;
 		overflow: visible;
 		padding-bottom: 0;
-		min-height: 0;
+		min-height: fit-content;
 	}
 
 	.guest-status-row {
@@ -2291,8 +2291,8 @@
 	@media (max-width: 1024px) and (min-width: 651px) {
 		.detail-modal-content {
 			height: auto;
-			max-height: 85vh;
-			overflow: hidden;
+			max-height: 90vh;
+			overflow: visible;
 		}
 
 		.calendar-info-row {
@@ -2463,14 +2463,16 @@
 		}
 
 		.detail-modal-content {
-			height: calc(100vh - var(--space-8));
+			height: auto;
+			min-height: calc(100vh - var(--space-8));
+			max-height: calc(100vh - var(--space-4));
 			width: calc(100vw - var(--space-8));
 			max-width: calc(100vw - var(--space-8));
 			display: flex;
 			flex-direction: column;
 			border-radius: var(--radius-lg);
 			margin: 0;
-			overflow: hidden;
+			overflow-y: auto;
 		}
 
 		.detail-modal {
@@ -2559,7 +2561,7 @@
 			display: flex;
 			flex-direction: column;
 			gap: var(--space-2);
-			min-height: 0;
+			min-height: fit-content;
 			margin-bottom: 0;
 		}
 
