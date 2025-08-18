@@ -476,7 +476,7 @@
 	}
 
 	.calendar-day.today:not(.has-reservation):not(.reserved-confirmed):not(.reserved-pending):not(.reserved-cancelled):not(.reserved-expired) {
-		background: var(--accent);
+		background: #6366f1;
 		color: white !important;
 		font-weight: 700;
 		position: relative;
@@ -517,14 +517,14 @@
 
 	/* Today + disabled 상태 */
 	.calendar-day.today.disabled {
-		background: var(--accent) !important;
+		background: #6366f1 !important;
 		color: white !important;
 		opacity: 0.7;
 		cursor: not-allowed;
 	}
 
 	.calendar-day.today.disabled:hover {
-		background: var(--accent) !important;
+		background: #6366f1 !important;
 		color: white !important;
 		transform: none;
 		box-shadow: none;
@@ -666,13 +666,13 @@
 
 	/* 오늘 + 예약이 있는 날짜 */
 	.calendar-day.today.has-reservation {
-		background: var(--accent) !important;
+		background: #6366f1 !important;
 		border-color: #6366f1;
 		color: #4f46e5;
 	}
 
 	.calendar-day.today.has-reservation:hover {
-		background: var(--accent) !important;
+		background: #6366f1 !important;
 		color: #4338ca;
 		transform: translateY(-1px);
 		box-shadow: 0 4px 8px rgba(99, 102, 241, 0.2);
