@@ -46,6 +46,7 @@ export function groupReservationsByCategory(reservations, adminId) {
 		'확정': reservations.filter(r => r.status === 'confirmed'),
 		'대기': reservations.filter(r => r.status === 'pending'), 
 		'거절': reservations.filter(r => r.status === 'cancelled'),
+		'이용종료': reservations.filter(r => r.status === 'expired'),
 		'내 결정': reservations.filter(r => r.confirmed_by === adminId)
 	};
 }

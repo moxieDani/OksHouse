@@ -10,7 +10,8 @@ export const reservationStatuses = {
 	PENDING: 'pending',
 	CONFIRMED: 'confirmed',
 	CANCELLED: 'cancelled',
-	COMPLETED: 'completed'
+	COMPLETED: 'completed',
+	EXPIRED: 'expired'
 };
 
 /**
@@ -20,7 +21,8 @@ export const statusDisplayText = {
 	pending: '예약대기',
 	confirmed: '예약확정',
 	cancelled: '예약거절',
-	completed: '이용완료'
+	completed: '이용완료',
+	expired: '이용종료'
 };
 
 /**
@@ -30,13 +32,14 @@ export const statusColorClasses = {
 	pending: 'status-pending',
 	confirmed: 'status-confirmed',
 	cancelled: 'status-cancelled',
-	completed: 'status-completed'
+	completed: 'status-completed',
+	expired: 'status-expired'
 };
 
 /**
  * 필터 옵션 목록
  */
-export const filterOptions = ['전체', '확정', '대기', '거절', '내 결정'];
+export const filterOptions = ['전체', '확정', '대기', '거절', '이용종료', '내 결정'];
 
 /**
  * 기본 필터 설정

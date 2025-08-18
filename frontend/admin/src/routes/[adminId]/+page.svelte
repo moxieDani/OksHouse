@@ -146,13 +146,26 @@
 			}
 			
 			// 예약 데이터를 Date 객체로 변환하고 confirmed_by를 관리자 ID로 매핑
-			existingReservations = reservations.map(reservation => ({
-				...reservation,
-				startDate: new Date(reservation.start_date + 'T00:00:00'),
-				endDate: new Date(reservation.end_date + 'T00:00:00'),
-				confirmed_by: reservation.confirmed_by ? adminNameToId[reservation.confirmed_by] || reservation.confirmed_by : null,
-				confirmed_at: reservation.updated_at || reservation.created_at
-			}));
+			const today = new Date();
+			today.setHours(0, 0, 0, 0); // 오늘 날짜의 시작 시점
+			
+			existingReservations = reservations.map(reservation => {
+				const endDate = new Date(reservation.end_date + 'T00:00:00');
+				const isPastReservation = endDate < today;
+				
+				// 과거 예약인 경우 상태를 'expired'로 변경
+				const finalStatus = isPastReservation ? 'expired' : reservation.status;
+				
+				return {
+					...reservation,
+					startDate: new Date(reservation.start_date + 'T00:00:00'),
+					endDate,
+					status: finalStatus,
+					confirmed_by: reservation.confirmed_by ? adminNameToId[reservation.confirmed_by] || reservation.confirmed_by : null,
+					confirmed_at: reservation.updated_at || reservation.created_at,
+					isPastReservation
+				};
+			});
 		} catch (error) {
 			console.error('월별 예약 로드 실패:', error);
 			console.error('Error details:', error.message, error.stack);
@@ -386,6 +399,14 @@
 				<span class="summary-label">거절</span>
 			</button>
 			<button 
+				class="summary-item {selectedFilter === '이용종료' ? 'active' : ''}"
+				on:click={() => handleFilterChange('이용종료')}
+				aria-label="이용종료된 예약 보기"
+			>
+				<span class="summary-number expired">{existingReservations.filter(r => r.status === 'expired').length}</span>
+				<span class="summary-label">이용종료</span>
+			</button>
+			<button 
 				class="summary-item {selectedFilter === '내 결정' ? 'active' : ''} admin-{adminId}"
 				on:click={() => handleFilterChange('내 결정')}
 				aria-label="내 결정 예약 보기"
@@ -562,15 +583,22 @@
 			</div>
 			
 			<div class="modal-footer action-footer">
-				<button class="action-button approve-btn" on:click={() => attemptStatusChange('confirmed')}>
-					✅ 승인하기
-				</button>
-				<button class="action-button pending-btn" on:click={() => attemptStatusChange('pending')}>
-					⏳ 대기하기
-				</button>
-				<button class="action-button reject-btn" on:click={() => attemptStatusChange('cancelled')}>
-					❌ 거절하기
-				</button>
+				{#if selectedDetailReservation.isPastReservation}
+					<div class="past-reservation-notice">
+						📅 체크아웃이 완료된 과거 예약입니다.<br>
+						상태 변경이 불가능합니다.
+					</div>
+				{:else}
+					<button class="action-button approve-btn" on:click={() => attemptStatusChange('confirmed')}>
+						✅ 승인하기
+					</button>
+					<button class="action-button pending-btn" on:click={() => attemptStatusChange('pending')}>
+						⏳ 대기하기
+					</button>
+					<button class="action-button reject-btn" on:click={() => attemptStatusChange('cancelled')}>
+						❌ 거절하기
+					</button>
+				{/if}
 			</div>
 		</div>
 	</div>
@@ -767,7 +795,7 @@
 		background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
 		border-bottom: 1px solid var(--neutral-200);
 		display: grid;
-		grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+		grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
 		gap: var(--space-2);
 		align-items: stretch;
 		border-radius: var(--radius-lg);
@@ -916,6 +944,10 @@
 		color: #ef4444;
 	}
 
+	.summary-number.expired {
+		color: #6b7280;
+	}
+
 	/* 내 결정 숫자 색상 - 관리자별 테마 색상 */
 	.summary-number.friend.admin-choi-bunok {
 		color: var(--admin-choi-bunok-primary);
@@ -1056,6 +1088,41 @@
 		background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
 	}
 
+	.reservation-card.status-expired {
+		background: #f8f9fa !important;
+		border-left: 6px solid #6b7280 !important;
+		opacity: 0.7;
+	}
+
+	.reservation-card.status-expired:hover {
+		background: linear-gradient(135deg, #f8f9fa 0%, #f1f5f9 100%) !important;
+		border-color: #6b7280 !important;
+		border-left: 6px solid #6b7280 !important;
+	}
+
+	.reservation-card.status-expired .guest-name,
+	.reservation-card.status-expired .period-dates {
+		color: #6b7280 !important;
+	}
+
+	.reservation-card.status-expired .status-badge {
+		background: #e5e7eb !important;
+		color: #6b7280 !important;
+		border: 1px solid #d1d5db !important;
+	}
+
+	.reservation-card.status-expired .duration-badge {
+		background: #f3f4f6 !important;
+		color: #6b7280 !important;
+		border: 1px solid #d1d5db !important;
+	}
+
+	.reservation-card.status-expired .admin-badge {
+		background: #f3f4f6 !important;
+		color: #6b7280 !important;
+		border: 1px solid #d1d5db !important;
+	}
+
 	/* 2줄 레이아웃 */
 	.card-content {
 		padding: var(--space-1) var(--space-3);
@@ -1180,6 +1247,12 @@
 		background: #ef4444;
 		color: #fee2e2;
 		border: 1px solid #991b1b;
+	}
+
+	.status-badge.status-expired {
+		background: #6b7280;
+		color: #f3f4f6;
+		border: 1px solid #4b5563;
 	}
 
 	.click-arrow {
@@ -1792,6 +1865,15 @@
 		border-color: #b91c1c !important; /* 기본 테두리 색상 덮어쓰기 */
 	}
 
+	.calendar-day.reserved-expired {
+		background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
+		color: white !important;
+		font-weight: 600;
+		box-shadow: 0 2px 4px rgba(107, 114, 128, 0.3) !important;
+		border: 3px solid #374151 !important;
+		border-color: #374151 !important;
+	}
+
 	/* 예약 범위 연속 사각형 스타일 - confirmed */
 	.calendar-day.reserved-confirmed.position-start {
 		border-top-right-radius: 0;
@@ -1844,6 +1926,12 @@
 		border-color: #b91c1c !important; /* 모든 테두리 색상 통일 */
 	}
 
+	.calendar-day.position-middle.reserved-expired {
+		border-top: 3px solid #374151 !important;
+		border-bottom: 3px solid #374151 !important;
+		border-color: #374151 !important; /* 모든 테두리 색상 통일 */
+	}
+
 	.calendar-day.position-end {
 		border-top-left-radius: 0;
 		border-bottom-left-radius: 0;
@@ -1867,6 +1955,7 @@
 	.calendar-day.today.reserved-cancelled {
 		border: 2px solid #ffffff;
 	}
+
 
 	.basic-info-section {
 		display: flex;
@@ -2109,6 +2198,19 @@
 		background: linear-gradient(135deg, #5153c7 0%, #2a5eb3 100%);
 	}
 
+	/* 과거 예약 알림 스타일 */
+	.past-reservation-notice {
+		text-align: center;
+		padding: var(--space-4);
+		background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+		color: #6b7280;
+		border-radius: var(--radius-lg);
+		font-size: var(--text-sm);
+		line-height: 1.5;
+		border: 2px solid #d1d5db;
+		margin: var(--space-2);
+	}
+
 	/* 태블릿 및 중간 화면 (651px ~ 1024px) */
 	@media (max-width: 1024px) and (min-width: 651px) {
 		.detail-modal-content {
@@ -2175,7 +2277,8 @@
 		}
 
 		.date-range-display {
-			grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+			grid-template-columns: 1fr 1fr 1fr;
+			grid-template-rows: 1fr 1fr;
 			gap: var(--space-1);
 			padding: var(--space-1);
 			text-align: center;
