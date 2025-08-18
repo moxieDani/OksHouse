@@ -27,8 +27,6 @@
 	} from '$lib/utils/reservationUtils.js';
 	import { generateReservationCalendar } from '$lib/utils/calendarUtils.js';
 	
-	// 목업 데이터 import
-	import { mockReservations } from '$lib/data/mockReservations.js';
 
 
 	// 현재 관리자 정보
@@ -39,7 +37,7 @@
 	let currentMonth = 7; // 8월 (0-based index)
 	let currentYear = 2025;
 	let existingReservations = [];
-	let isLoading = true; // 초기 로딩 상태
+	let isLoading = false; // 초기 로딩 상태
 
 
 	// 필터링 상태 관리
@@ -108,12 +106,8 @@
 	 * 컴포넌트 마운트 시 초기 데이터 로드
 	 */
 	onMount(() => {
-		// 실제 API 호출 대신 목업 데이터 사용 (테스트용)
-		existingReservations = [...mockReservations]; // 새 배열로 복사하여 리액티비티 보장
-		isLoading = false; // 로딩 완료
-		
-		// 실제 운영시에는 아래 코드 사용
-		// loadMonthlyReservations();
+		// 실제 API를 통한 데이터 로드
+		loadMonthlyReservations();
 		
 		// 초기 높이 조정
 		adjustHeightToLastCard();
@@ -128,30 +122,48 @@
 	});
 
 	/**
+	 * 관리자 이름을 ID로 변환하는 매핑
+	 */
+	const adminNameToId = {
+		'최분옥': 'choi-bunok',
+		'최창환': 'choi-changhwan',
+		'박서은': 'park-seoeun',
+		'박지영': 'park-jiyoung',
+		'박태현': 'park-taehyun'
+	};
+
+	/**
 	 * 월별 예약 데이터 로드
 	 */
 	async function loadMonthlyReservations() {
-		if (isLoading) return;
-		
 		isLoading = true;
+
 		try {
 			const reservations = await adminAPI.getMonthlyReservations(currentYear, currentMonth + 1);
+
+			if (!Array.isArray(reservations)) {
+				throw new Error('API 응답이 배열이 아닙니다.');
+			}
 			
-			// 예약 데이터를 Date 객체로 변환
+			// 예약 데이터를 Date 객체로 변환하고 confirmed_by를 관리자 ID로 매핑
 			existingReservations = reservations.map(reservation => ({
 				...reservation,
 				startDate: new Date(reservation.start_date + 'T00:00:00'),
-				endDate: new Date(reservation.end_date + 'T00:00:00')
+				endDate: new Date(reservation.end_date + 'T00:00:00'),
+				confirmed_by: reservation.confirmed_by ? adminNameToId[reservation.confirmed_by] || reservation.confirmed_by : null,
+				confirmed_at: reservation.updated_at || reservation.created_at
 			}));
-
-			console.log(`${currentYear}년 ${currentMonth + 1}월 예약 로드 완료:`, existingReservations.length, '건');
-			
 		} catch (error) {
 			console.error('월별 예약 로드 실패:', error);
+			console.error('Error details:', error.message, error.stack);
+
+			// 로딩 실패 시 빈 배열로 설정
+			existingReservations = [];
+			
 			showErrorFeedback(
 				feedbackManager,
 				'데이터 로드 오류',
-				'예약 정보를 불러오는 중 오류가 발생했습니다.'
+				`예약 정보를 불러오는 중 오류가 발생했습니다: ${error.message}`
 			);
 		} finally {
 			isLoading = false;

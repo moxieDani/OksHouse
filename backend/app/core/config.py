@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     database_url: Optional[str] = None
     
     # CORS settings
-    allowed_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    allowed_origins: list[str] = ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"]
     
     # Security settings
     secret_key: str = "your-secret-key-here"

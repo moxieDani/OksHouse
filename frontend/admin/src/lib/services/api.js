@@ -14,7 +14,7 @@ export const adminAPI = {
 	 */
 	async getMonthlyReservations(year, month) {
 		const formattedMonth = month.toString().padStart(2, '0');
-		return await apiRequest(`/user/reservations/monthly/${year}/${formattedMonth}`);
+		return await apiRequest(`/admin/reservations/monthly/${year}/${formattedMonth}`);
 	},
 
 	/**
