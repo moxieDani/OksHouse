@@ -163,14 +163,14 @@
 
 
 	function getReservationStatusType(reservation) {
-		// pending: 예약대기, confirmed: 예약확정, denied: 예약거부
+		// pending: 예약대기, confirmed: 예약확정, cancelled: 예약거부
 		return reservation.status || 'pending'; // 기본값은 pending
 	}
 
 	function getReservationStatusText(reservation) {
 		// 3가지 상태만 처리
 		if (reservation.status === 'pending') return '예약대기';
-		if (reservation.status === 'denied') return '예약거부';
+		if (reservation.status === 'cancelled') return '예약거부';
 		if (reservation.status === 'confirmed') return '예약확정';
 		return '예약대기'; // default
 	}
@@ -772,7 +772,7 @@
 		background: linear-gradient(135deg, #059669 0%, #047857 100%);
 	}
 
-	.reservation-status-denied {
+	.reservation-status-cancelled {
 		background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
 	}
 

@@ -698,14 +698,14 @@
 		transform: none;
 	}
 
-	/* Denied reservation styling (예약거부) - red */
-	.calendar-day.original-reservation-denied {
+	/* Cancelled reservation styling (예약거부) - red */
+	.calendar-day.original-reservation-cancelled {
 		background: rgba(220, 38, 38, 0.15);
 		border-color: #dc2626;
 		color: #b91c1c;
 	}
 
-	.calendar-day.original-reservation-denied:hover {
+	.calendar-day.original-reservation-cancelled:hover {
 		background: rgba(220, 38, 38, 0.25);
 		color: #b91c1c;
 		transform: none;
@@ -738,14 +738,14 @@
 		transform: none;
 	}
 
-	.calendar-day.today.original-reservation-denied {
+	.calendar-day.today.original-reservation-cancelled {
 		background: var(--accent) !important;
 		border-color: #dc2626;
 		color: #b91c1c;
 		position: relative;
 	}
 
-	.calendar-day.today.original-reservation-denied:hover {
+	.calendar-day.today.original-reservation-cancelled:hover {
 		background: var(--accent) !important;
 		color: #b91c1c;
 		transform: none;
@@ -784,7 +784,7 @@
 		color: #d97706;
 	}
 
-	.calendar-day.original-reservation-denied .original-day {
+	.calendar-day.original-reservation-cancelled .original-day {
 		color: #b91c1c;
 	}
 
@@ -819,14 +819,14 @@
 		transform: none;
 	}
 
-	/* Denied selected reservation styling - red */
-	.calendar-day.selected-reservation-denied {
+	/* Cancelled selected reservation styling - red */
+	.calendar-day.selected-reservation-cancelled {
 		background: rgba(220, 38, 38, 0.15);
 		border-color: #dc2626;
 		color: #b91c1c;
 	}
 
-	.calendar-day.selected-reservation-denied:hover {
+	.calendar-day.selected-reservation-cancelled:hover {
 		background: rgba(220, 38, 38, 0.25);
 		color: #b91c1c;
 		transform: none;
@@ -859,14 +859,14 @@
 		transform: none;
 	}
 
-	.calendar-day.today.selected-reservation-denied {
+	.calendar-day.today.selected-reservation-cancelled {
 		background: var(--accent) !important;
 		border-color: #dc2626;
 		color: #b91c1c;
 		position: relative;
 	}
 
-	.calendar-day.today.selected-reservation-denied:hover {
+	.calendar-day.today.selected-reservation-cancelled:hover {
 		background: var(--accent) !important;
 		color: #b91c1c;
 		transform: none;
