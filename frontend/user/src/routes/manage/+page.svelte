@@ -34,6 +34,10 @@
 	let selectedReservation = null;
 	/** @type {any} 달력 컴포넌트 참조 */
 	let calendar;
+	/** @type {number} 달력 현재 월 (0-11) */
+	let calendarCurrentMonth = new Date().getMonth();
+	/** @type {number} 달력 현재 년도 */
+	let calendarCurrentYear = new Date().getFullYear();
 	/** @type {boolean} 예약 정보 로딩 중 여부 */
 	let isLoadingReservations = false;
 	/** @type {boolean} 수동 새로고침 중 여부 */
@@ -51,41 +55,6 @@
 	/** @type {Function|null} 피드백 콜백 함수 */
 	let feedbackCallback = null;
 
-	// === 개발용 예약 데이터 (실제로는 서버에서 가져옴) ===
-	const mockReservations = [
-		{
-			id: 1,
-			name: '홍길동',
-			phone: '010-1234-5678',
-			startDate: new Date(2025, 7, 10), // 8월 10일
-			duration: 2,
-			status: 'confirmed' // pending(예약대기), confirmed(예약확정), denied(예약거부) 중 하나
-		},
-		{
-			id: 2,
-			name: '홍길동',
-			phone: '010-1234-5678',
-			startDate: new Date(2025, 8, 15), // 9월 15일
-			duration: 3,
-			status: 'pending' // 예약대기 상태
-		},
-		{
-			id: 3,
-			name: '홍길동',
-			phone: '010-1234-5678',
-			startDate: new Date(2025, 9, 20), // 10월 20일
-			duration: 1,
-			status: 'denied' // 예약거부 상태
-		},
-		{
-			id: 4,
-			name: '홍길동',
-			phone: '010-1234-5678',
-			startDate: new Date(2025, 10, 5), // 11월 5일
-			duration: 2,
-			status: 'pending' // 예약대기 상태
-		}
-	];
 
 	onMount(() => {
 		// Check URL hash for direct navigation
@@ -226,7 +195,7 @@
 			
 			// Auto-select the first reservation if available
 			if (reservations.length > 0) {
-				setTimeout(() => selectReservation(reservations[0].id), 300);
+				setTimeout(() => selectReservation(reservations[0].id, true), 300);
 			}
 		} catch (error) {
 			handleError(error, '예약 목록 로드', showAlert);
@@ -258,11 +227,60 @@
 		}
 	}
 
-	function selectReservation(reservationId) {
+	function selectReservation(reservationId, fromMonthChange = false) {
 		selectedReservation = reservations.find(res => res.id === reservationId);
 		
-		if (selectedReservation && calendar) {
+		if (selectedReservation && calendar && !fromMonthChange) {
+			// 예약 카드 클릭 시에는 항상 해당 날짜로 이동
 			calendar.navigateToDate(selectedReservation.startDate);
+			// 달력 상태도 동기화
+			calendarCurrentMonth = selectedReservation.startDate.getMonth();
+			calendarCurrentYear = selectedReservation.startDate.getFullYear();
+		}
+	}
+
+	/**
+	 * 특정 월의 예약 내역을 필터링하여 반환
+	 * @param {Array<Object>} reservations - 전체 예약 목록
+	 * @param {number} year - 년도
+	 * @param {number} month - 월 (0-11)
+	 * @returns {Array<Object>} 해당 월의 예약 내역
+	 */
+	function getReservationsForMonth(reservations, year, month) {
+		if (!reservations || reservations.length === 0) return [];
+		
+		return reservations.filter(reservation => {
+			const startDate = reservation.startDate;
+			const endDate = reservation.endDate;
+			
+			// 예약 시작날이나 끝나는 날이 해당 월에 포함되면 표시
+			const monthStart = new Date(year, month, 1);
+			const monthEnd = new Date(year, month + 1, 0);
+			
+			return (startDate <= monthEnd && endDate >= monthStart);
+		});
+	}
+
+	/**
+	 * 달력 월 변경 시 호출되는 핸들러
+	 * @param {CustomEvent} event - month: 변경된 월(0-11), year: 변경된 년도
+	 */
+	function handleMonthChange(event) {
+		const { month, year } = event.detail;
+		
+		// 달력 상태 업데이트
+		calendarCurrentMonth = month;
+		calendarCurrentYear = year;
+		
+		// 해당 월의 예약 내역을 가져와서 첫 번째 예약을 자동 선택
+		const monthReservations = getReservationsForMonth(reservations, year, month);
+		
+		if (monthReservations.length > 0) {
+			// 해당 월에 예약이 있으면 첫 번째 예약을 선택 (달력 이동하지 않음)
+			selectReservation(monthReservations[0].id, true);
+		} else {
+			// 해당 월에 예약이 없으면 선택된 예약 해제
+			selectedReservation = null;
 		}
 	}
 
@@ -505,8 +523,11 @@
 				selectedDate={selectedReservation?.startDate}
 				duration={selectedReservation ? calculateDurationInDays(selectedReservation.startDate, selectedReservation.endDate) : 0}
 				selectedReservation={selectedReservation}
+				currentMonth={calendarCurrentMonth}
+				currentYear={calendarCurrentYear}
 				{isRefreshing}
 				onRefresh={handleRefresh}
+				on:monthChange={handleMonthChange}
 			/>
 		</div>
 		
