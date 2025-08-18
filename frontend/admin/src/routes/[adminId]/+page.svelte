@@ -13,7 +13,7 @@
 	import { showErrorFeedback } from '../../../../shared/utils/errorUtils.js';
 	
 	// 상수 imports
-	import { administrators, getAdminName, getAdminEmoji } from '$lib/constants/admins.js';
+	import { administrators, getAdminName, getAdminEmoji, getAdminIdByName } from '$lib/constants/admins.js';
 	import { filterOptions, defaultFilter, statusActionNames, statusChangeMessages, statusChangeTitles } from '$lib/constants/reservations.js';
 	
 	// 유틸리티 함수 imports
@@ -121,16 +121,6 @@
 		};
 	});
 
-	/**
-	 * 관리자 이름을 ID로 변환하는 매핑
-	 */
-	const adminNameToId = {
-		'최분옥': 'choi-bunok',
-		'최창환': 'choi-changhwan',
-		'박서은': 'park-seoeun',
-		'박지영': 'park-jiyoung',
-		'박태현': 'park-taehyun'
-	};
 
 	/**
 	 * 월별 예약 데이터 로드
@@ -161,7 +151,7 @@
 					startDate: new Date(reservation.start_date + 'T00:00:00'),
 					endDate,
 					status: finalStatus,
-					confirmed_by: reservation.confirmed_by ? adminNameToId[reservation.confirmed_by] || reservation.confirmed_by : null,
+					confirmed_by: reservation.confirmed_by ? getAdminIdByName(reservation.confirmed_by) || null : null,
 					confirmed_at: reservation.updated_at || reservation.created_at,
 					isPastReservation
 				};
@@ -290,37 +280,50 @@
 	/**
 	 * 예약 상태 변경 실행
 	 */
-	function changeReservationStatus(newStatus) {
-		if (selectedDetailReservation) {
-			// 선택된 예약의 상태 업데이트
-			selectedDetailReservation.status = newStatus;
+	async function changeReservationStatus(newStatus) {
+		if (!selectedDetailReservation) return;
+		
+		try {
+			// API를 통해 백엔드에서 상태 업데이트
+			const adminName = getAdminName(adminId);
+			const updatedReservation = await adminAPI.updateReservationStatus(
+				selectedDetailReservation.id, 
+				newStatus, 
+				adminName
+			);
 			
-			if (newStatus === 'confirmed' || newStatus === 'cancelled') {
-				// 승인 또는 거절 시 확정자(처리자) 정보 설정
-				selectedDetailReservation.confirmed_by = adminId;
-				selectedDetailReservation.confirmed_at = new Date().toISOString();
-			} else if (newStatus === 'pending') {
-				// 대기 상태로 변경 시 확정자 정보 제거
-				selectedDetailReservation.confirmed_by = null;
-				selectedDetailReservation.confirmed_at = null;
-			}
+			// 응답받은 데이터로 로컬 상태 업데이트
+			const updatedReservationData = {
+				...selectedDetailReservation,
+				status: updatedReservation.status,
+				confirmed_by: updatedReservation.confirmed_by ? getAdminIdByName(updatedReservation.confirmed_by) || null : null,
+				updated_at: updatedReservation.updated_at
+			};
 			
 			// 목록에서 해당 예약을 찾아 업데이트 (Svelte 반응성을 위해 배열 재할당)
 			const index = existingReservations.findIndex(r => r.id === selectedDetailReservation.id);
 			if (index !== -1) {
 				existingReservations = existingReservations.map((reservation, i) => 
-					i === index ? { ...selectedDetailReservation } : reservation
+					i === index ? updatedReservationData : reservation
 				);
 			}
 			
 			// 모달도 업데이트된 정보로 다시 렌더링되도록 재할당
-			selectedDetailReservation = { ...selectedDetailReservation };
+			selectedDetailReservation = { ...updatedReservationData };
+			
+			// 달력 새로고침 (상태 변경이 모든 달력에 반영되도록)
+			await refreshCalendar();
 			
 			// 완료 모달 표시
 			completionTitle = statusChangeTitles[newStatus];
 			completionMessage = statusChangeMessages[newStatus];
 			showCompletionModal = true;
+			
+		} catch (error) {
+			console.error('예약 상태 변경 실패:', error);
+			showErrorFeedback(feedbackManager, '예약 상태 변경에 실패했습니다.', error);
 		}
+		
 		closeConfirmModal();
 	}
 
@@ -349,6 +352,17 @@
 		showCompletionModal = false;
 		completionMessage = '';
 		completionTitle = '';
+	}
+
+	/**
+	 * 달력 새로고침 - 상태 변경 후 모든 달력 업데이트
+	 */
+	async function refreshCalendar() {
+		try {
+			await loadMonthlyReservations();
+		} catch (error) {
+			console.error('달력 새로고침 실패:', error);
+		}
 	}
 </script>
 

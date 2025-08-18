@@ -34,12 +34,12 @@ export const adminAPI = {
 	/**
 	 * Update reservation status (admin privilege)
 	 */
-	async updateReservationStatus(reservationId, status) {
-		return await apiRequest('/admin/reservations/status', {
-			method: 'PUT',
+	async updateReservationStatus(reservationId, status, adminName) {
+		return await apiRequest(`/admin/reservations/${reservationId}/status`, {
+			method: 'PATCH',
 			body: JSON.stringify({
-				reservation_id: reservationId,
-				status
+				status,
+				admin_name: adminName
 			})
 		});
 	}

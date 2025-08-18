@@ -31,7 +31,7 @@ class ReservationDelete(ReservationWithAuth):
 
 class AdminStatusUpdate(BaseModel):
     """관리자 상태 업데이트 스키마"""
-    status: str = Field(..., pattern="^(pending|confirmed|denied)$", description="예약상태")
+    status: str = Field(..., pattern="^(pending|confirmed|cancelled)$", description="예약상태")
     admin_name: str = Field(..., min_length=1, description="관리자명")
 
 
@@ -40,7 +40,7 @@ class AdminStatusUpdate(BaseModel):
 class ReservationResponse(ReservationBase):
     """예약 응답 스키마"""
     id: int
-    status: str = Field(..., description="예약상태: pending(예약대기), confirmed(예약확정), denied(예약거부)")
+    status: str = Field(..., description="예약상태: pending(예약대기), confirmed(예약확정), cancelled(예약취소)")
     confirmed_by: Optional[str] = Field(None, description="확정 관리자명")
     created_at: datetime
     updated_at: datetime

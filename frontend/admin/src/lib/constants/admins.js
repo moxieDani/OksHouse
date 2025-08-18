@@ -41,3 +41,17 @@ export function getAdminEmoji(adminId) {
 export function getCurrentAdmin(adminId) {
 	return administrators[adminId] || null;
 }
+
+/**
+ * 관리자 이름으로 ID 조회
+ * @param {string} adminName - 관리자 이름
+ * @returns {string|null} 관리자 ID
+ */
+export function getAdminIdByName(adminName) {
+	for (const [id, admin] of Object.entries(administrators)) {
+		if (admin.name === adminName) {
+			return id;
+		}
+	}
+	return null;
+}
