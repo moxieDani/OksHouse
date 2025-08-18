@@ -7,6 +7,8 @@
 	export let currentMonth = new Date().getMonth();
 	export let currentYear = new Date().getFullYear();
 	export let existingReservations = [];
+	export let isRefreshing = false;
+	export let onRefresh = null;
 	
 	// Constants
 	const monthNames = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
@@ -294,9 +296,21 @@
 		>
 			‹
 		</button>
-		<span class="month-display">
-			{currentYear}년 {monthNames[currentMonth]}
-		</span>
+		<div class="header-center">
+			<span class="month-display">
+				{currentYear}년 {monthNames[currentMonth]}
+			</span>
+			{#if onRefresh}
+				<button 
+					class="refresh-button"
+					on:click={onRefresh}
+					disabled={isRefreshing}
+					title="예약 정보 새로고침"
+				>
+					<span class="refresh-icon {isRefreshing ? 'spinning' : ''}">🔄</span>
+				</button>
+			{/if}
+		</div>
 		<button 
 			class="calendar-nav" 
 			on:click={() => changeMonth(1)}
@@ -353,9 +367,58 @@
 		background: rgba(255, 255, 255, 0.1);
 	}
 
+	.header-center {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+	}
+
 	.month-display {
 		font-size: var(--text-lg);
 		font-weight: 600;
+	}
+
+	.refresh-button {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(255, 255, 255, 0);
+		color: white;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		border-radius: var(--radius-md);
+		padding: var(--space-1) var(--space-2);
+		font-size: var(--text-sm);
+		cursor: pointer;
+		transition: all 0.2s ease;
+		backdrop-filter: blur(4px);
+	}
+
+	.refresh-button:hover:not(:disabled) {
+		background: rgba(255, 255, 255, 0.2);
+		border-color: rgba(255, 255, 255, 0.3);
+		transform: translateY(-1px);
+	}
+
+	.refresh-button:disabled {
+		background: rgba(255, 255, 255, 0.05);
+		border-color: rgba(255, 255, 255, 0.1);
+		cursor: not-allowed;
+		transform: none;
+		opacity: 0.7;
+	}
+
+	.refresh-icon {
+		font-size: var(--text-base);
+		transition: transform 0.3s ease;
+	}
+
+	.refresh-icon.spinning {
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		from { transform: rotate(0deg); }
+		to { transform: rotate(360deg); }
 	}
 
 	.calendar-weekdays {

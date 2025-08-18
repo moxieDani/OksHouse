@@ -52,6 +52,8 @@
 	let existingReservations = [];
 	/** @type {boolean} 예약 데이터 로딩 상태 */
 	let isLoadingReservations = false;
+	/** @type {boolean} 수동 새로고침 중 여부 */
+	let isRefreshing = false;
 	
 	// === 피드백 매니저 상태 ===
 	/** @type {boolean} 피드백 모달 표시 여부 */
@@ -262,6 +264,28 @@
 
 	
 	// 중복 로드 방지를 위한 라이프사이클 관리는 위에서 처리
+
+	/**
+	 * 수동 새로고침 - 사용자가 버튼을 클릭할 때
+	 */
+	async function handleRefresh() {
+		if (isRefreshing || isLoadingReservations) return; // 이미 로딩 중이면 중단
+		
+		isRefreshing = true;
+		try {
+			// 현재 달의 예약 정보를 새로고침
+			isLoadingReservations = false; // 로딩 상태 리셋
+			await loadMonthlyReservations(currentYear, currentMonth);
+		} catch (error) {
+			console.error('새로고침 실패:', error);
+			showFeedback = true;
+			feedbackType = 'error';
+			feedbackTitle = '새로고침 실패';
+			feedbackMessage = '예약 정보를 불러오는데 실패했습니다.';
+		} finally {
+			isRefreshing = false;
+		}
+	}
 
 	// === 달력 이벤트 처리 함수 ===
 	
@@ -526,9 +550,12 @@
 <!-- Step 2: 달력에서 시작일 선택 -->
 {#if currentStep === 2}
 	<div class="step">
-		<div class="progress-guide">
-			<h4>🗓️ 2단계: 체크인 날짜 선택</h4>
-			<p>달력에서 체크인하는 날짜를 클릭해주세요</p>
+		<div class="step-header">
+			<div class="progress-guide">
+				<h4>🗓️ 2단계: 체크인 날짜 선택</h4>
+				<p>달력에서 체크인하는 날짜를 클릭해주세요</p>
+			</div>
+			
 		</div>
 		
 		<div class="date-range-display" class:selected={startDate}>
@@ -551,6 +578,8 @@
 				bind:currentMonth={currentMonth}
 				bind:currentYear={currentYear}
 				{existingReservations}
+				{isRefreshing}
+				onRefresh={handleRefresh}
 				on:dateSelect={(e) => {
 					// Update the store - this will automatically update startDate via reactive statement
 					updateReservationData({ startDate: e.detail });
@@ -720,6 +749,33 @@
 	.progress-guide p {
 		color: var(--neutral-600);
 		font-size: var(--text-base);
+	}
+
+	/* Step 헤더 - 제목과 새로고침 버튼 */
+	.step-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		margin-bottom: var(--space-6);
+		gap: var(--space-4);
+	}
+
+	.step-header .progress-guide {
+		flex: 1;
+		margin-bottom: 0;
+	}
+
+	/* 모바일 반응형 */
+	@media (max-width: 768px) {
+		.step-header {
+			flex-direction: column;
+			gap: var(--space-3);
+			align-items: center;
+		}
+
+		.step-header .progress-guide {
+			text-align: center;
+		}
 	}
 
 	.help-box {

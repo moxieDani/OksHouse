@@ -38,6 +38,7 @@
 	let currentYear = 2025;
 	let existingReservations = [];
 	let isLoading = false; // 초기 로딩 상태
+	let isRefreshing = false; // 새로고침 상태
 
 
 	// 필터링 상태 관리
@@ -364,6 +365,23 @@
 			console.error('달력 새로고침 실패:', error);
 		}
 	}
+
+	/**
+	 * 수동 새로고침 - 사용자가 버튼을 클릭할 때
+	 */
+	async function handleRefresh() {
+		if (isRefreshing) return; // 이미 새로고침 중이면 중단
+		
+		isRefreshing = true;
+		try {
+			await loadMonthlyReservations();
+		} catch (error) {
+			console.error('새로고침 실패:', error);
+			showErrorFeedback(feedbackManager, '새로고침에 실패했습니다.', error);
+		} finally {
+			isRefreshing = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -442,6 +460,8 @@
 				{currentMonth}
 				{currentYear}
 				{existingReservations}
+				{isRefreshing}
+				onRefresh={handleRefresh}
 				on:monthChange={handleMonthChange}
 				on:reservationDateClick={handleReservationDateClick}
 			/>

@@ -34,6 +34,10 @@
 	let selectedReservation = null;
 	/** @type {any} 달력 컴포넌트 참조 */
 	let calendar;
+	/** @type {boolean} 예약 정보 로딩 중 여부 */
+	let isLoadingReservations = false;
+	/** @type {boolean} 수동 새로고침 중 여부 */
+	let isRefreshing = false;
 
 	// === 피드백 매니저 상태 ===
 	/** @type {boolean} 피드백 모달 표시 여부 */
@@ -230,6 +234,30 @@
 		}
 	}
 
+	/**
+	 * 수동 새로고침 - 사용자가 버튼을 클릭할 때
+	 */
+	async function handleRefresh() {
+		if (isRefreshing || isLoadingReservations) return; // 이미 로딩 중이면 중단
+		
+		isRefreshing = true;
+		try {
+			// 선택된 예약 초기화 (새로고침시 깨끗한 상태로 시작)
+			selectedReservation = null;
+			
+			// 현재 사용자의 예약 정보를 새로고침
+			await loadUserReservations();
+		} catch (error) {
+			console.error('새로고침 실패:', error);
+			showFeedback = true;
+			feedbackType = 'error';
+			feedbackTitle = '새로고침 실패';
+			feedbackMessage = '예약 정보를 불러오는데 실패했습니다.';
+		} finally {
+			isRefreshing = false;
+		}
+	}
+
 	function selectReservation(reservationId) {
 		selectedReservation = reservations.find(res => res.id === reservationId);
 		
@@ -326,19 +354,8 @@
 		};
 	}
 
-	// 예약 목록 포맷팅 - 메모이제이션으로 불필요한 재계산 방지
-	let lastReservationsHash = '';
-	let cachedFormattedReservations = [];
-	
-	$: {
-		const currentHash = JSON.stringify(reservations.map(r => ({ id: r.id, startDate: r.startDate, duration: r.duration })));
-		if (currentHash !== lastReservationsHash) {
-			lastReservationsHash = currentHash;
-			cachedFormattedReservations = reservations.map(createReservationCard);
-		}
-	}
-	
-	$: formattedReservations = cachedFormattedReservations;
+	// 예약 목록 포맷팅 - 직접적인 reactive statement로 즉시 업데이트
+	$: formattedReservations = reservations.map(createReservationCard);
 
 	// === 피드백 매니저 헬퍼 함수 ===
 	
@@ -470,10 +487,15 @@
 <!-- Step 2: 예약 목록 확인 -->
 {#if currentStep === 2}
 	<div class="step">
-		<h3><span class="emoji-normal">📊</span> 예약 현황 확인</h3>
-		<p class="step-description">
-			<strong>{authName}</strong>님의 예약 현황입니다.
-		</p>
+		<div class="step-header">
+			<div class="title-section">
+				<h3><span class="emoji-normal">📊</span> 예약 현황 확인</h3>
+				<p class="step-description">
+					<strong>{authName}</strong>님의 예약 현황입니다.
+				</p>
+			</div>
+			
+		</div>
 		
 		<!-- 달력 보기 -->
 		<div class="calendar-view">
@@ -483,6 +505,8 @@
 				selectedDate={selectedReservation?.startDate}
 				duration={selectedReservation ? calculateDurationInDays(selectedReservation.startDate, selectedReservation.endDate) : 0}
 				selectedReservation={selectedReservation}
+				{isRefreshing}
+				onRefresh={handleRefresh}
 			/>
 		</div>
 		
@@ -564,6 +588,36 @@
 	@keyframes fadeIn {
 		from { opacity: 0; transform: translateY(20px); }
 		to { opacity: 1; transform: translateY(0); }
+	}
+
+	/* Step 헤더 - 제목과 새로고침 버튼 */
+	.step-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		margin-bottom: var(--space-6);
+		gap: var(--space-4);
+	}
+
+	.title-section {
+		flex: 1;
+	}
+
+	.title-section .step-description {
+		margin-bottom: 0;
+	}
+
+	/* 모바일 반응형 */
+	@media (max-width: 768px) {
+		.step-header {
+			flex-direction: column;
+			gap: var(--space-3);
+			align-items: center;
+		}
+
+		.title-section {
+			text-align: center;
+		}
 	}
 
 	.step h3 {
