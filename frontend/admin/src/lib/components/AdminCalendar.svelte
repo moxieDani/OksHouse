@@ -327,9 +327,6 @@
 </div>
 
 <style>
-	.admin-calendar {
-		/* 부모 calendar-section에서 스타일링 담당 */
-	}
 
 	.calendar-header {
 		display: flex;
