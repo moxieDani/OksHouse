@@ -30,11 +30,11 @@ def verify_password(plain_password: str, encrypted_password: str) -> bool:
         return False
 
 
-# JWT Settings
-JWT_SECRET_KEY = "okshouse-admin-secret-key-2024"  # 실제 운영에서는 환경변수로 관리
-JWT_ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_SECONDS = 300  # 5분
-REFRESH_TOKEN_EXPIRE_SECONDS = 60 * 60 * 24 * 365  # 1년
+# JWT Settings - 환경변수에서 로드
+JWT_SECRET_KEY = settings.jwt_secret_key
+JWT_ALGORITHM = settings.jwt_algorithm  
+ACCESS_TOKEN_EXPIRE_SECONDS = settings.access_token_expire_seconds
+REFRESH_TOKEN_EXPIRE_SECONDS = settings.refresh_token_expire_seconds
 
 # 인증된 관리자 세션 관리
 authenticated_admin_sessions = set()
