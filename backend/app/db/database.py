@@ -45,3 +45,39 @@ async def create_tables():
         Base.metadata.create_all(bind=engine)
     
     await loop.run_in_executor(None, sync_create_tables)
+
+
+async def init_admin_data():
+    """Initialize admin data if not exists"""
+    loop = asyncio.get_event_loop()
+    
+    def sync_init_admin_data():
+        from app.models.admin import Admin
+        
+        db = SessionLocal()
+        try:
+            # 관리자 데이터가 이미 존재하는지 확인
+            existing_admins = db.query(Admin).first()
+            if existing_admins:
+                return  # 이미 데이터가 있으면 초기화하지 않음
+            
+            # 초기 관리자 데이터 삽입
+            initial_admins = [
+                Admin(admin_id=1, name="최분옥", phone="010-7102-2552"),
+                Admin(admin_id=2, name="최창환", phone="010-4872-3713"),
+                Admin(admin_id=3, name="박서은", phone="010-2060-2552"),
+                Admin(admin_id=4, name="박지영", phone="010-4022-2552"),
+                Admin(admin_id=5, name="박태현", phone="010-3794-3420"),
+            ]
+            
+            for admin in initial_admins:
+                db.add(admin)
+            
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            raise e
+        finally:
+            db.close()
+    
+    await loop.run_in_executor(None, sync_init_admin_data)

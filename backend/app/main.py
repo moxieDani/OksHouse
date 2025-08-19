@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.api.v1 import api_router
-from app.db.database import create_tables
+from app.db.database import create_tables, init_admin_data
 
 
 @asynccontextmanager
@@ -11,6 +11,8 @@ async def lifespan(app: FastAPI):
     """애플리케이션 생명주기 관리"""
     # 시작 시 테이블 생성
     await create_tables()
+    # 초기 관리자 데이터 생성
+    await init_admin_data()
     yield
     # 종료 시 정리 작업 (필요한 경우)
 
