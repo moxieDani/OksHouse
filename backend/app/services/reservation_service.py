@@ -156,7 +156,11 @@ class ReservationService:
             reservation = db.query(Reservation).filter(Reservation.id == reservation_id).first()
             if reservation:
                 reservation.status = status_update.status
-                reservation.confirmed_by = status_update.admin_name
+                # pending 상태로 변경할 때는 confirmed_by를 NULL로 설정
+                if status_update.status == 'pending':
+                    reservation.confirmed_by = None
+                else:
+                    reservation.confirmed_by = status_update.admin_name
                 db.commit()
                 db.refresh(reservation)
             

@@ -148,12 +148,22 @@
 				// 과거 예약인 경우 상태를 'expired'로 변경
 				const finalStatus = isPastReservation ? 'expired' : reservation.status;
 				
+				// confirmed_by 처리 - 백엔드에서 관리자 이름을 받아서 ID로 변환
+				let confirmedBy = null;
+				if (reservation.confirmed_by) {
+					confirmedBy = getAdminIdByName(reservation.confirmed_by);
+					if (!confirmedBy) {
+						// 변환에 실패한 경우, 원본 값을 그대로 사용 (혹시 이미 ID인 경우)
+						confirmedBy = reservation.confirmed_by;
+					}
+				}
+				
 				return {
 					...reservation,
 					startDate: new Date(reservation.start_date + 'T00:00:00'),
 					endDate,
 					status: finalStatus,
-					confirmed_by: reservation.confirmed_by ? getAdminIdByName(reservation.confirmed_by) || null : null,
+					confirmed_by: confirmedBy,
 					confirmed_at: reservation.updated_at || reservation.created_at,
 					isPastReservation
 				};
@@ -295,10 +305,19 @@
 			);
 			
 			// 응답받은 데이터로 로컬 상태 업데이트
+			let confirmedBy = null;
+			if (updatedReservation.confirmed_by) {
+				confirmedBy = getAdminIdByName(updatedReservation.confirmed_by);
+				if (!confirmedBy) {
+					// 변환에 실패한 경우, 원본 값을 그대로 사용 (혹시 이미 ID인 경우)
+					confirmedBy = updatedReservation.confirmed_by;
+				}
+			}
+			
 			const updatedReservationData = {
 				...selectedDetailReservation,
 				status: updatedReservation.status,
-				confirmed_by: updatedReservation.confirmed_by ? getAdminIdByName(updatedReservation.confirmed_by) || null : null,
+				confirmed_by: confirmedBy,
 				updated_at: updatedReservation.updated_at
 			};
 			
@@ -506,6 +525,11 @@
 								<div class="admin-badge admin-theme-{reservation.confirmed_by}">
 									{getAdminEmoji(reservation.confirmed_by)} {getAdminName(reservation.confirmed_by)}
 								</div>
+							{:else if reservation.status === 'confirmed' || reservation.status === 'cancelled'}
+								<!-- 확정자 정보가 없는 확정/거절된 예약의 경우 기본 표시 -->
+								<div class="admin-badge admin-theme-default">
+									👤 관리자
+								</div>
 							{/if}
 						</div>
 					</div>
@@ -592,9 +616,9 @@
 							<span class="info-label">신청일시</span>
 							<span class="info-value">{new Date(selectedDetailReservation.created_at).toLocaleDateString('ko-KR')}</span>
 						</div>
-						<!-- 확정/거절 정보 (있는 경우만) -->
-						{#if (selectedDetailReservation.status === 'confirmed' || selectedDetailReservation.status === 'cancelled') && selectedDetailReservation.confirmed_by}
-							<div class="confirmed-info admin-{selectedDetailReservation.confirmed_by} {selectedDetailReservation.status === 'cancelled' ? 'rejected-theme' : ''}">
+						<!-- 확정/거절 정보 -->
+						{#if selectedDetailReservation.status === 'confirmed' || selectedDetailReservation.status === 'cancelled'}
+							<div class="confirmed-info {selectedDetailReservation.confirmed_by ? `admin-${selectedDetailReservation.confirmed_by}` : 'admin-default'} {selectedDetailReservation.status === 'cancelled' ? 'rejected-theme' : ''}">
 								<span class="confirmed-label">
 									{#if selectedDetailReservation.status === 'confirmed'}
 										✅ 확정자:
@@ -603,7 +627,11 @@
 									{/if}
 								</span>
 								<span class="confirmed-admin">
-									{getAdminEmoji(selectedDetailReservation.confirmed_by)} {getAdminName(selectedDetailReservation.confirmed_by)}
+									{#if selectedDetailReservation.confirmed_by}
+										{getAdminEmoji(selectedDetailReservation.confirmed_by)} {getAdminName(selectedDetailReservation.confirmed_by)}
+									{:else}
+										👤 관리자
+									{/if}
 								</span>
 								{#if selectedDetailReservation.confirmed_at}
 									<span class="confirmed-date">

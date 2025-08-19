@@ -537,6 +537,20 @@ h1 {
 	border: 1px solid var(--admin-park-taehyun-primary);
 }
 
+/* 기본 관리자 테마 (확정자 정보가 없는 경우) */
+.admin-theme-default {
+	background: #f9fafb;
+	color: #374151;
+	border: 1px solid #9ca3af;
+}
+
+/* 상세보기 모달의 기본 관리자 스타일 */
+.confirmed-info.admin-default {
+	background: #f9fafb;
+	color: #374151;
+	border: 1px solid #9ca3af;
+}
+
 .status-badge.status-confirmed {
 	background: rgb(0, 215, 75);
 	color: #005c20;
