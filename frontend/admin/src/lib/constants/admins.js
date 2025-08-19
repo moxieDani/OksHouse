@@ -55,3 +55,35 @@ export function getAdminIdByName(adminName) {
 	}
 	return null;
 }
+
+/**
+ * 숫자 ID를 문자열 ID로 변환
+ * @param {number} numericId - 숫자 관리자 ID (백엔드에서 사용)
+ * @returns {string|null} 문자열 관리자 ID (프론트엔드에서 사용)
+ */
+export function getStringIdFromNumeric(numericId) {
+	const idMap = {
+		1: 'choi-bunok',
+		2: 'choi-changhwan', 
+		3: 'park-seoeun',
+		4: 'park-jiyoung',
+		5: 'park-taehyun'
+	};
+	return idMap[numericId] || null;
+}
+
+/**
+ * 문자열 ID를 숫자 ID로 변환
+ * @param {string} stringId - 문자열 관리자 ID (프론트엔드에서 사용)
+ * @returns {number|null} 숫자 관리자 ID (백엔드에서 사용)
+ */
+export function getNumericIdFromString(stringId) {
+	const idMap = {
+		'choi-bunok': 1,
+		'choi-changhwan': 2,
+		'park-seoeun': 3,
+		'park-jiyoung': 4,
+		'park-taehyun': 5
+	};
+	return idMap[stringId] || null;
+}

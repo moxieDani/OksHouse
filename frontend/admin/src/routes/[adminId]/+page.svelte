@@ -1,8 +1,10 @@
 <script>
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import AdminCalendar from '$lib/components/AdminCalendar.svelte';
 	import FeedbackManager from '../../../../shared/components/FeedbackManager.svelte';
+	import { checkAuthStatus, logout, isAuthenticated, currentAdmin as authCurrentAdmin } from '$lib/stores/auth.js';
 	import './admin-page.css';
 	
 	// SvelteKit이 자동으로 전달하는 params prop을 받아서 경고 제거
@@ -14,7 +16,7 @@
 	import { showErrorFeedback } from '../../../../shared/utils/errorUtils.js';
 	
 	// 상수 imports
-	import { administrators, getAdminName, getAdminEmoji, getAdminIdByName } from '$lib/constants/admins.js';
+	import { administrators, getAdminName, getAdminEmoji, getAdminIdByName, getStringIdFromNumeric, getNumericIdFromString } from '$lib/constants/admins.js';
 	import { filterOptions, defaultFilter, statusActionNames, statusChangeMessages, statusChangeTitles } from '$lib/constants/reservations.js';
 	
 	// 유틸리티 함수 imports
@@ -105,9 +107,28 @@
 	}
 
 	/**
-	 * 컴포넌트 마운트 시 초기 데이터 로드
+	 * 컴포넌트 마운트 시 인증 확인 및 초기 데이터 로드
 	 */
-	onMount(() => {
+	onMount(async () => {
+		// 인증 상태 확인
+		const authResult = await checkAuthStatus();
+		
+		// 인증되지 않은 경우 메인 페이지로 리다이렉트
+		if (!authResult.success) {
+			goto('/');
+			return;
+		}
+		
+		// 인증된 관리자와 현재 페이지 관리자가 다른 경우 해당 관리자 페이지로 리다이렉트
+		// 백엔드는 숫자 ID, 프론트엔드는 문자열 ID 사용하므로 변환해서 비교
+		const authenticatedStringId = getStringIdFromNumeric(authResult.admin.admin_id);
+		const currentNumericId = getNumericIdFromString(adminId);
+		
+		if (authResult.admin && authResult.admin.admin_id !== currentNumericId) {
+			goto(`/${authenticatedStringId}`);
+			return;
+		}
+		
 		// 실제 API를 통한 데이터 로드
 		loadMonthlyReservations();
 		
