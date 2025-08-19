@@ -668,12 +668,12 @@
 	.calendar-day.today.has-reservation {
 		background: #6366f1 !important;
 		border-color: #6366f1;
-		color: #4f46e5;
+		color: #ffffff;
 	}
 
 	.calendar-day.today.has-reservation:hover {
 		background: #6366f1 !important;
-		color: #4338ca;
+		color: #ffffff;
 		transform: translateY(-1px);
 		box-shadow: 0 4px 8px rgba(99, 102, 241, 0.2);
 	}
