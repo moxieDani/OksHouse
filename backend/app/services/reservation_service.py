@@ -62,6 +62,22 @@ class ReservationService:
             reservation_data = reservation.model_dump()
             password = reservation_data.pop('password', None)
             
+            # 추가하려는 예약의 날짜 범위
+            new_start_date = reservation_data['start_date']
+            new_end_date = reservation_data['end_date']
+            
+            # 'cancelled' 상태이면서 날짜가 겹치는 예약 조회
+            # 두 날짜 구간이 겹치거나 인접한 조건: new_start <= existing_end AND new_end >= existing_start
+            overlapping_cancelled_reservations = db.query(Reservation).filter(
+                Reservation.status == "cancelled",
+                new_start_date <= Reservation.end_date,
+                new_end_date >= Reservation.start_date
+            ).all()
+            
+            # 겹치는 'cancelled' 예약들 삭제
+            for cancelled_reservation in overlapping_cancelled_reservations:
+                db.delete(cancelled_reservation)
+            
             # 비밀번호 암호화
             password_hash = None
             if password:
