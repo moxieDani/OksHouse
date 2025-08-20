@@ -321,6 +321,7 @@ h1 {
 .reservation-list-title h4 {
 	font-size: var(--text-xl);
 	color: var(--primary);
+	text-align: center;
 }
 
 /* 예약 목록 스타일 */
@@ -1566,7 +1567,6 @@ h1 {
 @media (max-width: 650px) {
 	h1.page-title {
 		margin: var(--space-1) 0 var(--space-1) 0 !important;
-		font-size: var(--text-xl) !important;
 	}
 	
 	/* 모바일에서는 전체 너비 사용 */

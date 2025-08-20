@@ -300,9 +300,24 @@
 	}
 
 	/**
-	 * 상세보기 팝업 열기
+	 * 상세보기 팝업 열기 (달력 이동 포함)
 	 */
-	function openDetailModal(reservation) {
+	async function openDetailModal(reservation) {
+		// 예약의 체크인 날짜로 달력 이동
+		const checkInDate = reservation.startDate || new Date(reservation.start_date);
+		const targetYear = checkInDate.getFullYear();
+		const targetMonth = checkInDate.getMonth(); // 0-based index
+		
+		// 현재 달력과 다른 년/월이면 달력 이동
+		if (currentYear !== targetYear || currentMonth !== targetMonth) {
+			currentYear = targetYear;
+			currentMonth = targetMonth;
+			
+			// 해당 월의 예약 데이터 로드
+			await loadMonthlyReservations();
+		}
+		
+		// 모달창 표시
 		selectedDetailReservation = reservation;
 		showDetailModal = true;
 	}
