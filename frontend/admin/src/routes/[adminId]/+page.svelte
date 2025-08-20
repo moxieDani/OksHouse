@@ -531,6 +531,11 @@
 
 <!-- 메인 콘텐츠 -->
 <div class="admin-page-header">
+	{#if currentAdmin}
+		<div class="admin-welcome">
+			<span class="admin-emoji">{getAdminEmoji(adminId)}</span> <strong>{currentAdmin.name}</strong>님 환영합니다!
+		</div>
+	{/if}
 	<button class="admin-logout-button" on:click={handleLogout} aria-label="로그아웃">
 		Logout
 	</button>
