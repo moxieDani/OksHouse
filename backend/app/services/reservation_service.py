@@ -12,6 +12,17 @@ class ReservationService:
     """확장된 예약 관련 비즈니스 로직"""
     
     @staticmethod
+    async def get_all_reservations_admin(db: Session) -> List[Reservation]:
+        """관리자용 전체 예약 조회 - 상태 무관"""
+        loop = asyncio.get_event_loop()
+        
+        def sync_get_all():
+            # 관리자는 모든 상태의 예약을 볼 수 있음
+            return db.query(Reservation).order_by(Reservation.start_date.desc()).all()
+        
+        return await loop.run_in_executor(None, sync_get_all)
+    
+    @staticmethod
     async def get_reservations_by_month(db: Session, year: str, month: str) -> List[Reservation]:
         """특정 년/월 예약 조회 (1번 기능)"""
         loop = asyncio.get_event_loop()

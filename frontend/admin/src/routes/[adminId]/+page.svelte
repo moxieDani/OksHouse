@@ -39,7 +39,8 @@
 	// 달력 상태 - 8월부터 시작
 	let currentMonth = 7; // 8월 (0-based index)
 	let currentYear = 2025;
-	let existingReservations = [];
+	let existingReservations = []; // 현재 월의 예약 데이터
+	let allReservations = []; // 전체 예약 데이터 (통계용)
 	let isLoading = false; // 초기 로딩 상태
 	let isRefreshing = false; // 새로고침 상태
 
@@ -130,7 +131,8 @@
 		}
 		
 		// 실제 API를 통한 데이터 로드
-		loadMonthlyReservations();
+		loadAllReservations(); // 전체 예약 데이터 로드 (통계용)
+		loadMonthlyReservations(); // 현재 월 예약 데이터 로드
 		
 		// 초기 높이 조정
 		adjustHeightToLastCard();
@@ -144,6 +146,58 @@
 		};
 	});
 
+
+	/**
+	 * 전체 예약 데이터 로드 (통계용)
+	 */
+	async function loadAllReservations() {
+		try {
+			console.log('전체 예약 데이터 로드 시작...');
+			const reservations = await adminAPI.getAllReservations();
+			console.log('API 응답:', reservations);
+
+			if (!Array.isArray(reservations)) {
+				throw new Error('API 응답이 배열이 아닙니다.');
+			}
+			
+			// 예약 데이터를 Date 객체로 변환하고 confirmed_by를 관리자 ID로 매핑
+			const today = new Date();
+			today.setHours(0, 0, 0, 0); // 오늘 날짜의 시작 시점
+			
+			allReservations = reservations.map(reservation => {
+				const endDate = new Date(reservation.end_date + 'T00:00:00');
+				const isPastReservation = endDate < today;
+				
+				// 과거 예약인 경우 상태를 'expired'로 변경
+				const finalStatus = isPastReservation ? 'expired' : reservation.status;
+				
+				// confirmed_by 처리 - 백엔드에서 관리자 이름을 받아서 ID로 변환
+				let confirmedBy = null;
+				if (reservation.confirmed_by) {
+					confirmedBy = getAdminIdByName(reservation.confirmed_by);
+					if (!confirmedBy) {
+						// 변환에 실패한 경우, 원본 값을 그대로 사용 (혹시 이미 ID인 경우)
+						confirmedBy = reservation.confirmed_by;
+					}
+				}
+				
+				return {
+					...reservation,
+					startDate: new Date(reservation.start_date + 'T00:00:00'),
+					endDate,
+					status: finalStatus,
+					confirmed_by: confirmedBy,
+					confirmed_at: reservation.updated_at || reservation.created_at,
+					isPastReservation
+				};
+			});
+			
+			console.log('처리된 전체 예약 데이터:', allReservations.length, allReservations);
+		} catch (error) {
+			console.error('전체 예약 로드 실패:', error);
+			allReservations = [];
+		}
+	}
 
 	/**
 	 * 월별 예약 데이터 로드
@@ -264,19 +318,28 @@
 
 
 	/**
-	 * 카테고리별 예약 그룹화
+	 * 카테고리별 예약 그룹화 (전체 데이터 기준)
 	 */
-	$: groupedReservations = groupReservationsByCategory(existingReservations, adminId);
+	$: groupedReservations = groupReservationsByCategory(allReservations, adminId);
 
 	/**
-	 * 필터링된 예약 목록
+	 * 필터링된 예약 목록 (전체 데이터 기준)
 	 */
-	$: filteredReservations = filterReservations(existingReservations, selectedFilter, groupedReservations);
+	$: filteredReservations = filterReservations(allReservations, selectedFilter, groupedReservations);
 
 	/**
-	 * 필터링된 예약 목록이 변경될 때마다 높이 재조정
+	 * 체크인 날짜 기준 오름차순 정렬된 예약 목록
 	 */
-	$: if (filteredReservations && typeof window !== 'undefined') {
+	$: sortedReservations = filteredReservations.sort((a, b) => {
+		const dateA = new Date(a.startDate || a.start_date);
+		const dateB = new Date(b.startDate || b.start_date);
+		return dateA.getTime() - dateB.getTime();
+	});
+
+	/**
+	 * 정렬된 예약 목록이 변경될 때마다 높이 재조정
+	 */
+	$: if (sortedReservations && typeof window !== 'undefined') {
 		// 데이터 변경 시 즉시 높이 조정
 		setTimeout(() => {
 			adjustHeightToLastCard();
@@ -342,11 +405,19 @@
 				updated_at: updatedReservation.updated_at
 			};
 			
-			// 목록에서 해당 예약을 찾아 업데이트 (Svelte 반응성을 위해 배열 재할당)
-			const index = existingReservations.findIndex(r => r.id === selectedDetailReservation.id);
-			if (index !== -1) {
+			// 전체 예약 목록에서 해당 예약을 찾아 업데이트 (Svelte 반응성을 위해 배열 재할당)
+			const allIndex = allReservations.findIndex(r => r.id === selectedDetailReservation.id);
+			if (allIndex !== -1) {
+				allReservations = allReservations.map((reservation, i) => 
+					i === allIndex ? updatedReservationData : reservation
+				);
+			}
+			
+			// 현재 월 예약 목록에서도 업데이트 (달력 표시용)
+			const monthIndex = existingReservations.findIndex(r => r.id === selectedDetailReservation.id);
+			if (monthIndex !== -1) {
 				existingReservations = existingReservations.map((reservation, i) => 
-					i === index ? updatedReservationData : reservation
+					i === monthIndex ? updatedReservationData : reservation
 				);
 			}
 			
@@ -401,6 +472,7 @@
 	 */
 	async function refreshCalendar() {
 		try {
+			await loadAllReservations(); // 전체 예약 데이터도 새로고침
 			await loadMonthlyReservations();
 		} catch (error) {
 			console.error('달력 새로고침 실패:', error);
@@ -415,6 +487,7 @@
 		
 		isRefreshing = true;
 		try {
+			await loadAllReservations(); // 전체 예약 데이터도 새로고침
 			await loadMonthlyReservations();
 		} catch (error) {
 			console.error('새로고침 실패:', error);
@@ -434,7 +507,7 @@
 	<span class="emoji-normal s-xe9m8xNPUuGQ">🗓️</span> 예약현황
 </h1>
 
-<div class="step {filteredReservations.length === 0 ? 'no-reservations' : ''}">
+<div class="step {sortedReservations.length === 0 ? 'no-reservations' : ''}">
 	<div class="calendar-section">
 	<!-- 날짜 범위 및 통계 표시 -->
 	<div class="date-range-display">
@@ -444,7 +517,7 @@
 				on:click={() => handleFilterChange('전체')}
 				aria-label="전체 예약 보기"
 			>
-				<span class="summary-number">{existingReservations.length}</span>
+				<span class="summary-number">{allReservations.length}</span>
 				<span class="summary-label">전체</span>
 			</button>
 			<button 
@@ -452,7 +525,7 @@
 				on:click={() => handleFilterChange('확정')}
 				aria-label="확정된 예약 보기"
 			>
-				<span class="summary-number confirmed">{existingReservations.filter(r => r.status === 'confirmed').length}</span>
+				<span class="summary-number confirmed">{allReservations.filter(r => r.status === 'confirmed').length}</span>
 				<span class="summary-label">확정</span>
 			</button>
 			<button 
@@ -460,7 +533,7 @@
 				on:click={() => handleFilterChange('대기')}
 				aria-label="대기 중인 예약 보기"
 			>
-				<span class="summary-number pending">{existingReservations.filter(r => r.status === 'pending').length}</span>
+				<span class="summary-number pending">{allReservations.filter(r => r.status === 'pending').length}</span>
 				<span class="summary-label">대기</span>
 			</button>
 			<button 
@@ -468,7 +541,7 @@
 				on:click={() => handleFilterChange('거절')}
 				aria-label="거절된 예약 보기"
 			>
-				<span class="summary-number cancelled">{existingReservations.filter(r => r.status === 'cancelled').length}</span>
+				<span class="summary-number cancelled">{allReservations.filter(r => r.status === 'cancelled').length}</span>
 				<span class="summary-label">거절</span>
 			</button>
 			<button 
@@ -476,7 +549,7 @@
 				on:click={() => handleFilterChange('이용종료')}
 				aria-label="이용종료된 예약 보기"
 			>
-				<span class="summary-number expired">{existingReservations.filter(r => r.status === 'expired').length}</span>
+				<span class="summary-number expired">{allReservations.filter(r => r.status === 'expired').length}</span>
 				<span class="summary-label">이용종료</span>
 			</button>
 			<button 
@@ -484,7 +557,7 @@
 				on:click={() => handleFilterChange('내 결정')}
 				aria-label="내 결정 예약 보기"
 			>
-				<span class="summary-number friend admin-{adminId}">{existingReservations.filter(r => r.confirmed_by === adminId).length}</span>
+				<span class="summary-number friend admin-{adminId}">{allReservations.filter(r => r.confirmed_by === adminId).length}</span>
 				<span class="summary-label">내 결정</span>
 			</button>
 		</div>
@@ -516,9 +589,9 @@
 	</div>
 
 	<!-- 예약자 정보 상세 표시 영역 -->
-	{#if filteredReservations.length > 0}
+	{#if sortedReservations.length > 0}
 		<div class="reservations-list">
-			{#each filteredReservations as reservation}
+			{#each sortedReservations as reservation}
 				<div 
 					class="reservation-card clickable {getStatusColor(reservation.status)}"
 					on:click={() => openDetailModal(reservation)}

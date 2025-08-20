@@ -9,6 +9,12 @@ from app.schemas.reservation import AdminStatusUpdate, ReservationResponse
 router = APIRouter()
 
 
+@router.get("/", response_model=List[ReservationResponse])
+async def get_all_reservations_admin(db: Session = Depends(get_async_db)):
+    """관리자용 전체 예약 조회 - 관리자 전용"""
+    return await ReservationService.get_all_reservations_admin(db)
+
+
 @router.get("/monthly/{year}/{month}", response_model=List[ReservationResponse])
 async def get_all_reservations_by_month_admin(
     year: str,
