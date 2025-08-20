@@ -5,6 +5,7 @@
 	import AdminCalendar from '$lib/components/AdminCalendar.svelte';
 	import FeedbackManager from '../../../../shared/components/FeedbackManager.svelte';
 	import { checkAuthStatus, logout, isAuthenticated, currentAdmin as authCurrentAdmin } from '$lib/stores/auth.js';
+	import { initializeFCM, requestFCMToken, setupFCMListener, isFCMSupported, showCustomNotification } from '$lib/services/firebase.js';
 	import './admin-page.css';
 	
 	// SvelteKit이 자동으로 전달하는 params prop을 받아서 경고 제거
@@ -139,6 +140,11 @@
 		
 		// 윈도우 리사이즈 시 높이 재조정
 		window.addEventListener('resize', adjustHeightToLastCard);
+		
+		// FCM 초기화 (인증 완료 후)
+		if ($isAuthenticated) {
+			initializeFCMNotifications();
+		}
 		
 		// 정리
 		return () => {
@@ -521,6 +527,60 @@
 		} catch (error) {
 			console.error('로그아웃 실패:', error);
 			showErrorFeedback(feedbackManager, '로그아웃에 실패했습니다.', error.message);
+		}
+	}
+
+	/**
+	 * FCM 초기화 및 토큰 등록
+	 */
+	async function initializeFCMNotifications() {
+		if (!isFCMSupported()) {
+			console.log('FCM이 지원되지 않는 브라우저입니다');
+			return;
+		}
+
+		try {
+			// FCM 초기화
+			await initializeFCM();
+
+			// FCM 토큰 요청
+			const fcmToken = await requestFCMToken();
+			
+			if (fcmToken) {
+				// 서버에 토큰 등록
+				await adminAPI.registerFCMToken(fcmToken);
+				console.log('FCM 토큰이 서버에 성공적으로 등록되었습니다:', fcmToken);
+
+				// 포그라운드 메시지 리스너 설정
+				await setupFCMListener((payload) => {
+					console.log('푸시 알림 수신:', payload);
+
+					// 포그라운드 상태에서도 알림 표시
+					if (payload.notification) {
+						showCustomNotification(payload.notification, payload.data);
+					}
+					
+					// 예약 관련 알림인 경우 데이터 새로고침
+					if (payload.data?.type === 'reservation') {
+						handleRefresh();
+					}
+				});
+			}
+		} catch (error) {
+			console.error('FCM 초기화 실패:', error);
+			if (error.message.includes('알림 권한이 거부되었습니다')) {
+				showErrorFeedback(
+					feedbackManager,
+					'알림 권한 필요',
+					'푸시 알림을 받으려면 브라우저 설정에서 알림 권한을 허용해주세요. 시크릿 모드에서는 알림 기능이 작동하지 않을 수 있습니다.'
+				);
+			} else {
+				showErrorFeedback(
+					feedbackManager,
+					'FCM 초기화 실패',
+					'푸시 알림 서비스 초기화에 실패했습니다. 페이지를 새로고침하거나 다시 시도해주세요.'
+				);
+			}
 		}
 	}
 </script>

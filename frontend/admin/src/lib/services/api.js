@@ -91,6 +91,35 @@ export const adminAPI = {
 				'Authorization': `Bearer ${accessToken}`
 			} : {}
 		});
+	},
+
+	/**
+	 * FCM 토큰 등록
+	 */
+	async registerFCMToken(fcmToken) {
+		return await apiRequest('/admin/fcm/register-token', {
+			method: 'POST',
+			body: JSON.stringify({ fcm_token: fcmToken })
+		});
+	},
+
+	/**
+	 * FCM 토큰 해제
+	 */
+	async unregisterFCMToken(fcmToken) {
+		return await apiRequest('/admin/fcm/unregister-token', {
+			method: 'DELETE',
+			body: JSON.stringify({ fcm_token: fcmToken })
+		});
+	},
+
+	/**
+	 * FCM 테스트 알림 전송
+	 */
+	async testFCMNotification() {
+		return await apiRequest('/admin/fcm/test-notification', {
+			method: 'POST'
+		});
 	}
 };
 

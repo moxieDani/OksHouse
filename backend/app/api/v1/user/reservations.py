@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
+import asyncio
 
 from app.db.database import get_async_db
 from app.services.reservation_service import ReservationService
+from app.services.fcm_service import FCMService
 from app.schemas.reservation import (
     ReservationCreate, ReservationResponse,
     ReservationDelete, UserReservationsRequest, ReservationUpdate
@@ -43,7 +45,24 @@ async def create_reservation_with_password(
     db: Session = Depends(get_async_db)
 ):
     """비밀번호를 포함한 예약 생성 (2번 기능) - 사용자용"""
-    return await ReservationService.add_reservation_with_password(db=db, reservation=reservation)
+    # 예약 생성
+    new_reservation = await ReservationService.add_reservation_with_password(db=db, reservation=reservation)
+    
+    # FCM 알림 전송 (백그라운드에서 실행)
+    asyncio.create_task(
+        FCMService.send_reservation_notification(
+            reservation_data={
+                "id": new_reservation.id,
+                "name": new_reservation.name,
+                "start_date": new_reservation.start_date.strftime("%Y-%m-%d"),
+                "end_date": new_reservation.end_date.strftime("%Y-%m-%d"),
+                "duration": new_reservation.duration
+            },
+            notification_type="new"
+        )
+    )
+    
+    return new_reservation
 
 
 @router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
@@ -101,5 +120,19 @@ async def update_reservation(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="예약을 찾을 수 없거나 권한이 없습니다."
         )
+    
+    # FCM 알림 전송 (백그라운드에서 실행)
+    asyncio.create_task(
+        FCMService.send_reservation_notification(
+            reservation_data={
+                "id": updated_reservation.id,
+                "name": updated_reservation.name,
+                "start_date": updated_reservation.start_date.strftime("%Y-%m-%d"),
+                "end_date": updated_reservation.end_date.strftime("%Y-%m-%d"),
+                "duration": updated_reservation.duration
+            },
+            notification_type="update"
+        )
+    )
     
     return updated_reservation

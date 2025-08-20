@@ -202,8 +202,8 @@ async function baseLogout() {
 	// 관리자 페이지 메인으로 리다이렉트
 	if (typeof window !== 'undefined') {
 		const currentPath = window.location.pathname;
-		if (currentPath.includes('/manage') || currentPath.includes('/admin')) {
-			window.location.href = '/manage';
+		if (currentPath.includes('/') || currentPath.includes('/admin')) {
+			window.location.href = '/';
 		}
 	}
 }

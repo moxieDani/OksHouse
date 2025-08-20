@@ -71,6 +71,9 @@ class Settings(BaseSettings):
     enable_metrics: bool = False
     enable_health_check: bool = True
     
+    # FCM settings
+    fcm_service_account_path: str | None = None
+    
     class Config:
         env_file = ".env"
         case_sensitive = False
