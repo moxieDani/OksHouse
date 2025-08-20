@@ -70,12 +70,12 @@ export async function apiRequest(endpoint, options = {}) {
 	}
 	
 	const defaultOptions = {
+		credentials: 'include',  // Include cookies with requests
+		...options,
 		headers: {
 			'Content-Type': 'application/json',
 			...options.headers
-		},
-		credentials: 'include',  // Include cookies with requests
-		...options
+		}
 	};
 
 	try {
@@ -98,7 +98,24 @@ export async function apiRequest(endpoint, options = {}) {
 		
 		if (!response.ok) {
 			const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-			throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+			
+			// Handle different error response formats
+			let errorMessage;
+			if (errorData.detail) {
+				// FastAPI standard format
+				errorMessage = typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail);
+			} else if (errorData.message) {
+				// Alternative message format
+				errorMessage = errorData.message;
+			} else if (typeof errorData === 'string') {
+				// Direct string error
+				errorMessage = errorData;
+			} else {
+				// Fallback with status
+				errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+			}
+			
+			throw new Error(errorMessage);
 		}
 		
 		return await response.json();
