@@ -4,7 +4,7 @@
  */
 
 /**
- * 예약 기간에 해당하는 달력 생성
+ * 예약 기간에 해당하는 달력 생성 (이전달/다음달 날짜 포함)
  * @param {Object} reservation - 예약 객체
  * @returns {Array} 달력 데이터 배열
  */
@@ -13,26 +13,39 @@ export function generateReservationCalendar(reservation) {
 	const end = new Date(reservation.endDate);
 	const calendar = [];
 	
-	// 시작 날짜의 월 첫째 날부터 계산
-	const firstDay = new Date(start.getFullYear(), start.getMonth(), 1);
-	const lastDay = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+	// 예약 시작일의 월을 기준으로 달력 생성
+	const currentYear = start.getFullYear();
+	const currentMonth = start.getMonth();
 	
-	// 첫 주의 빈 공간 채우기
+	// 현재 월의 첫째 날과 마지막 날
+	const firstDay = new Date(currentYear, currentMonth, 1);
+	const lastDay = new Date(currentYear, currentMonth + 1, 0);
+	
+	// 달력 첫 주의 시작 날짜 (이전 달 포함)
 	const startDayOfWeek = firstDay.getDay();
-	for (let i = 0; i < startDayOfWeek; i++) {
-		calendar.push({ 
-			date: null, 
-			isReserved: false, 
-			isToday: false, 
-			reservationPosition: null 
-		});
-	}
+	const calendarStart = new Date(firstDay);
+	calendarStart.setDate(firstDay.getDate() - startDayOfWeek);
 	
-	// 달력 날짜 채우기
-	for (let date = 1; date <= lastDay.getDate(); date++) {
-		const currentDate = new Date(start.getFullYear(), start.getMonth(), date);
+	// 달력 마지막 주의 끝 날짜 (다음 달 포함)
+	const endDayOfWeek = lastDay.getDay();
+	const calendarEnd = new Date(lastDay);
+	calendarEnd.setDate(lastDay.getDate() + (6 - endDayOfWeek));
+	
+	// 달력 전체 기간 생성 (42일 = 6주)
+	const totalDays = 42;
+	for (let i = 0; i < totalDays; i++) {
+		const currentDate = new Date(calendarStart);
+		currentDate.setDate(calendarStart.getDate() + i);
+		
+		const isCurrentMonth = currentDate.getMonth() === currentMonth && currentDate.getFullYear() === currentYear;
 		const isReserved = currentDate >= start && currentDate <= end;
 		const isToday = currentDate.toDateString() === new Date().toDateString();
+		
+		// 이전달/다음달 구분 (년도 경계도 고려)
+		const isPrevMonth = (currentDate.getFullYear() < currentYear) || 
+			(currentDate.getFullYear() === currentYear && currentDate.getMonth() < currentMonth);
+		const isNextMonth = (currentDate.getFullYear() > currentYear) || 
+			(currentDate.getFullYear() === currentYear && currentDate.getMonth() > currentMonth);
 		
 		// 예약 범위 내에서의 위치 결정
 		let reservationPosition = null;
@@ -53,10 +66,14 @@ export function generateReservationCalendar(reservation) {
 		}
 		
 		calendar.push({
-			date: date,
+			date: currentDate.getDate(),
+			fullDate: new Date(currentDate),
+			isCurrentMonth: isCurrentMonth,
 			isReserved: isReserved,
 			isToday: isToday,
-			reservationPosition: reservationPosition
+			reservationPosition: reservationPosition,
+			isPrevMonth: isPrevMonth,
+			isNextMonth: isNextMonth
 		});
 	}
 	

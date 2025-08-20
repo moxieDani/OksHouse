@@ -1878,3 +1878,103 @@ h1 {
 		text-align: left;
 	}
 }
+
+/* 예약 상세 모달 달력의 이전달/다음달 날짜 스타일 */
+.calendar-day.other-month {
+	color: var(--neutral-400);
+	background: var(--neutral-50);
+}
+
+.calendar-day.prev-month,
+.calendar-day.next-month {
+	color: var(--neutral-400);
+	background: var(--neutral-50);
+}
+
+/* 이전달/다음달 날짜가 예약된 경우에도 하이라이팅 */
+.calendar-day.other-month.reserved-confirmed,
+.calendar-day.prev-month.reserved-confirmed,
+.calendar-day.next-month.reserved-confirmed {
+	background: #10b981 !important;
+	color: white !important;
+	font-weight: 600 !important;
+	opacity: 0.8;
+}
+
+.calendar-day.other-month.reserved-pending,
+.calendar-day.prev-month.reserved-pending,
+.calendar-day.next-month.reserved-pending {
+	background: #f59e0b !important;
+	color: white !important;
+	font-weight: 600 !important;
+	opacity: 0.8;
+}
+
+.calendar-day.other-month.reserved-cancelled,
+.calendar-day.prev-month.reserved-cancelled,
+.calendar-day.next-month.reserved-cancelled {
+	background: #ef4444 !important;
+	color: white !important;
+	font-weight: 600 !important;
+	opacity: 0.8;
+}
+
+/* 예약 위치별 스타일 (이전달/다음달 포함) */
+.calendar-day.position-start {
+	border-top-left-radius: var(--radius-md);
+	border-bottom-left-radius: var(--radius-md);
+}
+
+.calendar-day.position-end {
+	border-top-right-radius: var(--radius-md);
+	border-bottom-right-radius: var(--radius-md);
+}
+
+.calendar-day.position-single {
+	border-radius: var(--radius-md);
+}
+
+.calendar-day.position-middle {
+	border-radius: 0;
+}
+
+/* 더 구체적인 선택자로 다른 월 예약 하이라이팅 강제 적용 */
+.mini-calendar .calendar-day.other-month.reserved-confirmed,
+.mini-calendar .calendar-day.prev-month.reserved-confirmed,
+.mini-calendar .calendar-day.next-month.reserved-confirmed {
+	background: #10b981 !important;
+	color: white !important;
+}
+
+.mini-calendar .calendar-day.other-month.reserved-pending,
+.mini-calendar .calendar-day.prev-month.reserved-pending,
+.mini-calendar .calendar-day.next-month.reserved-pending {
+	background: #f59e0b !important;
+	color: white !important;
+}
+
+.mini-calendar .calendar-day.other-month.reserved-cancelled,
+.mini-calendar .calendar-day.prev-month.reserved-cancelled,
+.mini-calendar .calendar-day.next-month.reserved-cancelled {
+	background: #ef4444 !important;
+	color: white !important;
+}
+
+/* 예약 상태별 기본 색상도 확실히 적용 */
+.calendar-day.reserved-confirmed {
+	background: #10b981 !important;
+	color: white !important;
+	font-weight: 600;
+}
+
+.calendar-day.reserved-pending {
+	background: #f59e0b !important;
+	color: white !important;
+	font-weight: 600;
+}
+
+.calendar-day.reserved-cancelled {
+	background: #ef4444 !important;
+	color: white !important;
+	font-weight: 600;
+}

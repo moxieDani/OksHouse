@@ -684,8 +684,14 @@
 							</div>
 							<div class="calendar-days">
 								{#each calendarDays as day}
-									<div class="calendar-day {day.isReserved ? `reserved-${selectedDetailReservation.status}` : ''} {day.isToday ? 'today' : ''} {day.reservationPosition ? `position-${day.reservationPosition}` : ''}">
-										{day.date || ''}
+									<div class="calendar-day 
+										{day.isReserved ? `reserved-${selectedDetailReservation.status}` : ''} 
+										{day.isToday ? 'today' : ''} 
+										{day.reservationPosition ? `position-${day.reservationPosition}` : ''}
+										{!day.isCurrentMonth ? 'other-month' : ''}
+										{day.isPrevMonth ? 'prev-month' : ''}
+										{day.isNextMonth ? 'next-month' : ''}">
+										{day.date}
 									</div>
 								{/each}
 							</div>
