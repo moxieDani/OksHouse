@@ -1978,3 +1978,49 @@ h1 {
 	color: white !important;
 	font-weight: 600;
 }
+
+/* 관리자 페이지 헤더 및 로그아웃 버튼 스타일 */
+.admin-page-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	position: relative;
+	margin-bottom: 20px;
+}
+
+.admin-logout-button {
+	position: absolute;
+	top: 0;
+	right: 0;
+	background: none;
+	border: none;
+	color: #9ca3af;
+	font-size: 11px;
+	font-weight: 400;
+	cursor: pointer;
+	padding: 4px 8px;
+	border-radius: 4px;
+	transition: all 0.2s ease;
+	opacity: 0.6;
+	letter-spacing: 0.5px;
+}
+
+.admin-logout-button:hover {
+	opacity: 1;
+	color: #6b7280;
+	background-color: rgba(107, 114, 128, 0.1);
+	transform: translateY(-1px);
+}
+
+.admin-logout-button:active {
+	transform: translateY(0);
+}
+
+/* 모바일에서는 조금 더 크게 */
+@media (max-width: 768px) {
+	.admin-logout-button {
+		font-size: 12px;
+		padding: 6px 10px;
+		top: -5px;
+	}
+}

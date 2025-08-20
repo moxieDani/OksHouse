@@ -152,9 +152,7 @@
 	 */
 	async function loadAllReservations() {
 		try {
-			console.log('전체 예약 데이터 로드 시작...');
 			const reservations = await adminAPI.getAllReservations();
-			console.log('API 응답:', reservations);
 
 			if (!Array.isArray(reservations)) {
 				throw new Error('API 응답이 배열이 아닙니다.');
@@ -511,6 +509,20 @@
 			isRefreshing = false;
 		}
 	}
+
+	/**
+	 * 로그아웃 처리
+	 */
+	async function handleLogout() {
+		try {
+			await logout();
+			// 메인 관리자 페이지로 리다이렉트
+			goto('/');
+		} catch (error) {
+			console.error('로그아웃 실패:', error);
+			showErrorFeedback(feedbackManager, '로그아웃에 실패했습니다.', error.message);
+		}
+	}
 </script>
 
 <svelte:head>
@@ -518,6 +530,11 @@
 </svelte:head>
 
 <!-- 메인 콘텐츠 -->
+<div class="admin-page-header">
+	<button class="admin-logout-button" on:click={handleLogout} aria-label="로그아웃">
+		Logout
+	</button>
+</div>
 <h1 class="page-title" style="margin-top: 27.5px; font-size: var(--text-3xl);">
 	<span class="emoji-normal s-xe9m8xNPUuGQ">🗓️</span> 예약현황
 </h1>
