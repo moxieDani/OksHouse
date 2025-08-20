@@ -77,27 +77,28 @@ async def refresh_access_token(
         
         token_response, new_refresh_token = await AuthService.refresh_access_token(db, refresh_token)
         
-        # 새로운 리프레시 토큰으로 쿠키 갱신
-        expires = datetime.now(timezone.utc) + timedelta(seconds=REFRESH_TOKEN_EXPIRE_SECONDS)
-        
-        # 직접 Set-Cookie 헤더 설정
-        expires_str = expires.strftime("%a, %d %b %Y %H:%M:%S GMT")
-        cookie_header = (
-            f"admin_refresh_token={new_refresh_token}; "
-            f"Max-Age={REFRESH_TOKEN_EXPIRE_SECONDS}; "
-            f"Expires={expires_str}; "
-            f"Path=/; "
-            f"HttpOnly; "
-            f"SameSite=Lax"
-        )
-        
-        # 다른 Set-Cookie 헤더와 충돌하지 않도록 append 방식 사용
-        if "Set-Cookie" in response.headers:
-            # 기존 Set-Cookie가 있으면 추가
-            existing_cookies = response.headers["Set-Cookie"]
-            response.headers["Set-Cookie"] = f"{existing_cookies}, {cookie_header}"
-        else:
-            response.headers["Set-Cookie"] = cookie_header
+        # 리프레시 토큰이 갱신된 경우에만 새 쿠키 설정
+        if token_response.refresh_token_renewed:
+            expires = datetime.now(timezone.utc) + timedelta(seconds=REFRESH_TOKEN_EXPIRE_SECONDS)
+            
+            # 직접 Set-Cookie 헤더 설정
+            expires_str = expires.strftime("%a, %d %b %Y %H:%M:%S GMT")
+            cookie_header = (
+                f"admin_refresh_token={new_refresh_token}; "
+                f"Max-Age={REFRESH_TOKEN_EXPIRE_SECONDS}; "
+                f"Expires={expires_str}; "
+                f"Path=/; "
+                f"HttpOnly; "
+                f"SameSite=Lax"
+            )
+            
+            # 다른 Set-Cookie 헤더와 충돌하지 않도록 append 방식 사용
+            if "Set-Cookie" in response.headers:
+                # 기존 Set-Cookie가 있으면 추가
+                existing_cookies = response.headers["Set-Cookie"]
+                response.headers["Set-Cookie"] = f"{existing_cookies}, {cookie_header}"
+            else:
+                response.headers["Set-Cookie"] = cookie_header
         
         return token_response
         

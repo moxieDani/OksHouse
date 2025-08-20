@@ -13,6 +13,8 @@ class TokenResponse(BaseModel):
     token_type: str = Field(default="bearer", description="토큰 타입")
     admin_id: int = Field(..., description="관리자 ID")
     admin_name: str = Field(..., description="관리자 이름")
+    refresh_token_renewed: Optional[bool] = Field(None, description="리프레시 토큰이 갱신되었는지 여부")
+    refresh_token_expires_in: Optional[int] = Field(None, description="리프레시 토큰 만료까지 남은 시간(초)")
 
 
 class AdminInfo(BaseModel):

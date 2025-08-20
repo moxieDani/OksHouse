@@ -47,10 +47,15 @@ class AuthService:
         
         result = await loop.run_in_executor(None, sync_verify_phone)
         
+        # 리프레시 토큰 만료까지 남은 시간 (새로 생성된 토큰이므로 전체 기간)
+        from app.core.security import REFRESH_TOKEN_EXPIRE_SECONDS
+        
         return TokenResponse(
             access_token=result["access_token"],
             admin_id=result["admin"].admin_id,
-            admin_name=result["admin"].name
+            admin_name=result["admin"].name,
+            refresh_token_renewed=True,
+            refresh_token_expires_in=REFRESH_TOKEN_EXPIRE_SECONDS
         ), result["refresh_token"]
 
     @staticmethod
@@ -59,6 +64,9 @@ class AuthService:
         loop = asyncio.get_event_loop()
         
         def sync_refresh_token():
+            import time
+            from app.core.security import REFRESH_TOKEN_EXPIRE_SECONDS
+            
             # 리프레시 토큰 검증
             token_data = verify_token(refresh_token)
             
@@ -77,15 +85,32 @@ class AuthService:
             if not admin:
                 raise HTTPException(status_code=401, detail="존재하지 않는 관리자입니다")
             
-            # 새 토큰 생성
+            # 리프레시 토큰 만료 시간 체크
+            exp_timestamp = token_data.get("exp", 0)
+            current_timestamp = int(time.time())
+            time_until_expiration = exp_timestamp - current_timestamp
+            
+            # 24시간(86400초) 내에 만료되는 경우 새 리프레시 토큰 발급
+            should_renew_refresh = time_until_expiration <= (24 * 60 * 60)
+            
+            # 새 액세스 토큰 생성 (항상)
             new_access_token = create_access_token(admin_id, admin_name)
-            new_refresh_token = create_refresh_token(admin_id, admin_name)
+            
+            # 조건에 따라 새 리프레시 토큰 생성
+            if should_renew_refresh:
+                new_refresh_token = create_refresh_token(admin_id, admin_name)
+                refresh_token_expires_in = REFRESH_TOKEN_EXPIRE_SECONDS
+            else:
+                new_refresh_token = refresh_token  # 기존 리프레시 토큰 유지
+                refresh_token_expires_in = time_until_expiration
             
             return {
                 "access_token": new_access_token,
                 "refresh_token": new_refresh_token,
                 "admin_id": admin_id,
-                "admin_name": admin_name
+                "admin_name": admin_name,
+                "refresh_token_renewed": should_renew_refresh,
+                "refresh_token_expires_in": refresh_token_expires_in
             }
         
         result = await loop.run_in_executor(None, sync_refresh_token)
@@ -93,7 +118,9 @@ class AuthService:
         return TokenResponse(
             access_token=result["access_token"],
             admin_id=result["admin_id"], 
-            admin_name=result["admin_name"]
+            admin_name=result["admin_name"],
+            refresh_token_renewed=result["refresh_token_renewed"],
+            refresh_token_expires_in=result["refresh_token_expires_in"]
         ), result["refresh_token"]
 
     @staticmethod
