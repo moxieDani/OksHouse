@@ -14,8 +14,8 @@
 		goto('/');
 	}
 	
-	// 현재 페이지가 홈 페이지인지 확인 (홈 페이지에서는 홈 버튼 숨김)
-	$: isHomePage = $page.url.pathname === '/';
+	// 현재 페이지가 홈 페이지이거나 로그인 페이지인지 확인 (홈 버튼 숨김)
+	$: isHomePage = $page.url.pathname === '/' || $page.url.pathname === '/login';
 	
 	// 현재 페이지에 따른 홈 버튼 텍스트 결정
 	$: homeButtonText = (() => {

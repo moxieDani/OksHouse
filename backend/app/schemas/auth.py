@@ -27,3 +27,14 @@ class AdminInfo(BaseModel):
 class RefreshTokenRequest(BaseModel):
     """리프레시 토큰 요청 (선택적)"""
     refresh_token: Optional[str] = Field(None, description="리프레시 토큰 (쿠키에서 자동 추출)")
+
+
+class UserLoginRequest(BaseModel):
+    """사용자 로그인 요청"""
+    password: str = Field(..., description="사용자 로그인 비밀번호", example="7332552")
+
+
+class UserLoginResponse(BaseModel):
+    """사용자 로그인 응답"""
+    success: bool = Field(..., description="로그인 성공 여부")
+    message: str = Field(..., description="응답 메시지")

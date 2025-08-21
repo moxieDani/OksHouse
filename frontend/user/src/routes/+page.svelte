@@ -1,13 +1,25 @@
 <script>
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
 	import PrivacyConsent from '$lib/components/PrivacyConsent.svelte';
+	import { isAuthenticated, checkAuth, logout } from '$lib/stores/auth.js';
 	
 	// SvelteKit automatically provides these props - declare them to avoid warnings
 	export let data = {};
 	export let params = {};
 
 	let showPrivacyModal = false;
+
+	onMount(() => {
+		// 인증 상태 확인
+		if (browser) {
+			const authStatus = checkAuth();
+			if (!authStatus) {
+				goto('/login');
+			}
+		}
+	});
 
 	function handleReservationClick() {
 		showPrivacyModal = true;
@@ -21,6 +33,11 @@
 	function handlePrivacyDecline() {
 		showPrivacyModal = false;
 	}
+
+	function handleLogout() {
+		logout();
+		goto('/login');
+	}
 </script>
 
 <svelte:head>
@@ -30,8 +47,16 @@
 <div class="main-container">
 	<div class="content-wrapper">
 		<header class="page-header">
-			<h1><span class="emoji-normal">🏡</span> Ok's 러브하우스</h1>
-			<h2>장사 별장 예약시스템</h2>
+			<div class="header-content">
+				<div class="title-section">
+					<h1><span class="emoji-normal">🏡</span> Ok's 러브하우스</h1>
+					<h2>장사 별장 예약시스템</h2>
+				</div>
+				<button class="logout-btn" on:click={handleLogout} title="로그아웃">
+					<span aria-hidden="true">🚪</span>
+					<span class="logout-text">로그아웃</span>
+				</button>
+			</div>
 		</header>
 
 		<nav class="menu" role="navigation" aria-label="예약 메뉴">
@@ -92,8 +117,23 @@
 	}
 
 	.page-header {
-		text-align: center;
 		margin-bottom: var(--space-10);
+		width: 100%;
+	}
+
+	.header-content {
+		position: relative;
+		display: flex;
+		justify-content: center;
+		align-items: flex-start;
+		width: 100%;
+		max-width: 400px;
+		margin: 0 auto;
+	}
+
+	.title-section {
+		text-align: center;
+		flex: 1;
 	}
 
 	.page-header h2 {
@@ -101,6 +141,43 @@
 		color: var(--neutral-600);
 		font-weight: 400;
 		margin-top: var(--space-4);
+	}
+
+	.logout-btn {
+		position: fixed;
+		top: var(--space-4);
+		right: var(--space-4);
+		background: rgba(255, 255, 255, 0.9);
+		border: 1px solid var(--neutral-200);
+		cursor: pointer;
+		padding: var(--space-2);
+		border-radius: var(--radius-md);
+		transition: var(--transition-colors);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--space-1);
+		color: var(--neutral-600);
+		font-size: var(--text-xs);
+		min-width: 60px;
+		box-shadow: var(--shadow-sm);
+		z-index: 1000;
+	}
+
+	.logout-btn:hover {
+		background: white;
+		color: var(--neutral-800);
+		border-color: var(--neutral-300);
+		box-shadow: var(--shadow-md);
+	}
+
+	.logout-btn span:first-child {
+		font-size: 1.5rem;
+	}
+
+	.logout-text {
+		font-size: var(--text-xs);
+		font-weight: 500;
 	}
 
 	.menu {
@@ -192,6 +269,25 @@
 	@media (max-width: 640px) {
 		.content-wrapper {
 			padding: var(--space-4);
+		}
+
+		.header-content {
+			max-width: 100%;
+		}
+
+		.logout-btn {
+			min-width: 50px;
+			top: var(--space-3);
+			right: var(--space-3);
+			padding: var(--space-1);
+		}
+
+		.logout-btn span:first-child {
+			font-size: 1.2rem;
+		}
+
+		.logout-text {
+			font-size: 0.7rem;
 		}
 
 		.menu {

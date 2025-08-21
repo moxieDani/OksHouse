@@ -25,10 +25,17 @@ class Settings(BaseSettings):
     def allowed_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.allowed_origins.split(",")]
     
+    @property
+    def login_keys_list(self) -> list[str]:
+        if not self.login_keys:
+            return []
+        return [key.strip() for key in self.login_keys.split("|")]
+    
     # Security settings
     secret_key: str = "your-secret-key-here"
     aes_key: Optional[str] = None
     aes_iv: Optional[str] = None
+    login_keys: Optional[str] = None
     https_only: bool = False
     secure_cookies: bool = False
     

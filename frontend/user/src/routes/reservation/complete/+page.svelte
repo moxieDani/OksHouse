@@ -2,6 +2,8 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
+	import { checkAuth } from '$lib/stores/auth.js';
 	import { formatKoreanDate } from '../../../../../shared/utils/dateUtils.js';
 
 	// 예약 정보 상태
@@ -9,6 +11,15 @@
 	let isModification = false;
 
 	onMount(() => {
+		// 인증 상태 확인
+		if (browser) {
+			const authStatus = checkAuth();
+			if (!authStatus) {
+				goto('/login');
+				return;
+			}
+		}
+
 		// URL에서 예약 정보를 가져옵니다
 		const urlParams = new URLSearchParams(window.location.search);
 		const dataParam = urlParams.get('data');

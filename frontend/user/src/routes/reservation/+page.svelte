@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { browser } from '$app/environment';
+	import { checkAuth } from '$lib/stores/auth.js';
 	
 	// SvelteKit automatically provides these props - declare them to avoid warnings
 	export let data = {};
@@ -97,6 +98,15 @@
 	 * - 예약 모드 (새로운 예약/변경) 설정
 	 */
 	onMount(() => {
+		// 인증 상태 확인
+		if (browser) {
+			const authStatus = checkAuth();
+			if (!authStatus) {
+				goto('/login');
+				return;
+			}
+		}
+
 		// Always initialize properly regardless of browser state
 		const storedModificationData = browser ? sessionStorage.getItem('modificationData') : null;
 		

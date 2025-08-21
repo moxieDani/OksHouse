@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
+	import { checkAuth } from '$lib/stores/auth.js';
 	
 	// SvelteKit automatically provides these props - declare them to avoid warnings
 	export let data = {};
@@ -57,6 +58,15 @@
 
 
 	onMount(() => {
+		// 인증 상태 확인
+		if (browser) {
+			const authStatus = checkAuth();
+			if (!authStatus) {
+				goto('/login');
+				return;
+			}
+		}
+
 		// Check URL hash for direct navigation
 		if (browser && window.location.hash === '#step2') {
 			// Check if returning from modification page
