@@ -142,7 +142,7 @@ export function showCustomNotification(notification, data = {}) {
 			body: notification.body,
 			icon: '/icons/icon-192x192.png',
 			badge: '/icons/badge-72x72.png',
-			tag: 'okshouse-reservation',
+			tag: 'okshouse-reservation-' + Date.now(),
 			renotify: true,
 			data: data
 		};

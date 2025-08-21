@@ -28,7 +28,7 @@ messaging.onBackgroundMessage((payload) => {
 		body: payload.notification?.body || '새로운 예약 알림이 있습니다.',
 		icon: '/icons/icon-192x192.png',
 		badge: '/icons/badge-72x72.png',
-		tag: 'okshouse-reservation',
+		tag: 'okshouse-reservation-' + Date.now(),
 		renotify: true,
 		data: payload.data || {},
 		actions: [
