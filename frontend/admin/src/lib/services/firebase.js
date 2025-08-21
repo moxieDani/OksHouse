@@ -61,16 +61,16 @@ export async function requestFCMToken() {
 		if (!messaging) {
 			throw new Error('FCM이 초기화되지 않았습니다');
 		}
-		console.log('초기화:', messaging);
+		// console.log('초기화:', messaging);
 		
 		// 현재 알림 권한 확인
 		let permission = Notification.permission;
-		console.log('현재 알림 권한:', permission);
+		// console.log('현재 알림 권한:', permission);
 
 		// 권한이 'default'일 경우에만 요청
 		if (permission === 'default') {
 			permission = await Notification.requestPermission();
-			console.log('요청 후 알림 권한:', permission);
+			// console.log('요청 후 알림 권한:', permission);
 		}
 		
 		if (permission !== 'granted') {
@@ -86,7 +86,7 @@ export async function requestFCMToken() {
 			throw new Error('FCM 토큰을 받을 수 없습니다');
 		}
 		
-		console.log('FCM 토큰 획득:', token);
+		// console.log('FCM 토큰 획득:', token);
 		return token;
 		
 	} catch (error) {

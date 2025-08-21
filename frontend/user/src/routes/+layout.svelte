@@ -22,7 +22,7 @@
 		const pathname = $page.url.pathname;
 		if (pathname.includes('/reservation')) return '🏠 홈으로';
 		if (pathname.includes('/manage')) return '🏠 홈으로';
-		return '🏠 Home';
+		return '🏠 처음으로';
 	})();
 </script>
 
@@ -34,7 +34,7 @@
 			aria-label="홈으로 돌아가기"
 			title="홈으로 돌아가기"
 		>
-			🏠 Home
+			🏠 처음으로
 		</button>
 	</div>
 {/if}

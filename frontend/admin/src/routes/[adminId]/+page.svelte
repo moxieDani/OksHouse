@@ -196,7 +196,7 @@
 				};
 			});
 			
-			console.log('처리된 전체 예약 데이터:', allReservations.length, allReservations);
+			// console.log('처리된 전체 예약 데이터:', allReservations.length, allReservations);
 		} catch (error) {
 			console.error('전체 예약 로드 실패:', error);
 			allReservations = [];
@@ -549,11 +549,11 @@
 			if (fcmToken) {
 				// 서버에 토큰 등록
 				await adminAPI.registerFCMToken(fcmToken);
-				console.log('FCM 토큰이 서버에 성공적으로 등록되었습니다:', fcmToken);
+				// console.log('FCM 토큰이 서버에 성공적으로 등록되었습니다:', fcmToken);
 
 				// 포그라운드 메시지 리스너 설정
 				await setupFCMListener((payload) => {
-					console.log('푸시 알림 수신:', payload);
+					// console.log('푸시 알림 수신:', payload);
 
 					// 포그라운드 상태에서도 알림 표시
 					if (payload.notification) {

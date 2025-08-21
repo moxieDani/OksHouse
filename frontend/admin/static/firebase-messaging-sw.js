@@ -21,7 +21,7 @@ const messaging = firebase.messaging();
 
 // 백그라운드 메시지 처리
 messaging.onBackgroundMessage((payload) => {
-	console.log('백그라운드 메시지 수신:', payload);
+	// console.log('백그라운드 메시지 수신:', payload);
 	
 	const notificationTitle = payload.notification?.title || '새로운 알림';
 	const notificationOptions = {
@@ -48,7 +48,7 @@ messaging.onBackgroundMessage((payload) => {
 
 // 알림 클릭 이벤트 처리
 self.addEventListener('notificationclick', (event) => {
-	console.log('알림 클릭:', event);
+	// console.log('알림 클릭:', event);
 	
 	event.notification.close();
 	

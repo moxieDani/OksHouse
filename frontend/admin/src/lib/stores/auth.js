@@ -232,10 +232,10 @@ function startTokenMonitoring() {
 		
 		// 토큰이 만료되었거나 1분 내 만료 예정인 경우
 		if (tokenStatus.needsRefresh) {
-			console.log('백그라운드 토큰 갱신 필요 감지, 자동 갱신 시도...');
+			// console.log('백그라운드 토큰 갱신 필요 감지, 자동 갱신 시도...');
 			try {
 				await refreshAccessToken();
-				console.log('백그라운드 토큰 갱신 성공');
+				// console.log('백그라운드 토큰 갱신 성공');
 			} catch (error) {
 				console.error('백그라운드 토큰 갱신 실패:', error);
 				// 갱신 실패시 모니터링 중지 (logout이 호출됨)
@@ -244,7 +244,7 @@ function startTokenMonitoring() {
 		}
 	}, 30 * 1000); // 30초마다 체크
 	
-	console.log('토큰 모니터링 시작됨');
+	// console.log('토큰 모니터링 시작됨');
 }
 
 /**
@@ -254,7 +254,7 @@ function stopTokenMonitoring() {
 	if (tokenMonitorInterval) {
 		clearInterval(tokenMonitorInterval);
 		tokenMonitorInterval = null;
-		console.log('토큰 모니터링 중지됨');
+		// console.log('토큰 모니터링 중지됨');
 	}
 }
 

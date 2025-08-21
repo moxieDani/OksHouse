@@ -95,7 +95,7 @@ class FCMService:
             # 토큰 갱신
             cls._credentials.refresh(Request())
             
-            print("FCM 서비스 계정 인증 완료")
+            # print("FCM 서비스 계정 인증 완료")
             return cls._credentials.token
             
         except Exception as e:
@@ -223,13 +223,13 @@ class FCMService:
             end_date = reservation_data.get("end_date", "")
             
             if notification_type == "new":
-                title = "🔔 새로운 예약이 등록되었습니다"
-                body = f"{guest_name}님의 예약 ({start_date} ~ {end_date})"
+                title = "[OksHouse] 새로운 예약 등록 알림"
+                body = f"{guest_name}({start_date} ~ {end_date})"
             elif notification_type == "update":
-                title = "📝 예약 정보가 수정되었습니다"
-                body = f"{guest_name}님의 예약이 변경되었습니다"
+                title = "[OksHouse] 예약 변경 알림"
+                body = f"{guest_name}({start_date} ~ {end_date})"
             else:
-                title = "📋 예약 알림"
+                title = "[OksHouse] 예약 알림"
                 body = f"{guest_name}님의 예약 관련 알림"
             
             # 클릭 시 관리자 페이지로 이동
@@ -253,7 +253,7 @@ class FCMService:
                 click_action=click_action
             )
             
-            print(f"예약 알림 전송 결과: {result}")
+            # print(f"예약 알림 전송 결과: {result}")
             return result
             
         except Exception as e:

@@ -45,7 +45,7 @@ export async function apiRequest(endpoint, options = {}) {
 				
 				// 토큰 갱신이 필요한 경우
 				if (tokenStatus.needsRefresh) {
-					console.log('API 요청 전 토큰 갱신 필요, 자동 갱신 시도...');
+					// console.log('API 요청 전 토큰 갱신 필요, 자동 갱신 시도...');
 					const refreshResult = await authModule.refreshAccessToken();
 					
 					if (!refreshResult.success) {
