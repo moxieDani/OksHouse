@@ -100,7 +100,7 @@
 
 <style>
 	.main-container {
-		min-height: 100vh;
+		min-height: 95vh;
 		display: flex;
 		flex-direction: column;
 		justify-content: space-between;
@@ -240,13 +240,11 @@
 
 	.footer {
 		padding: var(--space-6) var(--space-6) var(--space-8);
-		border-top: 1px solid rgba(0, 0, 0, 0.08);
 		color: var(--neutral-500);
 		font-size: 0.875rem;
 		opacity: 0.8;
 		font-weight: 400;
 		letter-spacing: -0.025em;
-		line-height: 1.5;
 	}
 
 	.welcome-message {

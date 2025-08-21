@@ -151,7 +151,6 @@
 		align-items: center;
 		justify-content: center;
 		padding: var(--space-6);
-		background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 	}
 
 	.login-wrapper {

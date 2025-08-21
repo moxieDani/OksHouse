@@ -809,7 +809,7 @@
 		border-radius: var(--radius-lg);
 		padding: var(--space-4);
 		text-align: center;
-		margin-bottom: var(--space-6);
+		margin-bottom: var(--space-1);
 		font-size: var(--text-base);
 		color: var(--neutral-600);
 	}
