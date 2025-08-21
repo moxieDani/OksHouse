@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
+from datetime import datetime, timedelta, timezone
 import asyncio
 
 from app.db.database import get_async_db
@@ -119,7 +120,8 @@ async def update_reservation(
     db: Session = Depends(get_async_db)
 ):
     """예약 정보 업데이트 - 상태를 pending으로 초기화"""
-    updated_reservation = await ReservationService.update_reservation(
+    # 서비스에서 (업데이트된 예약, 원본 상태, 원본 updated_at) 튜플을 반환
+    result_tuple = await ReservationService.update_reservation(
         db=db,
         reservation_id=update_request.reservation_id,
         name=update_request.name,
@@ -129,24 +131,44 @@ async def update_reservation(
         duration=update_request.duration
     )
     
-    if not updated_reservation:
+    if not result_tuple:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="예약을 찾을 수 없거나 권한이 없습니다."
         )
+
+    updated_reservation, original_status, original_updated_at = result_tuple
     
-    # FCM 알림 전송 (백그라운드에서 실행)
-    asyncio.create_task(
-        FCMService.send_reservation_notification(
-            reservation_data={
-                "id": updated_reservation.id,
-                "name": updated_reservation.name,
-                "start_date": updated_reservation.start_date.strftime("%Y-%m-%d"),
-                "end_date": updated_reservation.end_date.strftime("%Y-%m-%d"),
-                "duration": updated_reservation.duration
-            },
-            notification_type="update"
+    # FCM 알림 조건부 전송 로직
+    should_send_fcm = False
+    
+    if original_status == 'pending':
+        # pending 상태에서 수정된 경우 - 24시간 제한 적용
+        if original_updated_at:
+            # timezone-aware로 변환
+            if original_updated_at.tzinfo is None:
+                original_updated_at = original_updated_at.replace(tzinfo=timezone.utc)
+            
+            time_difference = datetime.now(timezone.utc) - original_updated_at
+            
+            if time_difference >= timedelta(hours=24):
+                should_send_fcm = True
+    else:
+        # pending이 아닌 상태에서 수정된 경우 - 즉시 알림 전송
+        should_send_fcm = True
+
+    if should_send_fcm:
+        asyncio.create_task(
+            FCMService.send_reservation_notification(
+                reservation_data={
+                    "id": updated_reservation.id,
+                    "name": updated_reservation.name,
+                    "start_date": updated_reservation.start_date.strftime("%Y-%m-%d"),
+                    "end_date": updated_reservation.end_date.strftime("%Y-%m-%d"),
+                    "duration": updated_reservation.duration
+                },
+                notification_type="update"
+            )
         )
-    )
     
     return updated_reservation

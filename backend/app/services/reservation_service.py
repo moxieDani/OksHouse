@@ -5,7 +5,7 @@ from app.models.reservation import Reservation
 from app.schemas.reservation import ReservationCreate, ReservationWithAuth, AdminStatusUpdate
 from app.core.security import encrypt_password, verify_password
 from typing import List, Optional
-from datetime import date
+from datetime import date, datetime
 
 
 class ReservationService:
@@ -257,7 +257,7 @@ class ReservationService:
         start_date: date,
         end_date: date,
         duration: int
-    ) -> Optional[Reservation]:
+    ) -> Optional[tuple[Reservation, str, datetime]]:
         """예약 정보 업데이트 - 상태를 pending으로 초기화"""
         loop = asyncio.get_event_loop()
         
@@ -271,6 +271,10 @@ class ReservationService:
             if not reservation:
                 return None
             
+            # 변경 전의 값을 저장
+            original_status = reservation.status
+            original_updated_at = reservation.updated_at
+
             # 예약 정보 업데이트
             reservation.start_date = start_date
             reservation.end_date = end_date
@@ -280,6 +284,6 @@ class ReservationService:
             
             db.commit()
             db.refresh(reservation)
-            return reservation
+            return (reservation, original_status, original_updated_at)
         
         return await loop.run_in_executor(None, sync_update)
