@@ -122,7 +122,7 @@
 
 <style>
 	.admin-container {
-		min-height: 100vh;
+		min-height: 95vh;
 		display: flex;
 		flex-direction: column;
 		justify-content: space-between;
