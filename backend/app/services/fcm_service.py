@@ -221,13 +221,17 @@ class FCMService:
             guest_name = reservation_data.get("name", "손님")
             start_date = reservation_data.get("start_date", "")
             end_date = reservation_data.get("end_date", "")
-            
+            duration = reservation_data.get("duration", "")
+
             if notification_type == "new":
                 title = "[OksHouse] 새로운 예약 등록 알림"
-                body = f"{guest_name}({start_date} ~ {end_date})"
+                body = f"{guest_name}, {duration}박 {duration+1}일({start_date} ~ {end_date})"
             elif notification_type == "update":
                 title = "[OksHouse] 예약 변경 알림"
-                body = f"{guest_name}({start_date} ~ {end_date})"
+                body = f"{guest_name}, {duration}박 {duration+1}일({start_date} ~ {end_date})"
+            elif notification_type == "delete":
+                title = "[OksHouse] 예약 삭제 알림"
+                body = f"{guest_name}, {duration}박 {duration+1}일({start_date} ~ {end_date})"
             else:
                 title = "[OksHouse] 예약 알림"
                 body = f"{guest_name}님의 예약 관련 알림"

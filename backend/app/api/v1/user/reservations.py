@@ -71,7 +71,7 @@ async def delete_reservation_with_auth(
     db: Session = Depends(get_async_db)
 ):
     """인증을 통한 예약 삭제 (5번 기능) - 사용자용"""
-    success = await ReservationService.delete_reservation_with_auth(
+    deleted_reservation = await ReservationService.delete_reservation_with_auth(
         db,
         delete_request.reservation_id,
         delete_request.name,
@@ -79,11 +79,25 @@ async def delete_reservation_with_auth(
         delete_request.password
     )
     
-    if not success:
+    if not deleted_reservation:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="예약 정보가 일치하지 않거나 권한이 없습니다."
         )
+    
+    # FCM 알림 전송 (백그라운드에서 실행)
+    asyncio.create_task(
+        FCMService.send_reservation_notification(
+            reservation_data={
+                "id": deleted_reservation.id,
+                "name": deleted_reservation.name,
+                "start_date": deleted_reservation.start_date.strftime("%Y-%m-%d"),
+                "end_date": deleted_reservation.end_date.strftime("%Y-%m-%d"),
+                "duration": deleted_reservation.duration
+            },
+            notification_type="delete"
+        )
+    )
 
 
 @router.post("/user", response_model=List[ReservationResponse])

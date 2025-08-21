@@ -132,7 +132,7 @@ class ReservationService:
         name: str, 
         phone: str, 
         password: str = None
-    ) -> bool:
+    ) -> Optional[Reservation]:
         """ID 기반 예약 삭제 (5번 기능) - 이미 인증된 사용자의 예약 삭제"""
         loop = asyncio.get_event_loop()
         
@@ -144,12 +144,11 @@ class ReservationService:
             ).first()
             
             if not reservation:
-                return False
-            
+                return None
             
             db.delete(reservation)
             db.commit()
-            return True
+            return reservation
         
         return await loop.run_in_executor(None, sync_delete)
     
