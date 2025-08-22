@@ -45,8 +45,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
                 status_code=status.HTTP_403_FORBIDDEN,
                 content={
                     "detail": "API access is restricted to authorized origins only. Please access through the official admin or user interface.",
-                    "error_code": "EXTERNAL_API_ACCESS_FORBIDDEN",
-                    "allowed_origins": list(self.allowed_origins)
+                    "error_code": "EXTERNAL_API_ACCESS_FORBIDDEN"
                 }
             )
         
