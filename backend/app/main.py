@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.api.v1 import api_router
 from app.db.database import create_tables, init_admin_data
+from app.middleware import APIKeyMiddleware
 
 
 @asynccontextmanager
@@ -23,6 +24,9 @@ app = FastAPI(
     description="Ok's House 별장 예약시스템 Backend API (Structured)",
     lifespan=lifespan
 )
+
+# API Key 미들웨어 추가 (CORS 보다 먼저 적용)
+app.add_middleware(APIKeyMiddleware)
 
 # CORS 설정
 app.add_middleware(
