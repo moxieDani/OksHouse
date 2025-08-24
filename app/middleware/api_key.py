@@ -14,9 +14,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         self.excluded_paths = excluded_paths or []
         # 완전 공개 경로들 (외부 접근 허용)
         self.public_paths = [
-            "/docs",
-            "/redoc", 
-            "/openapi.json",
+            "/api/v1/public/health",
         ]
         # 정확히 매칭해야 하는 공개 경로들
         self.exact_public_paths = ["/"]

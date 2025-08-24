@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.api.v1 import api_router
 from app.db.database import create_tables, init_admin_data
-from app.middleware import APIKeyMiddleware
+from app.middleware.api_key import APIKeyMiddleware
 
 
 @asynccontextmanager

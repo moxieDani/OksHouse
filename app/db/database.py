@@ -1,16 +1,27 @@
-import asyncio
+import os
 from typing import AsyncGenerator
-from sqlalchemy import create_engine, select
+import asyncio
+from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from app.core.config import settings
 
 # Base class for models
 Base = declarative_base()
 
+# Database directory setup for local SQLite
+if settings.database_url.startswith("sqlite"):
+    # URL에서 경로 부분 추출 (e.g., sqlite:///./data/reservations.db -> ./data/reservations.db)
+    db_path = settings.database_url.split(":///")[1]
+    # 경로에서 디렉토리 부분 추출
+    db_dir = os.path.dirname(db_path)
+    # 디렉토리가 존재하지 않으면 생성
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
+
 # Database engine
 engine = create_engine(
-    settings.database_url or "sqlite:///./reservations.db",
-    connect_args={"check_same_thread": False} if "sqlite" in (settings.database_url or "") else {}
+    settings.database_url,
+    connect_args={"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
 )
 
 # Session factory

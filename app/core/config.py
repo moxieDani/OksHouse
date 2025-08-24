@@ -14,7 +14,7 @@ class Settings:
     environment: str = os.getenv("ENVIRONMENT", "development")
     
     # Database settings
-    database_url: str = os.getenv("DATABASE_URL", "")
+    database_url: str = os.getenv("DATABASE_URL", "sqlite:///./data/reservations.db")
     
     # Server settings
     host: str = os.getenv("HOST", "0.0.0.0")

@@ -77,20 +77,35 @@ class FCMService:
             if cls._credentials and cls._credentials.valid:
                 return cls._credentials.token
             
-            # 서비스 계정 키 파일 경로 확인
-            service_account_path = cls._get_service_account_path()
-            if not service_account_path:
-                print("FCM 서비스 계정 키 파일을 찾을 수 없습니다.")
-                print("다음 중 하나의 방법으로 설정해주세요:")
-                print("1. 환경변수 FCM_SERVICE_ACCOUNT_PATH 설정")
-                print("2. 프로젝트 루트에 service-account-key.json 파일 배치")
-                return None
-            
-            # 서비스 계정 키로 credentials 생성
-            cls._credentials = service_account.Credentials.from_service_account_file(
-                service_account_path,
-                scopes=cls.FCM_SCOPES
-            )
+            # 1. 환경변수에서 JSON 문자열 확인 (fly.io 방식)
+            service_account_json = os.getenv("FCM_SERVICE_ACCOUNT_JSON")
+            if service_account_json:
+                try:
+                    import json
+                    service_account_info = json.loads(service_account_json)
+                    cls._credentials = service_account.Credentials.from_service_account_info(
+                        service_account_info,
+                        scopes=cls.FCM_SCOPES
+                    )
+                except json.JSONDecodeError as e:
+                    print(f"FCM_SERVICE_ACCOUNT_JSON 파싱 오류: {e}")
+                    return None
+            else:
+                # 2. 파일 경로 방식 (로컬 개발용)
+                service_account_path = cls._get_service_account_path()
+                if not service_account_path:
+                    print("FCM 서비스 계정 키를 찾을 수 없습니다.")
+                    print("다음 중 하나의 방법으로 설정해주세요:")
+                    print("1. 환경변수 FCM_SERVICE_ACCOUNT_JSON 설정 (fly.io)")
+                    print("2. 환경변수 FCM_SERVICE_ACCOUNT_PATH 설정 (로컬)")
+                    print("3. 프로젝트 루트에 service-account-key.json 파일 배치")
+                    return None
+                
+                # 서비스 계정 키로 credentials 생성
+                cls._credentials = service_account.Credentials.from_service_account_file(
+                    service_account_path,
+                    scopes=cls.FCM_SCOPES
+                )
             
             # 토큰 갱신
             cls._credentials.refresh(Request())
@@ -100,7 +115,7 @@ class FCMService:
             
         except Exception as e:
             print(f"FCM 액세스 토큰 획득 실패: {e}")
-            print("서비스 계정 키 파일이 올바른지 확인하세요.")
+            print("서비스 계정 키 설정을 확인하세요.")
             return None
     
     @classmethod

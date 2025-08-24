@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 from typing import Optional
+from app.core.config import settings
 from app.db.database import get_async_db
 from app.schemas.auth import AdminPhoneRequest, TokenResponse, AdminInfo, RefreshTokenRequest
 from app.services.auth_service import AuthService
@@ -25,15 +26,21 @@ async def verify_admin_phone(
         # HttpOnly 쿠키로 리프레시 토큰 설정 (1년 만료)
         expires = datetime.now(timezone.utc) + timedelta(seconds=REFRESH_TOKEN_EXPIRE_SECONDS)
         
-        # 직접 Set-Cookie 헤더 설정 (FastAPI set_cookie 문제로 인해)
+        # 직접 Set-Cookie 헤더 설정 (환경에 따라 SameSite, Secure 속성 분기)
         expires_str = expires.strftime("%a, %d %b %Y %H:%M:%S GMT")
+        
+        if settings.environment == "production":
+            samesite_and_secure = "SameSite=None; Secure"
+        else:
+            samesite_and_secure = "SameSite=Lax"
+
         cookie_header = (
             f"admin_refresh_token={refresh_token}; "
             f"Max-Age={REFRESH_TOKEN_EXPIRE_SECONDS}; "
             f"Expires={expires_str}; "
             f"Path=/; "
             f"HttpOnly; "
-            f"SameSite=Lax"
+            f"{samesite_and_secure}"
         )
         
         # 다른 Set-Cookie 헤더와 충돌하지 않도록 append 방식 사용
@@ -50,6 +57,10 @@ async def verify_admin_phone(
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e
+        import traceback
+        print("--- UNEXPECTED ERROR IN /verify-phone ---")
+        traceback.print_exc()
+        print("-----------------------------------------")
         raise HTTPException(status_code=500, detail="인증 처리 중 오류가 발생했습니다")
 
 
@@ -81,15 +92,21 @@ async def refresh_access_token(
         if token_response.refresh_token_renewed:
             expires = datetime.now(timezone.utc) + timedelta(seconds=REFRESH_TOKEN_EXPIRE_SECONDS)
             
-            # 직접 Set-Cookie 헤더 설정
+            # 직접 Set-Cookie 헤더 설정 (환경에 따라 SameSite, Secure 속성 분기)
             expires_str = expires.strftime("%a, %d %b %Y %H:%M:%S GMT")
+
+            if settings.environment == "production":
+                samesite_and_secure = "SameSite=None; Secure"
+            else:
+                samesite_and_secure = "SameSite=Lax"
+
             cookie_header = (
                 f"admin_refresh_token={new_refresh_token}; "
                 f"Max-Age={REFRESH_TOKEN_EXPIRE_SECONDS}; "
                 f"Expires={expires_str}; "
                 f"Path=/; "
                 f"HttpOnly; "
-                f"SameSite=Lax"
+                f"{samesite_and_secure}"
             )
             
             # 다른 Set-Cookie 헤더와 충돌하지 않도록 append 방식 사용
@@ -130,6 +147,10 @@ async def get_current_admin(
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e
+        import traceback
+        print("--- UNEXPECTED ERROR IN /me ---")
+        traceback.print_exc()
+        print("-------------------------------")
         raise HTTPException(status_code=500, detail="관리자 정보 조회 중 오류가 발생했습니다")
 
 
@@ -140,12 +161,19 @@ async def logout_admin(
 ):
     """관리자 로그아웃"""
     try:
-        # 쿠키에서 리프레시 토큰 제거
-        response.delete_cookie(
-            key="admin_refresh_token",
-            path="/",
-            samesite="lax",
-            secure=False
+        # 쿠키에서 리프레시 토큰 제거 (환경에 따라 SameSite, Secure 속성 분기)
+        if settings.environment == "production":
+            samesite_and_secure = "SameSite=None; Secure"
+        else:
+            samesite_and_secure = "SameSite=Lax"
+
+        response.headers["Set-Cookie"] = (
+            f"admin_refresh_token=; "
+            f"Max-Age=0; "
+            f"Expires=Thu, 01 Jan 1970 00:00:00 GMT; "
+            f"Path=/; "
+            f"HttpOnly; "
+            f"{samesite_and_secure}"
         )
         
         # 액세스 토큰이 있다면 세션에서 제거
