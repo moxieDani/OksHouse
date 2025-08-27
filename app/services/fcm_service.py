@@ -150,28 +150,31 @@ class FCMService:
                         })
                         continue
                     
-                    # FCM v1 API 메시지 구조
+                    # FCM v1 API 메시지 구조 (data-only 방식으로 중복 알림 방지)
+                    message_data = {
+                        "title": title,
+                        "body": body,
+                        "icon": "/icons/icon-192x192.png",
+                        "badge": "/icons/badge-72x72.png",
+                        "click_action": click_action or "/",
+                        "type": "notification"
+                    }
+                    
+                    # 추가 데이터가 있으면 병합
+                    if data:
+                        message_data.update(data)
+                    
                     message = {
                         "message": {
                             "token": token,
-                            "notification": {
-                                "title": title,
-                                "body": body
-                            },
+                            "data": message_data,
                             "webpush": {
-                                "notification": {
-                                    "title": title,
-                                    "body": body,
-                                    "icon": "/icons/icon-192x192.png",
-                                    "badge": "/icons/badge-72x72.png",
-                                    "click_action": click_action or "/"
+                                "headers": {
+                                    "Urgency": "high"
                                 }
                             }
                         }
                     }
-                    
-                    if data:
-                        message["message"]["data"] = data
                     
                     # HTTP 요청 전송
                     async with httpx.AsyncClient() as client:
