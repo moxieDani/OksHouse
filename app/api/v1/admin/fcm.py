@@ -30,7 +30,6 @@ async def register_fcm_token(
 ):
     """관리자 FCM 토큰 등록"""
     try:
-        # 관리자 인증 확인
         if not authorization or not authorization.startswith("Bearer "):
             raise HTTPException(status_code=401, detail="인증이 필요합니다")
         
@@ -40,9 +39,7 @@ async def register_fcm_token(
         if not admin_info:
             raise HTTPException(status_code=401, detail="유효하지 않은 토큰입니다")
         
-        # FCM 토큰 등록
-        admin_id = admin_info.admin_id
-        FCMService.add_admin_token(admin_id, token_request.fcm_token)
+        FCMService.add_admin_token(db, admin_id=admin_info.admin_id, fcm_token=token_request.fcm_token)
         
         return FCMTokenResponse(
             success=True,
@@ -66,7 +63,6 @@ async def unregister_fcm_token(
 ):
     """관리자 FCM 토큰 해제"""
     try:
-        # 관리자 인증 확인
         if not authorization or not authorization.startswith("Bearer "):
             raise HTTPException(status_code=401, detail="인증이 필요합니다")
         
@@ -76,9 +72,7 @@ async def unregister_fcm_token(
         if not admin_info:
             raise HTTPException(status_code=401, detail="유효하지 않은 토큰입니다")
         
-        # FCM 토큰 해제
-        admin_id = admin_info.admin_id
-        FCMService.remove_admin_token(admin_id, token_request.fcm_token)
+        FCMService.remove_admin_token(db, admin_id=admin_info.admin_id, fcm_token=token_request.fcm_token)
         
         return FCMTokenResponse(
             success=True,
@@ -101,7 +95,6 @@ async def test_notification(
 ):
     """FCM 알림 테스트"""
     try:
-        # 관리자 인증 확인
         if not authorization or not authorization.startswith("Bearer "):
             raise HTTPException(status_code=401, detail="인증이 필요합니다")
         
@@ -111,9 +104,7 @@ async def test_notification(
         if not admin_info:
             raise HTTPException(status_code=401, detail="유효하지 않은 토큰입니다")
         
-        # 테스트 알림 전송
-        admin_id = admin_info.admin_id
-        admin_tokens = FCMService.get_admin_tokens(admin_id)
+        admin_tokens = FCMService.get_admin_tokens(db, admin_id=admin_info.admin_id)
         
         if not admin_tokens:
             return {

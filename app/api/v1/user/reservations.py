@@ -52,6 +52,7 @@ async def create_reservation_with_password(
     # FCM 알림 전송 (백그라운드에서 실행)
     asyncio.create_task(
         FCMService.send_reservation_notification(
+            db=db,
             reservation_data={
                 "id": new_reservation.id,
                 "name": new_reservation.name,
@@ -89,6 +90,7 @@ async def delete_reservation_with_auth(
     # FCM 알림 전송 (백그라운드에서 실행)
     asyncio.create_task(
         FCMService.send_reservation_notification(
+            db=db,
             reservation_data={
                 "id": deleted_reservation.id,
                 "name": deleted_reservation.name,
@@ -160,6 +162,7 @@ async def update_reservation(
     if should_send_fcm:
         asyncio.create_task(
             FCMService.send_reservation_notification(
+                db=db,
                 reservation_data={
                     "id": updated_reservation.id,
                     "name": updated_reservation.name,

@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.database import Base
 
@@ -11,3 +12,5 @@ class Admin(Base):
     name = Column(String, nullable=False, unique=True, comment="관리자명")
     phone = Column(String, nullable=True, comment="전화번호")
     created_at = Column(DateTime, default=func.now(), comment="생성일시")
+
+    fcm_tokens = relationship("FCMToken", back_populates="admin", cascade="all, delete-orphan")

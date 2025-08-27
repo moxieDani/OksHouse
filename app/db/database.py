@@ -8,6 +8,11 @@ from app.core.config import settings
 # Base class for models
 Base = declarative_base()
 
+# Import all models here so that Base has them registered
+from app.models.admin import Admin
+from app.models.reservation import Reservation
+from app.models.fcm import FCMToken
+
 # Database directory setup for local SQLite
 if settings.database_url.startswith("sqlite"):
     # URL에서 경로 부분 추출 (e.g., sqlite:///./data/reservations.db -> ./data/reservations.db)
